@@ -1,1 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chrome & iOS Safari Livestream - Anti Seek</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    #video-container, #fallback-message {
+      display: none;
+    }
+    .video-wrapper {
+      position: relative;
+      width: 90vw;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none; /* Prevent direct user interaction */
+    }
+    .overlay-block {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+    .click-to-unmute {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      font-size: 1.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="video-container">
+    <div class="video-wrapper">
+      <div id="player"></div>
+      <div class="overlay-block"></div>
+      <div class="click-to-unmute" id="unmute-overlay">🔊 Click to unmute</div>
+    </div>
+  </div>
+
+  <div id="fallback-message">
+    <h2>⚠️ This livestream is only available in Google Chrome (desktop/Android) and Safari/Chrome on iOS.</h2>
+    <p>Please use one of these browsers to view the video.</p>
+  </div>
+
+  <noscript>
+    <style> body { display: none; } </style>
+    <div style="color: white; background: black; padding: 2rem;">
+      <h2>⚠️ JavaScript must be enabled to view this livestream.</h2>
+    </div>
+  </noscript>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    function isAllowedBrowser() {
+      const ua = navigator.userAgent;
+
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+      const isDesktopChrome =
+        /Chrome\/[.0-9]* Safari\/[.0-9]*$/.test(ua) &&
+        !/Edg|OPR|Brave|Vivaldi/i.test(ua);
+
+      const isChromeOnAndroid =
+        isAndroid &&
+        /Chrome\/[.0-9]* Mobile/i.test(ua) &&
+        !/EdgA|OPR|Brave|SamsungBrowser/i.test(ua);
+
+      const isChromeOniOS = isIOS && /CriOS/i.test(ua);
+
+      const isSafariOniOS = isIOS && /Version\/[\d\.]+.*Safari/.test(ua);
+
+      return isDesktopChrome || isChromeOnAndroid || isChromeOniOS || isSafariOniOS;
+    }
+
+    let player;
+    let maxTimeReached = 0;
+    const LIVE_DELAY_SECONDS = 5; // Allowable live delay
+
+    function onYouTubeIframeAPIReady() {
+      if (!isAllowedBrowser()) {
+        document.getElementById('fallback-message').style.display = 'block';
+        return;
+      }
+      document.getElementById('video-container').style.display = 'block';
+
+      player = new YT.Player('player', {
+        videoId: '9P9YMgPvr1E', // 🔁 Replace with your YouTube video ID here
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          disablekb: 1,
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1
+        },
+        events: {
+          onReady: (event) => {
+            event.target.playVideo();
+            startAntiSeekCheck();
+          }
+        }
+      });
+    }
+
+    function startAntiSeekCheck() {
+      setInterval(() => {
+        if (!player || !player.getCurrentTime) return;
+        const currentTime = player.getCurrentTime();
+
+        if (currentTime > maxTimeReached) {
+          maxTimeReached = currentTime;
+        }
+
+        if (currentTime < maxTimeReached - LIVE_DELAY_SECONDS) {
+          player.seekTo(maxTimeReached - LIVE_DELAY_SECONDS, true);
+        }
+      }, 1000);
+    }
+
+    // Auto unmute on first user click
+    document.addEventListener('click', () => {
+      const overlay = document.getElementById('unmute-overlay');
+      if (overlay && player && typeof player.unMute === 'function') {
+        player.unMute();
+        overlay.style.display = 'none';
+      }
+    }, { once: true });
+  </script>
+</body>
+</html>
 
