@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chrome & iOS Safari Livestream - Anti Seek</title>
+  <title>Secure Chrome/iOS Livestream</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,21 +16,28 @@
       margin: 0;
       text-align: center;
     }
+
     #video-container, #fallback-message {
       display: none;
     }
+
     .video-wrapper {
       position: relative;
       width: 90vw;
       max-width: 960px;
       aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
     }
+
     iframe {
       width: 100%;
       height: 100%;
       border: none;
-      pointer-events: none; /* Prevent direct user interaction */
+      pointer-events: none;
     }
+
     .overlay-block {
       position: absolute;
       top: 0; left: 0;
@@ -38,20 +45,55 @@
       height: 100%;
       z-index: 2;
     }
+
     .click-to-unmute {
       position: absolute;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 3;
-      font-size: 1.5rem;
+      font-size: 1.8rem;
+      font-weight: bold;
       cursor: pointer;
+      animation: pulse 1.5s infinite;
+      border-radius: 8px;
+      text-shadow: 1px 1px 4px #000;
       user-select: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    .scroll-banner {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-size: 1rem;
+      padding: 5px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      z-index: 4;
+    }
+
+    .scroll-banner span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: scroll-left 15s linear infinite;
+    }
+
+    @keyframes scroll-left {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
     }
   </style>
 </head>
@@ -61,7 +103,8 @@
     <div class="video-wrapper">
       <div id="player"></div>
       <div class="overlay-block"></div>
-      <div class="click-to-unmute" id="unmute-overlay">🔊 Click to unmute</div>
+      <div class="click-to-unmute" id="unmute-overlay">🔊 Tap to Unmute</div>
+      <div class="scroll-banner"><span>📺 Live Streaming — No Skipping | Optimized for Chrome and iOS | Stay Tuned for More!</span></div>
     </div>
   </div>
 
@@ -82,39 +125,47 @@
   <script>
     function isAllowedBrowser() {
       const ua = navigator.userAgent;
-
       const isAndroid = /Android/i.test(ua);
       const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
-      const isDesktopChrome =
-        /Chrome\/[.0-9]* Safari\/[.0-9]*$/.test(ua) &&
+      const isDesktopChrome = /Chrome\/[.0-9]* Safari\/[.0-9]*$/.test(ua) &&
         !/Edg|OPR|Brave|Vivaldi/i.test(ua);
 
-      const isChromeOnAndroid =
-        isAndroid &&
+      const isChromeOnAndroid = isAndroid &&
         /Chrome\/[.0-9]* Mobile/i.test(ua) &&
         !/EdgA|OPR|Brave|SamsungBrowser/i.test(ua);
 
       const isChromeOniOS = isIOS && /CriOS/i.test(ua);
-
       const isSafariOniOS = isIOS && /Version\/[\d\.]+.*Safari/.test(ua);
 
       return isDesktopChrome || isChromeOnAndroid || isChromeOniOS || isSafariOniOS;
     }
 
+    const playlist = [
+      'MFLVmAE4cqg',  // 🔁 Replace with your YouTube video IDs
+      'u2IEDVXPcc8',
+      '9P9YMgPvr1E'
+    ];
+
     let player;
+    let currentVideoIndex = 0;
     let maxTimeReached = 0;
-    const LIVE_DELAY_SECONDS = 5; // Allowable live delay
+    const LIVE_DELAY_SECONDS = 5;
+    let userUnmuted = false;
 
     function onYouTubeIframeAPIReady() {
       if (!isAllowedBrowser()) {
         document.getElementById('fallback-message').style.display = 'block';
         return;
       }
-      document.getElementById('video-container').style.display = 'block';
 
+      document.getElementById('video-container').style.display = 'block';
+      loadVideo(playlist[currentVideoIndex]);
+    }
+
+    function loadVideo(videoId) {
       player = new YT.Player('player', {
-        videoId: '9P9YMgPvr1E', // 🔁 Replace with your YouTube video ID here
+        videoId: videoId,
         playerVars: {
           autoplay: 1,
           mute: 1,
@@ -128,35 +179,43 @@
           onReady: (event) => {
             event.target.playVideo();
             startAntiSeekCheck();
+            if (userUnmuted) {
+              event.target.unMute();
+              document.getElementById('unmute-overlay').style.display = 'none';
+            }
+          },
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.ENDED) {
+              currentVideoIndex++;
+              if (currentVideoIndex < playlist.length) {
+                loadVideo(playlist[currentVideoIndex]);
+              }
+            }
           }
         }
       });
     }
 
     function startAntiSeekCheck() {
+      maxTimeReached = 0;
       setInterval(() => {
         if (!player || !player.getCurrentTime) return;
         const currentTime = player.getCurrentTime();
-
-        if (currentTime > maxTimeReached) {
-          maxTimeReached = currentTime;
-        }
-
+        if (currentTime > maxTimeReached) maxTimeReached = currentTime;
         if (currentTime < maxTimeReached - LIVE_DELAY_SECONDS) {
           player.seekTo(maxTimeReached - LIVE_DELAY_SECONDS, true);
         }
       }, 1000);
     }
 
-    // Auto unmute on first user click
     document.addEventListener('click', () => {
       const overlay = document.getElementById('unmute-overlay');
       if (overlay && player && typeof player.unMute === 'function') {
         player.unMute();
+        userUnmuted = true; // ✅ persist across playlist videos
         overlay.style.display = 'none';
       }
     }, { once: true });
   </script>
 </body>
 </html>
-
