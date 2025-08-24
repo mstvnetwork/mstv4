@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pseudo-Live Stream Auto-Switch</title>
+  <title>Pseudo Live Stream</title>
   <style>
     html, body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background: black;
       height: 100%;
       overflow: hidden;
@@ -23,9 +24,11 @@
     }
     #loaderOverlay {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -36,11 +39,12 @@
     }
     #muteButton {
       position: absolute;
-      top: 10px; right: 10px;
+      top: 10px;
+      right: 10px;
       z-index: 11;
       font-size: 1.5em;
       padding: 8px;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       color: white;
       border: none;
       border-radius: 50%;
@@ -48,7 +52,8 @@
     }
     #scrollBanner {
       position: absolute;
-      bottom: 0; left: 0;
+      bottom: 0;
+      left: 0;
       width: 100%;
       background-color: #007BFF;
       color: white;
@@ -74,73 +79,56 @@
     <video id="videoPlayer" autoplay playsinline muted></video>
     <div id="loaderOverlay">Loading Video...</div>
     <button id="muteButton">🔇</button>
-
     <div id="scrollBanner">
-      <div id="scrollText">Now Playing: Pseudo-Live Stream — Enjoy the show!</div>
+      <div id="scrollText">Now Playing: "Pseudo Live Stream" — Enjoy the show!</div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // 🕒 Set your broadcast start time here in UNIX timestamp UTC (e.g. AEST 15:00 = UTC 05:00)
-    const BROADCAST_START_UNIX = 1756040400;
-
-    // <-- UPDATED JSON file path for GitHub Pages hosting -->
-    const VIDEO_URL_JSON_PATH = 'channel.json';
-
-
-    let totalPreviousDuration = 0;
-    let currentVideoStartTime = null;
-    let currentVideoOffset = 0;
-    let currentVideoUrl = null;
+    const BROADCAST_START_UNIX = 1726776000; // Replace this with your actual UNIX start time (UTC)
+    const VIDEO_URL_JSON_PATH = 'channel.json'; // This should be accessible via GitHub Pages
+    const POLL_INTERVAL = 15000; // Check every 15 seconds for updated video URL
 
     let video = document.getElementById('videoPlayer');
     let loader = document.getElementById('loaderOverlay');
     let muteButton = document.getElementById('muteButton');
     let hls = null;
+    let currentVideoUrl = '';
+    let currentVideoOffset = 0;
+    let lastTime = 0;
 
     function getLiveElapsedTime() {
       return Math.floor(Date.now() / 1000) - BROADCAST_START_UNIX;
     }
 
-    function resetVideo() {
-      const newVideo = document.createElement('video');
-      newVideo.id = 'videoPlayer';
-      newVideo.autoplay = true;
-      newVideo.playsInline = true;
-      newVideo.muted = true;
-      newVideo.style.width = "100%";
-      newVideo.style.height = "100%";
-      newVideo.style.objectFit = "cover";
-      document.getElementById('videoContainer').replaceChild(newVideo, video);
-      video = newVideo;
-
-      attachMuteButtonLogic();
-      attachSeekPrevention();
-      return newVideo;
-    }
-
     function switchVideo(newUrl) {
-      if (!newUrl) return;
-      loader.style.display = 'flex';
-
-      if (currentVideoStartTime !== null) {
-        const now = Date.now();
-        const playedDuration = Math.floor((now - currentVideoStartTime) / 1000);
-        totalPreviousDuration += playedDuration;
-      }
+      if (newUrl === currentVideoUrl || !newUrl) return;
 
       currentVideoUrl = newUrl;
-      currentVideoStartTime = Date.now();
-      currentVideoOffset = getLiveElapsedTime() - totalPreviousDuration;
-      currentVideoOffset = Math.max(0, currentVideoOffset);
+      loader.style.display = 'flex';
 
       if (hls) {
         hls.destroy();
         hls = null;
       }
 
-      resetVideo();
+      const newVideo = document.createElement('video');
+      newVideo.id = 'videoPlayer';
+      newVideo.autoplay = true;
+      newVideo.playsInline = true;
+      newVideo.muted = video.muted;
+      newVideo.style.width = "100%";
+      newVideo.style.height = "100%";
+      newVideo.style.objectFit = "cover";
+
+      document.getElementById('videoContainer').replaceChild(newVideo, video);
+      video = newVideo;
+
+      attachMuteButtonLogic();
+      attachSeekPrevention();
+
+      currentVideoOffset = Math.max(0, getLiveElapsedTime());
 
       if (Hls.isSupported()) {
         hls = new Hls();
@@ -149,7 +137,8 @@
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.onloadedmetadata = () => {
-            video.currentTime = Math.min(currentVideoOffset, video.duration - 1);
+            const seekTime = Math.min(currentVideoOffset, video.duration - 1);
+            video.currentTime = seekTime;
             video.play().catch(console.warn);
           };
         });
@@ -161,7 +150,8 @@
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = newUrl;
         video.onloadedmetadata = () => {
-          video.currentTime = currentVideoOffset;
+          const seekTime = Math.min(currentVideoOffset, video.duration - 1);
+          video.currentTime = seekTime;
           video.play().catch(console.warn);
           loader.style.display = 'none';
         };
@@ -182,10 +172,10 @@
     }
 
     function attachSeekPrevention() {
-      let lastTime = 0;
       video.addEventListener('timeupdate', () => {
         lastTime = video.currentTime;
       });
+
       video.addEventListener('seeking', () => {
         if (Math.abs(video.currentTime - lastTime) > 0.01) {
           console.log('⛔ Seek attempt blocked');
@@ -194,42 +184,24 @@
       });
     }
 
-    async function pollVideoUrl() {
+    async function pollChannelJson() {
       try {
-        const response = await fetch(VIDEO_URL_JSON_PATH, {cache: "no-store"});
-        if (!response.ok) throw new Error("Failed to fetch JSON");
-
-        const data = await response.json();
-        if (!data.videoUrl) throw new Error("Invalid JSON format");
-
-        if (data.videoUrl !== currentVideoUrl) {
-          console.log("🔄 Detected new video URL, switching...");
+        const res = await fetch(VIDEO_URL_JSON_PATH + '?t=' + Date.now());
+        const data = await res.json();
+        if (data.videoUrl) {
           switchVideo(data.videoUrl);
         }
-      } catch (err) {
-        console.warn("Error polling video URL JSON:", err);
+      } catch (e) {
+        console.error('Error polling video URL JSON:', e);
       }
     }
 
+    // Start everything
     attachMuteButtonLogic();
     attachSeekPrevention();
+    pollChannelJson(); // Load initial video
+    setInterval(pollChannelJson, POLL_INTERVAL); // Poll for URL updates
 
-    (async () => {
-      try {
-        const response = await fetch(VIDEO_URL_JSON_PATH, {cache: "no-store"});
-        const data = await response.json();
-        if (data.videoUrl) {
-          switchVideo(data.videoUrl);
-        } else {
-          loader.innerText = 'No video URL found in JSON';
-        }
-      } catch (err) {
-        loader.innerText = 'Failed to load video URL JSON';
-        console.error(err);
-      }
-    })();
-
-    setInterval(pollVideoUrl, 10000);
   </script>
 </body>
 </html>
