@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pseudo Live Video</title>
+  <title>Single Video Pseudo Live</title>
   <style>
     html, body {
       margin: 0;
@@ -12,20 +12,25 @@
       height: 100%;
       overflow: hidden;
     }
+
     #videoContainer {
       position: relative;
       width: 100%;
       height: 100%;
     }
+
     video {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+
     #loaderOverlay {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.85);
       display: flex;
       align-items: center;
@@ -35,6 +40,7 @@
       font-size: 1.2em;
       z-index: 10;
     }
+
     #muteButton {
       position: absolute;
       top: 10px;
@@ -48,6 +54,7 @@
       border-radius: 50%;
       cursor: pointer;
     }
+
     #scrollBanner {
       position: absolute;
       bottom: 0;
@@ -61,36 +68,41 @@
       white-space: nowrap;
       z-index: 11;
     }
+
     #scrollText {
       display: inline-block;
       padding-left: 100%;
       animation: scrollText 20s linear infinite;
     }
+
     @keyframes scrollText {
-      0% { transform: translateX(0%); }
-      100% { transform: translateX(-100%); }
+      0% {
+        transform: translateX(0%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
     }
   </style>
 </head>
 <body>
   <div id="videoContainer">
     <video id="videoPlayer" autoplay playsinline muted></video>
-    <div id="loaderOverlay">Loading Channel...</div>
+    <div id="loaderOverlay">Loading Video...</div>
     <button id="muteButton">🔇</button>
+
     <div id="scrollBanner">
-      <div id="scrollText">Now playing: "Loading..."</div>
+      <div id="scrollText">Now Playing: "Your Hardcoded Video" — Enjoy the show!</div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
+    const videoUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"; // 🔧 Your hardcoded m3u8 URL
     let video = document.getElementById('videoPlayer');
     let loader = document.getElementById('loaderOverlay');
     let muteButton = document.getElementById('muteButton');
     let hls = null;
-    let currentUrl = '';
-    let currentIndex = -1;
-    let channel = null;
 
     function resetVideo() {
       const newVideo = document.createElement('video');
@@ -110,8 +122,7 @@
       return newVideo;
     }
 
-    function loadStream(index, time = 0) {
-      const url = channel.urls[index];
+    function loadVideo() {
       loader.style.display = 'flex';
 
       if (hls) {
@@ -123,57 +134,29 @@
 
       if (Hls.isSupported()) {
         hls = new Hls();
-        hls.loadSource(url);
+        hls.loadSource(videoUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.currentTime = time;
+          video.currentTime = 0;
           video.play().catch(console.warn);
         });
         hls.on(Hls.Events.LEVEL_LOADED, () => {
           loader.style.display = 'none';
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
+        video.src = videoUrl;
         video.onloadedmetadata = () => {
-          video.currentTime = time;
+          video.currentTime = 0;
           video.play().catch(console.warn);
           loader.style.display = 'none';
         };
       } else {
-        console.error('HLS not supported in this browser.');
         loader.innerText = 'Unsupported Video Format';
-      }
-    }
-
-    async function fetchChannel() {
-      try {
-        const response = await fetch('/channel.json?_=' + Date.now());
-        return await response.json();
-      } catch (err) {
-        console.error("Failed to fetch channel.json", err);
-        return null;
-      }
-    }
-
-    async function syncPlayback() {
-      const newChannel = await fetchChannel();
-      if (!newChannel || !newChannel.urls.length) return;
-
-      const index = 0;
-      const newUrl = newChannel.urls[index];
-
-      if (newUrl !== currentUrl) {
-        currentIndex = index;
-        currentUrl = newUrl;
-        channel = newChannel;
-        loadStream(index, 0); // always start from beginning
-        updateBanner(index, newChannel);
       }
     }
 
     function attachMuteButtonLogic() {
       muteButton.textContent = video.muted ? '🔇' : '🔊';
-
       muteButton.onclick = () => {
         video.muted = !video.muted;
         muteButton.textContent = video.muted ? '🔇' : '🔊';
@@ -196,22 +179,19 @@
       });
     }
 
-    function updateBanner(index, channel) {
-      const scrollText = document.getElementById('scrollText');
-      const currentTitle = channel.titles?.[index] || `Video ${index + 1}`;
-      const nextTitle = channel.titles?.[index + 1] || "Stay tuned...";
-      scrollText.textContent = `Now Playing: "${currentTitle}" — Coming Up Next: "${nextTitle}"`;
+    // 🔁 Auto-refresh video every X minutes (optional pseudo-live effect)
+    function autoRefresh(intervalSeconds) {
+      setInterval(() => {
+        console.log("⏱️ Restarting video to simulate pseudo-live...");
+        loadVideo();
+      }, intervalSeconds * 1000);
     }
 
-    // Start sync loop every 5s
-    (function loop() {
-      syncPlayback();
-      setTimeout(loop, 5000);
-    })();
-
-    // Initial setup
+    // Init
     attachMuteButtonLogic();
     attachSeekPrevention();
+    loadVideo();
+    // autoRefresh(300); // Uncomment to auto-refresh every 5 min
   </script>
 </body>
 </html>
