@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pseudo Live Stream</title>
+  <title>MSTV Pseudo-Live Embed</title>
   <style>
     html, body {
       margin: 0;
@@ -12,196 +12,190 @@
       height: 100%;
       overflow: hidden;
     }
+
     #videoContainer {
       position: relative;
       width: 100%;
       height: 100%;
     }
-    video {
+
+    video, iframe {
       width: 100%;
       height: 100%;
-      object-fit: cover;
-    }
-    #loaderOverlay {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: gold;
-      font-family: sans-serif;
-      font-size: 1.2em;
-      z-index: 10;
+      border: none;
     }
+
+    video {
+      object-fit: cover;
+    }
+
     #muteButton {
       position: absolute;
       top: 10px;
       right: 10px;
-      z-index: 11;
-      font-size: 1.5em;
-      padding: 8px;
       background: rgba(0, 0, 0, 0.5);
       color: white;
-      border: none;
+      font-size: 1.5em;
+      padding: 5px 10px;
       border-radius: 50%;
       cursor: pointer;
-    }
-    #scrollBanner {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: #007BFF;
-      color: white;
-      font-family: sans-serif;
-      font-size: 1em;
-      overflow: hidden;
-      white-space: nowrap;
-      z-index: 11;
-    }
-    #scrollText {
-      display: inline-block;
-      padding-left: 100%;
-      animation: scrollText 20s linear infinite;
-    }
-    @keyframes scrollText {
-      0% { transform: translateX(0%); }
-      100% { transform: translateX(-100%); }
+      z-index: 10;
     }
   </style>
 </head>
 <body>
   <div id="videoContainer">
     <video id="videoPlayer" autoplay playsinline muted></video>
-    <div id="loaderOverlay">Loading Video...</div>
-    <button id="muteButton">🔇</button>
-    <div id="scrollBanner">
-      <div id="scrollText">Now Playing: "Pseudo Live Stream" — Enjoy the show!</div>
-    </div>
+    <iframe id="htmlEmbed" style="display: none;"></iframe>
+    <span id="muteButton">🔇</span>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const BROADCAST_START_UNIX = 1755961200; // 2025-08-24 17:00 AEST // Replace this with your actual UNIX start time (UTC)
-    const VIDEO_URL_JSON_PATH = 'channel.json'; // This should be accessible via GitHub Pages
-    const POLL_INTERVAL = 15000; // Check every 15 seconds for updated video URL
-
-    let video = document.getElementById('videoPlayer');
-    let loader = document.getElementById('loaderOverlay');
-    let muteButton = document.getElementById('muteButton');
+    const video = document.getElementById('videoPlayer');
+    const iframe = document.getElementById('htmlEmbed');
+    const muteButton = document.getElementById('muteButton');
     let hls = null;
-    let currentVideoUrl = '';
-    let currentVideoOffset = 0;
-    let lastTime = 0;
 
-    function getLiveElapsedTime() {
-      return Math.floor(Date.now() / 1000) - BROADCAST_START_UNIX;
+    let isMuted = localStorage.getItem('mstvMuted') === 'false' ? false : true;
+
+    const channel = {
+      type: "auto",
+      durations: [8667, 10, 10, 10, 10,120, 10],
+      urls: [
+        "https://gt4s3g.cfglobalcdn.com/silverlight/secip/113295/133612/ISsncYR3yO68gGO_-1BESA/MTIwLjE5LjE4Ni42OQ==/1756467498/hls-vod-s002/flv/api/files/videos/2025/08/19/1755585723vuuip.mp4.m3u8",                               // MP4
+        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",                         // M3U8
+        "https://www.w3schools.com/html/html_iframe.asp",                            // HTML Page
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",                               // YouTube
+        "https://vimeo.com/76979871",                                               // Vimeo
+        "https://www.dailymotion.com/video/x7vo5ev",                                 // Dailymotion
+        "https://www.twitch.tv/ninja"                                               // Twitch
+      ]
+    };
+
+    let currentVideoIndex = -1;
+
+    function getPlaybackPosition(channel) {
+      const total = channel.durations.reduce((a, b) => a + b, 0);
+      const now = Math.floor(Date.now() / 1000) % total;
+      let offset = 0;
+      for (let i = 0; i < channel.durations.length; i++) {
+        if (now < offset + channel.durations[i]) {
+          return { index: i, time: now - offset };
+        }
+        offset += channel.durations[i];
+      }
+      return { index: 0, time: 0 };
     }
 
-    function switchVideo(newUrl) {
-      if (newUrl === currentVideoUrl || !newUrl) return;
+    function detectType(url) {
+      if (channel.type !== "auto") return channel.type;
+      if (url.endsWith(".m3u8")) return "m3u8";
+      if (url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg")) return "mp4";
+      if (url.endsWith(".html")) return "html";
+      if (url.includes("youtube.com") || url.includes("youtu.be")) return "youtube";
+      if (url.includes("vimeo.com")) return "vimeo";
+      if (url.includes("dailymotion.com")) return "dailymotion";
+      if (url.includes("twitch.tv")) return "twitch";
+      return "unknown";
+    }
 
-      currentVideoUrl = newUrl;
-      loader.style.display = 'flex';
+    function getEmbedUrl(url, type) {
+      switch (type) {
+        case "youtube": {
+          const idMatch = url.match(/(?:youtu\.be\/|v=)([^&?/]+)/);
+          return idMatch ? `https://www.youtube.com/embed/${idMatch[1]}?autoplay=1&mute=1` : null;
+        }
+        case "vimeo": {
+          const idMatch = url.match(/vimeo\.com\/(\d+)/);
+          return idMatch ? `https://player.vimeo.com/video/${idMatch[1]}?autoplay=1&muted=1` : null;
+        }
+        case "dailymotion": {
+          const idMatch = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+          return idMatch ? `https://www.dailymotion.com/embed/video/${idMatch[1]}?autoplay=1&mute=1` : null;
+        }
+        case "twitch": {
+          const channelMatch = url.match(/twitch\.tv\/([a-zA-Z0-9_]+)/);
+          const channel = channelMatch ? channelMatch[1] : null;
+          const parent = "yourdomain.com"; // 🔧 Replace this with your domain (e.g. localhost or example.com)
+          return channel ? `https://player.twitch.tv/?channel=${channel}&parent=${parent}&autoplay=true&muted=true` : null;
+        }
+        default: return null;
+      }
+    }
+
+    function loadStream(index, time) {
+      const url = channel.urls[index];
+      const type = detectType(url);
 
       if (hls) {
         hls.destroy();
         hls = null;
       }
+      video.pause();
+      video.src = '';
+      video.style.display = 'none';
+      iframe.style.display = 'none';
 
-      const newVideo = document.createElement('video');
-      newVideo.id = 'videoPlayer';
-      newVideo.autoplay = true;
-      newVideo.playsInline = true;
-      newVideo.muted = video.muted;
-      newVideo.style.width = "100%";
-      newVideo.style.height = "100%";
-      newVideo.style.objectFit = "cover";
+      if (["html", "youtube", "vimeo", "dailymotion", "twitch"].includes(type)) {
+        const embedUrl = type === "html" ? url : getEmbedUrl(url, type);
+        if (embedUrl) {
+          iframe.src = embedUrl;
+          iframe.style.display = 'block';
+          muteButton.style.display = 'none';
+          return;
+        }
+      }
 
-      document.getElementById('videoContainer').replaceChild(newVideo, video);
-      video = newVideo;
+      video.style.display = 'block';
+      muteButton.style.display = 'block';
 
-      attachMuteButtonLogic();
-      attachSeekPrevention();
-
-      currentVideoOffset = Math.max(0, getLiveElapsedTime());
-
-      if (Hls.isSupported()) {
+      if (type === 'm3u8' && Hls.isSupported()) {
         hls = new Hls();
-        hls.loadSource(newUrl);
+        hls.loadSource(url);
         hls.attachMedia(video);
-
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.onloadedmetadata = () => {
-            const seekTime = Math.min(currentVideoOffset, video.duration - 1);
-            video.currentTime = seekTime;
-            video.play().catch(console.warn);
-          };
+          video.currentTime = time;
+          video.play().catch(() => {});
         });
-
-        hls.on(Hls.Events.LEVEL_LOADED, () => {
-          loader.style.display = 'none';
-        });
-
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = newUrl;
-        video.onloadedmetadata = () => {
-          const seekTime = Math.min(currentVideoOffset, video.duration - 1);
-          video.currentTime = seekTime;
-          video.play().catch(console.warn);
-          loader.style.display = 'none';
-        };
       } else {
-        loader.innerText = 'Unsupported Video Format';
+        video.src = url;
+        video.addEventListener('loadeddata', function handler() {
+          video.removeEventListener('loadeddata', handler);
+          video.currentTime = time;
+          video.play().catch(() => {});
+        });
       }
     }
 
-    function attachMuteButtonLogic() {
-      muteButton.textContent = video.muted ? '🔇' : '🔊';
-      muteButton.onclick = () => {
-        video.muted = !video.muted;
-        muteButton.textContent = video.muted ? '🔇' : '🔊';
-        if (!video.paused) {
-          video.play().catch(console.warn);
-        }
-      };
-    }
-
-    function attachSeekPrevention() {
-      video.addEventListener('timeupdate', () => {
-        lastTime = video.currentTime;
-      });
-
-      video.addEventListener('seeking', () => {
-        if (Math.abs(video.currentTime - lastTime) > 0.01) {
-          console.log('⛔ Seek attempt blocked');
-          video.currentTime = lastTime;
-        }
-      });
-    }
-
-    async function pollChannelJson() {
-      try {
-        const res = await fetch(VIDEO_URL_JSON_PATH + '?t=' + Date.now());
-        const data = await res.json();
-        if (data.videoUrl) {
-          switchVideo(data.videoUrl);
-        }
-      } catch (e) {
-        console.error('Error polling video URL JSON:', e);
+    function syncPlayback() {
+      const { index, time } = getPlaybackPosition(channel);
+      if (index !== currentVideoIndex) {
+        currentVideoIndex = index;
+        loadStream(index, time);
+      } else if (video.style.display !== 'none' && Math.abs(video.currentTime - time) > 2) {
+        video.currentTime = time;
       }
     }
 
-    // Start everything
-    attachMuteButtonLogic();
-    attachSeekPrevention();
-    pollChannelJson(); // Load initial video
-    setInterval(pollChannelJson, POLL_INTERVAL); // Poll for URL updates
+    muteButton.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('mstvMuted', isMuted);
+      video.muted = isMuted;
+      muteButton.textContent = isMuted ? '🔇' : '🔊';
+      if (!video.paused) {
+        video.play().catch(() => {});
+      }
+    });
 
+    video.muted = isMuted;
+    muteButton.textContent = isMuted ? '🔇' : '🔊';
+
+    syncPlayback();
+    setInterval(syncPlayback, 1000);
   </script>
 </body>
 </html>
