@@ -22,35 +22,37 @@
             z-index: 1;
         }
 
-        /* The Lock Layer starts INVISIBLE and NON-BLOCKING */
+        /* THE SMART SHIELD */
         #lockLayer {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-            background: rgba(0,0,0,0);
-            display: none; /* Hidden until video starts */
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            z-index: 9999; 
+            /* Starts transparent so clicks hit the iframe */
+            background: rgba(0,0,0,0.01); 
+            /* 'none' allows the first 4 clicks to pass through to the video */
+            pointer-events: none; 
+            cursor: pointer;
         }
 
-        .start-prompt {
-            position: absolute;
-            z-index: 20;
-            color: #fff;
-            font-family: sans-serif;
-            background: rgba(0,255,160,0.2);
-            padding: 15px 30px;
-            border: 2px solid var(--primary);
-            border-radius: 50px;
-            cursor: pointer;
-            pointer-events: none; /* Let the click go through this text to the iframe below */
+        /* The 'Locked' state that blocks everything */
+        #lockLayer.active {
+            pointer-events: all !important;
+            cursor: default;
+        }
+
+        .click-hint {
+            position: absolute; bottom: 10px; right: 15px;
+            color: var(--primary); font-family: sans-serif; font-size: 12px;
+            z-index: 10000; pointer-events: none; opacity: 0.7;
         }
     </style>
 </head>
 <body>
 
-    <div class="viewport" id="mainContainer">
-       
-        <!-- The actual invisible shield that will activate later -->
+    <div class="viewport" id="playerWrapper">
         <div id="lockLayer"></div>
+        <div id="status" class="click-hint">▶️ Click on screen to play</div>
 
         <iframe id="captureFrame" 
                 src="https://tplay.live" 
@@ -60,22 +62,37 @@
     </div>
 
     <script>
-        const container = document.getElementById('mainContainer');
-        const lockLayer = document.getElementById('lockLayer');
-        const prompt = document.getElementById('prompt');
+        let clickCount = 0;
+        const maxClicks = 4;
+        const shield = document.getElementById('lockLayer');
+        const wrapper = document.getElementById('playerWrapper');
+        const status = document.getElementById('status');
 
-        // Logic: When the user clicks anywhere in the container...
-        container.addEventListener('click', function() {
-            // 1. Hide the prompt text
-            prompt.style.display = 'none';
+        // We listen to the wrapper to count clicks hitting the iframe
+        wrapper.addEventListener('click', function() {
+            clickCount++;
+            
+            let remaining = maxClicks - clickCount;
+            if (remaining > 0) {
+                status.innerText = `Setup Mode: ${remaining} clicks left`;
+            }
 
-            // 2. Wait 2 seconds (time for the device selection to process)
-            // Then activate the 'lock' so they can't change channels
-            setTimeout(() => {
-                lockLayer.style.display = 'block';
-                console.log("Controls Locked.");
-            }, 2000); 
+            // Once the limit is reached, activate the permanent shield
+            if (clickCount >= maxClicks) {
+                lockPlayer();
+            }
         });
+
+        function lockPlayer() {
+            shield.classList.add('active');
+            status.innerText = "CONTROLS LOCKED";
+            setTimeout(() => { status.style.opacity = "0"; }, 3000); // Fade out hint
+            console.log("Maximum clicks reached. Shield Activated.");
+        }
+        
+        // Safety Lock: If they don't click 4 times but the video is playing, 
+        // lock it anyway after 15 seconds to prevent tampering.
+        setTimeout(lockPlayer, 15000);
     </script>
 
 </body>
