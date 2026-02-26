@@ -26,7 +26,7 @@
 #captureFrame {
     /* 1. Reset width and height to fill the container exactly */
     width: 100%; 
-    height: 120%; 
+    height: 140%; 
     
     /* 2. Reset positioning so it isn't "pulled" or "zoomed" */
     position: absolute; 
@@ -64,47 +64,5 @@
         </iframe>
     </div>
 
-    <!-- EASY ALIGNMENT SLIDERS -->
-    <div class="controls">
-        <div class="control-group">
-            <label>Move Up/Down</label>
-            <input type="range" id="topSlider" min="-500" max="0" value="-120">
-            <span class="val-display" id="topVal">-120px</span>
-        </div>
-        <div class="control-group">
-            <label>Move Left/Right</label>
-            <input type="range" id="leftSlider" min="-50" max="0" value="-15">
-            <span class="val-display" id="leftVal">-15%</span>
-        </div>
-        <div class="control-group">
-            <label>Zoom Level</label>
-            <input type="range" id="zoomSlider" min="100" max="200" value="130">
-            <span class="val-display" id="zoomVal">130%</span>
-        </div>
-    </div>
-
-    <p style="color: #444; font-size: 11px; margin-top: 10px;">Refreshes on T-Play might trigger "Iframe Refused" if their security updates.</p>
-
-    <script>
-        const frame = document.getElementById('captureFrame');
-        const topSlider = document.getElementById('topSlider');
-        const leftSlider = document.getElementById('leftSlider');
-        const zoomSlider = document.getElementById('zoomSlider');
-
-        function updatePosition() {
-            frame.style.top = topSlider.value + 'px';
-            frame.style.left = leftSlider.value + '%';
-            frame.style.width = zoomSlider.value + '%';
-            
-            document.getElementById('topVal').innerText = topSlider.value + 'px';
-            document.getElementById('leftVal').innerText = leftSlider.value + '%';
-            document.getElementById('zoomVal').innerText = zoomSlider.value + '%';
-        }
-
-        topSlider.oninput = updatePosition;
-        leftSlider.oninput = updatePosition;
-        zoomSlider.oninput = updatePosition;
-    </script>
-
-</body>
+   </body>
 </html>
