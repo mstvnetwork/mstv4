@@ -1,46 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-Play Capture Tool</title>
     <style>
-        /* Base page styling */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; }
+        :root { --primary: #e50914; --bg: #0f0f13; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 20px; margin: 0; overflow-x: hidden; }
 
-        /* This matches the dimensions you provided for your player-container */
-        .player-container { 
-            position: relative; 
-            width: 90%; 
-            max-width: 900px; 
-            aspect-ratio: 16/9; 
-            background: linear-gradient(135deg,#141618,#1A1D20); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 15px; 
-            box-shadow: 0 8px 25px rgba(0,255,160,0.2); 
-            overflow: hidden; 
+/* THE VIEWPORT (The Container) */
+.viewport {
+    width: 90vw; 
+    max-width: 1000px; 
+    aspect-ratio: 16 / 9; /* Sets the 16:9 shape */
+    
+    overflow: hidden; 
+    position: relative;
+    border: 4px solid var(--primary); 
+    border-radius: 12px;
+    background: #000; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+}
+
+/* THE IFRAME (The Player) */
+#captureFrame {
+    /* 1. Reset width and height to fill the container exactly */
+    width: 100%; 
+    height: 140%; 
+    
+    /* 2. Reset positioning so it isn't "pulled" or "zoomed" */
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    border: none;
+
+    /* 3. Ensure the video content scales correctly inside */
+    object-fit: contain; 
+}
+
+        /* CONTROL PANEL */
+        .controls {
+            background: #1a1a23; padding: 20px; border-radius: 12px;
+            margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap;
+            border: 1px solid #333;
         }
-        FIXED IFRAME: 
-           Removed the negative 'top' and 'left' values. 
-           Using width/height: 100% so it fills the 16:9 container perfectly.
-        */
-        iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 15px;
-            /* Prevents distortion */
-            object-fit: contain; 
-        }
-</style>
+        .control-group { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        label { font-size: 12px; text-transform: uppercase; color: #888; }
+        input[type="range"] { cursor: pointer; width: 150px; accent-color: var(--primary); }
+        .val-display { font-weight: bold; color: var(--primary); }
+    </style>
 </head>
 <body>
-    <div class="crop-container">
-        <iframe src="https://tplay.live" 
-                sandbox="allow-forms allow-scripts allow-same-origin"
-                allow="autoplay; encrypted-media; fullscreen"></iframe>
+
+    <h2 style="margin-bottom: 10px;">CNN Live Stream</h2>
+
+    <div class="viewport">
+        <iframe 
+            id="captureFrame"
+            src="https://tplay.live" 
+            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"
+            allow="autoplay; encrypted-media; fullscreen"
+            scrolling="no">
+        </iframe>
     </div>
+
+    <!-- EASY ALIGNMENT SLIDERS -->
+    <div class="controls">
+        <div class="control-group">
+            <label>Move Up/Down</label>
+            <input type="range" id="topSlider" min="-500" max="0" value="-120">
+            <span class="val-display" id="topVal">-120px</span>
+        </div>
+        <div class="control-group">
+            <label>Move Left/Right</label>
+            <input type="range" id="leftSlider" min="-50" max="0" value="-15">
+            <span class="val-display" id="leftVal">-15%</span>
+        </div>
+        <div class="control-group">
+            <label>Zoom Level</label>
+            <input type="range" id="zoomSlider" min="100" max="200" value="130">
+            <span class="val-display" id="zoomVal">130%</span>
+        </div>
+    </div>
+
+    <p style="color: #444; font-size: 11px; margin-top: 10px;">Refreshes on T-Play might trigger "Iframe Refused" if their security updates.</p>
+
+    <script>
+        const frame = document.getElementById('captureFrame');
+        const topSlider = document.getElementById('topSlider');
+        const leftSlider = document.getElementById('leftSlider');
+        const zoomSlider = document.getElementById('zoomSlider');
+
+        function updatePosition() {
+            frame.style.top = topSlider.value + 'px';
+            frame.style.left = leftSlider.value + '%';
+            frame.style.width = zoomSlider.value + '%';
+            
+            document.getElementById('topVal').innerText = topSlider.value + 'px';
+            document.getElementById('leftVal').innerText = leftSlider.value + '%';
+            document.getElementById('zoomVal').innerText = zoomSlider.value + '%';
+        }
+
+        topSlider.oninput = updatePosition;
+        leftSlider.oninput = updatePosition;
+        zoomSlider.oninput = updatePosition;
+    </script>
+
 </body>
 </html>
