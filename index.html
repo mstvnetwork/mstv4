@@ -9,12 +9,13 @@
             position: relative; overflow: hidden;
         }
         iframe {
-            border: none; position: absolute;
-            /* PASTE YOUR PERFECT SLIDER NUMBERS HERE */
-            top: -120px;   /* Your 'Move Up' value */
-            left: -15%;    /* Your 'Move Left' value */
-            width: 130%;   /* Your 'Zoom' value */
-            height: 1000px;
+            border: none;
+            position: absolute;
+            /* ADJUSTED FOR 16:9 CONTAINERS */
+            top: -65px;    /* Pulls the T-Play header out of view */
+            left: -5%;     /* Centers the player horizontally */
+            width: 110%;   /* Slight zoom to hide sidebars without distortion */
+            height: 150%;  /* Ensures the video fills the vertical space */
         }
     </style>
 </head>
