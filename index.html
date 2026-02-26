@@ -4,45 +4,26 @@
 <head>
     <style>
         body, html { margin: 0; padding: 0; overflow: hidden; background: #000; }
-        .crop-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        
+        .crop-container {
+            width: 100vw; height: 100vh; 
+            position: relative; overflow: hidden;
+        }
         iframe {
             border: none; position: absolute;
-            /* USE YOUR SLIDER NUMBERS HERE */
-            top: -150px;   
-            left: -10%;    
-            width: 10%;   
-            height: 1200px;
-            /* Critical: Smooth transition while loading */
-            transition: opacity 0.5s;
+            /* PASTE YOUR PERFECT SLIDER NUMBERS HERE */
+            top: -120px;   /* Your 'Move Up' value */
+            left: -15%;    /* Your 'Move Left' value */
+            width: 130%;   /* Your 'Zoom' value */
+            height: 1000px;
         }
     </style>
 </head>
 <body>
     <div class="crop-container">
-        <iframe 
-            id="targetFrame"
-            /* TRY ADDING &type=mix TO THE URL */
-            src="https://tplay.live" 
-            /* Added 'allow-modals' and 'allow-same-origin' to help scripts run */
-            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"
-            /* MANDATORY FOR AUTOPLAY */
-            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-            scrolling="no">
-        </iframe>
+        <iframe src="https://tplay.live" 
+                sandbox="allow-forms allow-scripts allow-same-origin"
+                allow="autoplay; encrypted-media; fullscreen"></iframe>
     </div>
-
-    <script>
-        // TRICK: Some players need a 'nudge' to start. 
-        // We ensure the iframe has focus so autoplay policies are more relaxed.
-        window.onload = function() {
-            const frame = document.getElementById('targetFrame');
-            frame.focus();
-            
-            // If the page still shows the menu, we can try to force a reload 
-            // specifically to the 'Mix' endpoint if we find the exact URL.
-            console.log("Player Initialized in MIX mode");
-        };
-    </script>
 </body>
 </html>
+
