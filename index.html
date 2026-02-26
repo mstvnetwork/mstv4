@@ -1,4 +1,28 @@
-<video width="640" height="360" controls>
-  <source src="https://si.videoapne.to/bdohwq6h7bboxuzvta574dayqikkjqmdc7rnas57us4yuluq7qunuyu3q5ta/v.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<!-- cnn-player.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; }
+        .crop-container {
+            width: 100vw; height: 100vh; 
+            position: relative; overflow: hidden;
+        }
+        iframe {
+            border: none; position: absolute;
+            /* PASTE YOUR PERFECT SLIDER NUMBERS HERE */
+            top: -120px;   /* Your 'Move Up' value */
+            left: -15%;    /* Your 'Move Left' value */
+            width: 130%;   /* Your 'Zoom' value */
+            height: 1000px;
+        }
+    </style>
+</head>
+<body>
+    <div class="crop-container">
+        <iframe src="https://tplay.live" 
+                sandbox="allow-forms allow-scripts allow-same-origin"
+                allow="autoplay; encrypted-media; fullscreen"></iframe>
+    </div>
+</body>
+</html>
