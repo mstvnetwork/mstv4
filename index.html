@@ -3,10 +3,10 @@
 <head>
     <style>
         :root { --primary: #00ffA0; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-direction: column; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
         .viewport {
-            width: 90vw; max-width: 1000px; aspect-ratio: 16 / 9; 
+            width: 100vw; max-width: 1000px; aspect-ratio: 16 / 9; 
             overflow: hidden; position: relative;
             border: 4px solid var(--primary); border-radius: 12px;
             background: #000;
@@ -14,37 +14,41 @@
 
         #captureFrame {
             position: absolute;
-            width: 130%; height: 150%; 
-            top: -30px; left: -15%; 
+            width: 100%; height: 170%; 
+            top: -57px; left: -10%; 
             border: none;
             pointer-events: auto; 
             z-index: 1;
-            transition: top 0.1s, left 0.1s, transform 0.1s;
-            transform-origin: center center; /* Zoom from center */
         }
 
-        #adminControls {
-            margin-top: 15px;
-            display: none; 
-            gap: 8px;
-            z-index: 10001;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .ctrl-btn {
-            background: #222; border: 1px solid var(--primary); color: var(--primary);
-            padding: 8px 12px; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-size: 12px;
-        }
-        .ctrl-btn:hover { background: var(--primary); color: #000; }
-
+        /* THE SMART SHIELD */
         #lockLayer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 9999; background: rgba(0,0,0,0.01); pointer-events: none; cursor: pointer;
+            display: none; /* hidden by default */
+            position: absolute;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            z-index: 9999; 
+            background: rgba(0,0,0,0.01); /* barely visible for hint */
+            pointer-events: none; /* click-through initially */
+            cursor: pointer;
         }
-        #lockLayer.active { pointer-events: all !important; cursor: default; }
+
+        /* Show overlay only on desktop/laptop/tablet */
+        @media (pointer: fine) {
+            #lockLayer {
+                display: block;
+            }
+        }
+
+        /* Block interaction when active */
+        #lockLayer.active {
+            pointer-events: auto;
+            cursor: default;
+        }
+
         .click-hint {
             position: absolute; bottom: 10px; right: 15px;
-            color: var(--primary); font-family: sans-serif; font-size: 10px;
+            color: var(--primary); font-family: sans-serif; font-size: 12px;
             z-index: 10000; pointer-events: none; opacity: 0.7;
         }
     </style>
@@ -54,90 +58,49 @@
     <div class="viewport" id="playerWrapper">
         <div id="lockLayer"></div>
         <div id="status" class="click-hint">▶️ Click on screen to play</div>
-        <iframe id="captureFrame" src="https://tulnit.com" scrolling="no" sandbox="allow-forms allow-scripts allow-same-origin"></iframe>
-    </div>
 
-    <div id="adminControls">
-        <button class="ctrl-btn" onclick="moveFrame('up')">Up</button>
-        <button class="ctrl-btn" onclick="moveFrame('down')">Down</button>
-        <button class="ctrl-btn" onclick="moveFrame('left')">Left</button>
-        <button class="ctrl-btn" onclick="moveFrame('right')">Right</button>
-        <button class="ctrl-btn" onclick="adjustZoom(0.05)">Zoom +</button>
-        <button class="ctrl-btn" onclick="adjustZoom(-0.05)">Zoom -</button>
-        <button class="ctrl-btn" onclick="resetFrame()" style="border-color: #ff4444; color: #ff4444;">Reset All</button>
+        <iframe id="captureFrame" 
+                src="https://tulnit.com/live/sony-tv-hd/" 
+                scrolling="no" 
+                sandbox="allow-forms allow-scripts allow-same-origin">
+        </iframe>
     </div>
 
     <script>
         let clickCount = 0;
         const maxClicks = 4;
-        const step = 5;
-        let currentZoom = 1.0;
-        
-        const frame = document.getElementById('captureFrame');
-        const controls = document.getElementById('adminControls');
-
-        window.onload = function() {
-            // Load Position & Zoom
-            const savedTop = [localStorage.getItem](https://developer.mozilla.org)('frameTop');
-            const savedLeft = localStorage.getItem('frameLeft');
-            const savedZoom = localStorage.getItem('frameZoom');
-            
-            if (savedTop) frame.style.top = savedTop;
-            if (savedLeft) frame.style.left = savedLeft;
-            if (savedZoom) {
-                currentZoom = parseFloat(savedZoom);
-                frame.style.transform = `scale(${currentZoom})`;
-            }
-
-            if (window.self === window.top) controls.style.display = 'flex';
-        };
-
-        function moveFrame(direction) {
-            let top = parseInt(window.getComputedStyle(frame).top);
-            let left = parseInt(window.getComputedStyle(frame).left);
-
-            if(direction === 'up') frame.style.top = (top - step) + "px";
-            if(direction === 'down') frame.style.top = (top + step) + "px";
-            if(direction === 'left') frame.style.left = (left - step) + "px";
-            if(direction === 'right') frame.style.left = (left + step) + "px";
-            
-            saveSettings();
-        }
-
-        function adjustZoom(delta) {
-            currentZoom += delta;
-            frame.style.transform = `scale(${currentZoom})`;
-            saveSettings();
-        }
-
-        function saveSettings() {
-            [localStorage.setItem](https://developer.mozilla.org)('frameTop', frame.style.top);
-            localStorage.setItem('frameLeft', frame.style.left);
-            localStorage.setItem('frameZoom', currentZoom);
-        }
-
-        function resetFrame() {
-            frame.style.top = "-30px";
-            frame.style.left = "-15%";
-            currentZoom = 1.0;
-            frame.style.transform = "scale(1)";
-            [localStorage.clear](https://developer.mozilla.org)();
-        }
-
-        // Lock Logic
         const shield = document.getElementById('lockLayer');
+        const wrapper = document.getElementById('playerWrapper');
         const status = document.getElementById('status');
-        document.getElementById('playerWrapper').addEventListener('click', function() {
-            clickCount++;
-            if (clickCount >= maxClicks) lockPlayer();
-        });
+
+        // Only count clicks if the overlay exists (desktop/tablet)
+        if (window.matchMedia("(pointer: fine)").matches) {
+            wrapper.addEventListener('click', function() {
+                clickCount++;
+                
+                let remaining = maxClicks - clickCount;
+                if (remaining > 0) {
+                    status.innerText = `Setup Mode: ${remaining} clicks left`;
+                }
+
+                if (clickCount >= maxClicks) {
+                    lockPlayer();
+                }
+            });
+
+            // Safety lock after 15 seconds even if not enough clicks
+            setTimeout(lockPlayer, 15000);
+        }
 
         function lockPlayer() {
-            shield.classList.add('active');
-            status.innerText = "CONTROLS LOCKED";
-            setTimeout(() => { status.style.opacity = "0"; }, 3000);
+            if (shield) {
+                shield.classList.add('active');
+                status.innerText = "CONTROLS LOCKED";
+                setTimeout(() => { status.style.opacity = "0"; }, 3000);
+                console.log("Maximum clicks reached. Shield Activated.");
+            }
         }
-        setTimeout(lockPlayer, 15000);
     </script>
+
 </body>
 </html>
