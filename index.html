@@ -21,30 +21,30 @@
             z-index: 1;
         }
 
-        /* THE SMART SHIELD */
         #lockLayer {
-            display: none; /* hidden by default */
-            position: absolute;
-            top: 0; left: 0; 
-            width: 100%; height: 100%;
-            z-index: 9999; 
-            background: rgba(0,0,0,0.01); /* barely visible for hint */
-            pointer-events: none; /* click-through initially */
-            cursor: pointer;
-        }
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background: rgba(0,0,0,0.01);
+    pointer-events: none;
+    cursor: pointer;
+}
 
-        /* Show overlay only on desktop/laptop/tablet */
-        @media (pointer: fine) {
-            #lockLayer {
-                display: block;
-            }
-        }
+/* Show overlay for desktop, laptop, tablets (exclude small mobile screens) */
+@media (min-width: 768px) {
+    #lockLayer {
+        display: block;
+    }
+}
 
-        /* Block interaction when active */
-        #lockLayer.active {
-            pointer-events: auto;
-            cursor: default;
-        }
+#lockLayer.active {
+    pointer-events: auto;
+    cursor: default;
+}
 
         .click-hint {
             position: absolute; bottom: 10px; right: 15px;
