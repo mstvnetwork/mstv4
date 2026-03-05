@@ -26,7 +26,7 @@
     window.onload = function() {
         if (typeof videojs !== 'undefined') {
             const status = document.getElementById('status');
-            const originalStream = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
+            const originalStream = "https://ny2.rocketdns.info:25463/live/ALEX/sg5ng25ikf/3972.m3u8?token=HkNcWEBYFAkUCVECA1kCVwFeBAdWCFNXAVYKUAdcVFZQBVZbA1YECgUSH0ZAFRFRUwtoXlQaXgBbVgEdERBBVhc+XV0RChQABAgAVgJDTxZGD1pSEgJUH0ARWlURXxABVVQDDAIEFB8UVUsQVhMNVV45U1JGUQdWQFtdRF8JHhEKD2tdVl1XXVISCUYDQ08WWxVHFQpWEV8OTRFTWhFAUhEEFgMRAwcBDxIfRlAOFlpGFE4VCholZkBNEVRLEVddFghbVxEKFF4FRQtGH0MKR20UUkRESgFSDwRBEwlHAhFJQ1lYS29VXFheVgdHCAxaQUQNFQMIVBFOQ15eXQxGXBc+RFBXEgwRBQEDVgFXVBZP";
             const proxiedStream = "/live-stream?url=" + encodeURIComponent(originalStream);
 
             const player = videojs('mstv-player');
