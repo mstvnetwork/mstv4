@@ -2,28 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HLS Player</title>
-    <!-- Load Video.js CSS -->
+    <title>MSTV Video.js Player</title>
+    <!-- Video.js CSS -->
     <link href="https://vjs.zencdn.net" rel="stylesheet" />
+    <style>
+        body { background: #000; display: flex; justify-content: center; padding-top: 50px; }
+        .video-js { border: 1px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    </style>
 </head>
 <body>
 
   <video
-    id="my-video"
-    class="video-js vjs-default-skin"
+    id="mstv-player"
+    class="video-js vjs-big-play-centered vjs-default-skin"
     controls
     preload="auto"
-    width="640"
-    height="360"
-    data-setup='{}'>
-    <source src="https://restream-live.realiptv.to/live/ALEX/sg5ng25ikf/3973.m3u8" type="application/x-mpegURL">
-    <p class="vjs-no-js">
-      To view this video please enable JavaScript, and consider upgrading to a
-      web browser that <a href="https://videojs.com" target="_blank">supports HTML5 video</a>
-    </p>
+    width="800"
+    height="450">
+    <!-- Source is empty initially, we will set it via JS below -->
+    <p class="vjs-no-js">To view this video please enable JavaScript.</p>
   </video>
 
-  <!-- Load Video.js Library -->
+  <!-- Video.js Library -->
   <script src="https://vjs.zencdn.net"></script>
+
+  <script>
+    // 1. Your original 3rd party stream URL
+    const originalStream = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
+    
+    // 2. Wrap it in your Netlify Edge Function path
+    const proxiedStream = "/live-stream?url=" + encodeURIComponent(originalStream);
+
+    // 3. Initialize Video.js
+    var player = videojs('mstv-player');
+    
+    player.ready(function() {
+      player.src({
+        src: proxiedStream,
+        type: 'application/x-mpegURL'
+      });
+      player.play().catch(err => {
+          console.log("Autoplay blocked, user must click play.");
+      });
+    });
+  </script>
 </body>
 </html>
