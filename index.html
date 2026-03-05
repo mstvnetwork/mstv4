@@ -10,18 +10,26 @@
 </head>
 <body>
     <video id="video" controls autoplay></video>
-    <script>
-        var video = document.getElementById('video');
-        // Pointing to your Netlify Edge Function
-        var videoSrc = '/live-stream';
+    <script src="https://cdn.jsdelivr.net"></script>
+<video id="video" controls autoplay style="width:100%;"></video>
 
-        if (Hls.isSupported()) {
-            var hls = new Hls();
-            hls.loadSource(videoSrc);
-            hls.attachMedia(video);
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = videoSrc;
-        }
-    </script>
+<script>
+  var video = document.getElementById('video');
+  
+  // PASTE YOUR RAW URL HERE:
+  var rawUrl = "https://tulnit.com" "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
+  
+  // THIS SENDS IT THROUGH YOUR BACKEND:
+  var videoSrc = "/live-stream?url=" + encodeURIComponent(rawUrl);
+
+  if (Hls.isSupported()) {
+    var hls = new Hls();
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = videoSrc;
+  }
+</script>
+
 </body>
 </html>
