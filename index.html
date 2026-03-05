@@ -1,35 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>MSTV Live Stream</title>
+    <meta charset="UTF-8">
+    <title>MSTV Player</title>
     <script src="https://cdn.jsdelivr.net"></script>
     <style>
-        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        video { width: 100%; max-width: 900px; border: 2px solid #333; }
+        body { background: #000; color: #fff; text-align: center; margin: 0; padding: 20px; }
+        .player-wrapper { max-width: 800px; margin: auto; }
+        video { width: 100%; border: 1px solid #333; }
     </style>
 </head>
 <body>
-    <video id="video" controls autoplay></video>
-    <script src="https://cdn.jsdelivr.net"></script>
-<video id="video" controls autoplay style="width:100%;"></video>
+    <div class="player-wrapper">
+        <h2>MSTV Network</h2>
+        <video id="video" controls autoplay></video>
+        <p id="status">Loading stream...</p>
+    </div>
 
-<script>
-  var video = document.getElementById('video');
-  
-  // PASTE YOUR RAW URL HERE:
-  var rawUrl = "https://tulnit.com" "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
-  
-  // THIS SENDS IT THROUGH YOUR BACKEND:
-  var videoSrc = "/live-stream?url=" + encodeURIComponent(rawUrl);
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        
+        // YOUR SOURCE URL
+        const streamUrl = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
+        // PROXY PATH
+        const proxyUrl = "/live-stream?url=" + encodeURIComponent(streamUrl);
 
-  if (Hls.isSupported()) {
-    var hls = new Hls();
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = videoSrc;
-  }
-</script>
-
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(proxyUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                status.innerText = "Playing via Netlify Proxy";
+                video.play();
+            });
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) status.innerText = "Error: " + data.type;
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = proxyUrl;
+        }
+    </script>
 </body>
 </html>
