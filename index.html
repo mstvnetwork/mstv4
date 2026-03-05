@@ -2,44 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MSTV Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTV Network Player</title>
+    <!-- Moved library to head to ensure it loads first -->
     <script src="https://cdn.jsdelivr.net"></script>
     <style>
-        body { background: #000; color: #fff; text-align: center; margin: 0; padding: 20px; }
-        .player-wrapper { max-width: 800px; margin: auto; }
-        video { width: 100%; border: 1px solid #333; }
+        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; margin: 0; padding: 20px; }
+        #video-container { max-width: 850px; margin: auto; border: 2px solid #333; border-radius: 8px; overflow: hidden; background: #111; }
+        video { width: 100%; display: block; }
+        #status { padding: 15px; font-size: 14px; color: #aaa; }
     </style>
 </head>
 <body>
-    <div class="player-wrapper">
-        <h2>MSTV Network</h2>
-        <video id="video" controls autoplay></video>
-        <p id="status">Loading stream...</p>
+
+    <div id="video-container">
+        <video id="video" controls autoplay playsinline></video>
+        <div id="status">Connecting to MSTV Proxy...</div>
     </div>
 
     <script>
-        const video = document.getElementById('video');
-        const status = document.getElementById('status');
-        
-        // YOUR SOURCE URL
-        const streamUrl = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
-        // PROXY PATH
-        const proxyUrl = "/live-stream?url=" + encodeURIComponent(streamUrl);
+        window.onload = function() {
+            const video = document.getElementById('video');
+            const status = document.getElementById('status');
+            
+            // Your original 3rd party stream
+            const streamUrl = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
+            // Your Netlify Proxy Path
+            const proxyUrl = "/live-stream?url=" + encodeURIComponent(streamUrl);
 
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(proxyUrl);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                status.innerText = "Playing via Netlify Proxy";
-                video.play();
-            });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) status.innerText = "Error: " + data.type;
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = proxyUrl;
-        }
+            // Double check if Hls library loaded correctly
+            if (typeof Hls !== 'undefined') {
+                if (Hls.isSupported()) {
+                    const hls = new Hls({
+                        debug: false,
+                        enableWorker: true
+                    });
+                    hls.loadSource(proxyUrl);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        status.innerText = "Stream Live - Playing via Proxy";
+                        video.play().catch(() => {
+                            status.innerText = "Click Play to Start Video";
+                        });
+                    });
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        if (data.fatal) {
+                            status.innerText = "Stream Error: " + data.details;
+                            console.error("HLS Fatal Error:", data);
+                        }
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Native support (Safari)
+                    video.src = proxyUrl;
+                    status.innerText = "Native Safari Player Active";
+                }
+            } else {
+                status.innerText = "Error: HLS Library failed to load. Check your internet connection.";
+            }
+        };
     </script>
 </body>
 </html>
