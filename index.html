@@ -2,49 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MSTV Video.js Player</title>
-    <!-- Video.js CSS -->
-    <link href="https://vjs.zencdn.net" rel="stylesheet" />
+    <title>MSTV Player</title>
+    <!-- Reliable Cloudflare CDN for CSS -->
+    <link href="https://cdnjs.cloudflare.com" rel="stylesheet" />
     <style>
-        body { background: #000; display: flex; justify-content: center; padding-top: 50px; }
-        .video-js { border: 1px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        body { background: #000; color: #fff; text-align: center; margin: 0; padding: 20px; font-family: sans-serif; }
+        .player-container { max-width: 850px; margin: auto; }
+        #status { color: #888; margin-top: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-  <video
-    id="mstv-player"
-    class="video-js vjs-big-play-centered vjs-default-skin"
-    controls
-    preload="auto"
-    width="800"
-    height="450">
-    <!-- Source is empty initially, we will set it via JS below -->
-    <p class="vjs-no-js">To view this video please enable JavaScript.</p>
-  </video>
+  <div class="player-container">
+    <h2>MSTV Network</h2>
+    <video id="mstv-player" class="video-js vjs-big-play-centered vjs-default-skin" controls preload="auto" width="800" height="450"></video>
+    <div id="status">Connecting to Proxy...</div>
+  </div>
 
-  <!-- Video.js Library -->
-  <script src="https://vjs.zencdn.net"></script>
+  <!-- Reliable Cloudflare CDN for JS -->
+  <script src="https://cdnjs.cloudflare.com"></script>
 
   <script>
-    // 1. Your original 3rd party stream URL
-    const originalStream = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
-    
-    // 2. Wrap it in your Netlify Edge Function path
-    const proxiedStream = "/live-stream?url=" + encodeURIComponent(originalStream);
+    // Wait for the library to be defined
+    window.onload = function() {
+        if (typeof videojs !== 'undefined') {
+            const status = document.getElementById('status');
+            const originalStream = "https://fucking-tv-ott.keralive.workers.dev/mumt01/FASTMIX/tracks-v2a1/mono.m3u8";
+            const proxiedStream = "/live-stream?url=" + encodeURIComponent(originalStream);
 
-    // 3. Initialize Video.js
-    var player = videojs('mstv-player');
-    
-    player.ready(function() {
-      player.src({
-        src: proxiedStream,
-        type: 'application/x-mpegURL'
-      });
-      player.play().catch(err => {
-          console.log("Autoplay blocked, user must click play.");
-      });
-    });
+            const player = videojs('mstv-player');
+            
+            player.ready(function() {
+                player.src({
+                    src: proxiedStream,
+                    type: 'application/x-mpegURL'
+                });
+                status.innerText = "Proxy Active - Loading Stream";
+            });
+
+            player.on('error', function() {
+                status.innerText = "Stream Offline or Proxy Blocked";
+            });
+        } else {
+            document.getElementById('status').innerText = "CDN Error: Library failed to load.";
+        }
+    };
   </script>
 </body>
 </html>
