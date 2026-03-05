@@ -2,50 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MSTV Player</title>
-    
- <style>
-        body { background: #000; color: #fff; text-align: center; margin: 0; padding: 20px; font-family: sans-serif; }
-        .player-container { max-width: 850px; margin: auto; }
-        #status { color: #888; margin-top: 10px; font-size: 14px; }
-    </style>
+    <title>HLS Player</title>
+    <!-- Load Video.js CSS -->
+    <link href="https://vjs.zencdn.net" rel="stylesheet" />
 </head>
 <body>
 
-  <div class="player-container">
-    <h2>MSTV Network</h2>
-    <video id="mstv-player" class="video-js vjs-big-play-centered vjs-default-skin" controls preload="auto" width="800" height="450"></video>
-    <div id="status">Connecting to Proxy...</div>
-  </div>
+  <video
+    id="my-video"
+    class="video-js vjs-default-skin"
+    controls
+    preload="auto"
+    width="640"
+    height="360"
+    data-setup='{}'>
+    <source src="https://restream-live.realiptv.to/live/ALEX/sg5ng25ikf/3973.m3u8" type="application/x-mpegURL">
+    <p class="vjs-no-js">
+      To view this video please enable JavaScript, and consider upgrading to a
+      web browser that <a href="https://videojs.com" target="_blank">supports HTML5 video</a>
+    </p>
+  </video>
 
-  <!-- Reliable Cloudflare CDN for JS -->
-  <script src="shaka.js"></script>
-
-  <script>
-    // Wait for the library to be defined
-    window.onload = function() {
-        if (typeof videojs !== 'undefined') {
-            const status = document.getElementById('status');
-            const originalStream = "https://ny2.rocketdns.info:25463/live/ALEX/sg5ng25ikf/3972.m3u8?token=HkNcWEBYFAkUCVECA1kCVwFeBAdWCFNXAVYKUAdcVFZQBVZbA1YECgUSH0ZAFRFRUwtoXlQaXgBbVgEdERBBVhc+XV0RChQABAgAVgJDTxZGD1pSEgJUH0ARWlURXxABVVQDDAIEFB8UVUsQVhMNVV45U1JGUQdWQFtdRF8JHhEKD2tdVl1XXVISCUYDQ08WWxVHFQpWEV8OTRFTWhFAUhEEFgMRAwcBDxIfRlAOFlpGFE4VCholZkBNEVRLEVddFghbVxEKFF4FRQtGH0MKR20UUkRESgFSDwRBEwlHAhFJQ1lYS29VXFheVgdHCAxaQUQNFQMIVBFOQ15eXQxGXBc+RFBXEgwRBQEDVgFXVBZP";
-            const proxiedStream = "/live-stream?url=" + encodeURIComponent(originalStream);
-
-            const player = videojs('mstv-player');
-            
-            player.ready(function() {
-                player.src({
-                    src: proxiedStream,
-                    type: 'application/x-mpegURL'
-                });
-                status.innerText = "Proxy Active - Loading Stream";
-            });
-
-            player.on('error', function() {
-                status.innerText = "Stream Offline or Proxy Blocked";
-            });
-        } else {
-            document.getElementById('status').innerText = "CDN Error: Library failed to load.";
-        }
-    };
-  </script>
+  <!-- Load Video.js Library -->
+  <script src="https://vjs.zencdn.net"></script>
 </body>
 </html>
