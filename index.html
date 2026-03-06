@@ -45,6 +45,11 @@
     
     let shakaInstance = null;
     let hlsInstance = null;
+    let hlsInstance = null;
+let shakaInstance = null;
+let channelsData = [];
+let retryTimer = null; // <--- ADD THIS LINE HERE
+
 
     function toggleLoader(show) { loader.style.display = show ? 'flex' : 'none'; }
 
@@ -73,36 +78,44 @@
     }
 
     async function stopAll() {
-    clearTimeout(retryTimer);
-    
-    // 1. Kill Shaka Instance immediately
+    // Check if retryTimer exists before clearing to avoid the error
+    if (typeof retryTimer !== 'undefined' && retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+    }
+
+    // 1. Kill Shaka (Heavy Engine)
     if (shakaInstance) {
         try {
-            await shakaInstance.detach(); // Detach from video element first
-            await shakaInstance.destroy(); 
-        } catch (e) { console.error("Shaka destroy error", e); }
-        shakaInstance = null;
+            await shakaInstance.detach(); 
+            await shakaInstance.destroy();
+            shakaInstance = null;
+        } catch (e) { console.error("Shaka cleanup error", e); }
     }
 
-    // 2. Kill HLS.js Instance immediately
+    // 2. Kill HLS.js (Light Engine)
     if (hlsInstance) {
-        hlsInstance.stopLoad(); // Stop downloading segments NOW
-        hlsInstance.detachMedia();
-        hlsInstance.destroy();
-        hlsInstance = null;
+        try {
+            hlsInstance.stopLoad();
+            hlsInstance.detachMedia();
+            hlsInstance.destroy();
+            hlsInstance = null;
+        } catch (e) { console.error("HLS cleanup error", e); }
     }
 
-    // 3. HARD RESET the video element to clear the buffer
+    // 3. Clear Video Buffer (Fixes the switching lag)
     videoPlayer.pause();
-    videoPlayer.removeAttribute('src'); // Removes the ghost link
-    videoPlayer.load(); // Forces the browser to flush the video memory
+    videoPlayer.removeAttribute('src'); 
+    videoPlayer.load(); 
     
-    // 4. UI Reset
+    // 4. UI Hide
     videoPlayer.style.display = 'none';
     iframePlayer.src = "";
     iframePlayer.style.display = 'none';
-    liveStamp.style.display = 'none';
+    if (liveStamp) liveStamp.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'none';
 }
+
 
 
     async function playChannel(index) {
