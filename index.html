@@ -240,7 +240,7 @@
 </footer>
  <script>
     
-   const select = document.getElementById('channel-select');
+    const select = document.getElementById('channel-select');
 const videoPlayer = document.getElementById('video-player');
 const iframePlayer = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
@@ -253,50 +253,34 @@ let channelsData = [];
 let lastKnownJsonContent = null;
 const JSON_URL = "./channels.json";
 
-// Initialize Shaka Polyfills for Global Browser Support (iOS/Safari)
+// 1. Initialize Shaka Support
 if (window.shaka) { shaka.polyfill.installAll(); }
 
-function showLoading(show) { if(loading) loading.style.display = show ? 'block' : 'none'; }
-
+// 2. Clear UI and Stop Ghost Audio
 async function stopAllPlayback() {
-    // 1. Force Mute and Pause the actual element immediately
     videoPlayer.pause();
     videoPlayer.muted = true; 
     videoPlayer.src = "";
     videoPlayer.removeAttribute('src');
-    videoPlayer.load(); // This "flushes" the audio buffer
+    videoPlayer.load();
 
-    // 2. Kill HLS.js instance
-    if (hlsInstance) {
-        hlsInstance.detachMedia();
-        hlsInstance.destroy();
-        hlsInstance = null;
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    if (shakaPlayer) { 
+        try { await shakaPlayer.destroy(); } catch(e){} 
+        shakaPlayer = null; 
     }
 
-    // 3. Kill Shaka Player instance (Wait for it to finish)
-    if (shakaPlayer) {
-        try {
-            await shakaPlayer.detach();
-            await shakaPlayer.destroy();
-        } catch (e) { console.error("Shaka Cleanup Error:", e); }
-        shakaPlayer = null;
-    }
-
-    // 4. Reset Iframe
-    iframePlayer.src = "about:blank"; // Clears iframe audio/video
-    
-    // 5. Reset UI
+    iframePlayer.src = "about:blank";
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'none';
     liveStamp.style.display = 'none';
-    videoPlayer.muted = false; // Unmute for the NEXT channel
+    videoPlayer.muted = false;
 }
 
+// 3. Play Channel Logic
 async function playChannel(channel) {
     if(loading) loading.style.display = 'block';
     placeholder.style.display = 'none';
-
-    // Await the full cleanup to ensure old audio is DEAD
     await stopAllPlayback();
 
     if (!channel) {
@@ -305,62 +289,28 @@ async function playChannel(channel) {
         return;
     }
 
-    // ... [Rest of your play logic for HLS, DASH, and Iframe remains the same] ...
-}
-
-    
-    videoPlayer.pause();
-    videoPlayer.src = "";
-    videoPlayer.removeAttribute('src'); // Essential to clear the "Shaka" state
-    videoPlayer.load(); 
-    
-    videoPlayer.style.display = 'none';
-    iframePlayer.style.display = 'none';
-    liveStamp.style.display = 'none';
-
-    if (!channel) { 
-        placeholder.style.display = 'flex'; 
-        if(loading) loading.style.display = 'none';
-        return; 
-    }
-
     if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
-        // Check for Hls.js support (Chrome/Firefox/Android)
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
             hlsInstance = new Hls();
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                 videoPlayer.play();
-                if(loading) loading.style.display = 'none'; // Hide spinner
-                liveStamp.style.display = 'block';
-            });
-        } 
-        // Fallback for Safari/iPhone (Native HLS)
-        else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-            videoPlayer.src = channel.url;
-            videoPlayer.play().then(() => {
                 if(loading) loading.style.display = 'none';
                 liveStamp.style.display = 'block';
             });
         }
-    } 
-    else if (channel.type === 'dash') {
+    } else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
-        
         try {
             await shakaPlayer.load(channel.url);
             videoPlayer.play();
             if(loading) loading.style.display = 'none';
             liveStamp.style.display = 'block';
-        } catch (e) {
-            console.error("Shaka Error:", e);
-            if(loading) loading.style.display = 'none';
-        }
-    } 
-    else if (channel.type === 'iframe') {
+        } catch (e) { if(loading) loading.style.display = 'none'; }
+    } else if (channel.type === 'iframe') {
         iframePlayer.src = channel.url;
         iframePlayer.style.display = 'block';
         if(loading) loading.style.display = 'none';
@@ -368,15 +318,13 @@ async function playChannel(channel) {
     }
 }
 
-
+// 4. Fetch Channels (The reason your list stopped loading)
 async function fetchChannelsJson() {
     try {
         const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
-        if (!response.ok) throw new Error('Fetch failed');
         const json = await response.json();
         const jsonString = JSON.stringify(json);
 
-        // SMART UPDATE: Only rebuild the list if data actually changed
         if (lastKnownJsonContent !== jsonString) {
             lastKnownJsonContent = jsonString;
             channelsData = json;
@@ -390,16 +338,19 @@ async function fetchChannelsJson() {
             });
             select.value = currentVal;
         }
-    } catch (e) { console.error('JSON Error:', e); }
+    } catch (e) { console.error("List Load Error:", e); }
 }
 
+// 5. Event Listeners
 select.addEventListener('change', () => {
     const index = select.value;
     playChannel(index === '' ? null : channelsData[index]);
 });
 
+// Start the app
 fetchChannelsJson();
-setInterval(fetchChannelsJson, 600000); // 10-Minute Check
+setInterval(fetchChannelsJson, 600000); 
+
 </script>
 </body>
 </html>
