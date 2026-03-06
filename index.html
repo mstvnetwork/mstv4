@@ -142,18 +142,33 @@
     }
 
     async function loadChannels() {
-        const cached = localStorage.getItem('channels_cache');
-        if (cached) renderDropdown(JSON.parse(cached));
-        try {
-            const res = await fetch(JSON_URL);
-            const data = await res.json();
-            localStorage.setItem('channels_cache', JSON.stringify(data));
-            renderDropdown(data);
-        } catch (e) { console.error(e); }
-    }
+    // 1. Check Cache first (Instant display)
+    const cached = localStorage.getItem('channels_cache');
+    if (cached) renderDropdown(JSON.parse(cached));
 
-    select.onchange = () => { if(select.value !== "") playChannel(select.value); };
-    loadChannels();
+    try {
+        // 2. Use a relative path that works on Netlify
+        const res = await fetch('./channel.json'); 
+        
+        // 3. Verify it's actually JSON before parsing
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Oops, we didn't get JSON!");
+        }
+
+        const data = await res.json();
+        localStorage.setItem('channels_cache', JSON.stringify(data));
+        renderDropdown(data);
+    } catch (e) { 
+        console.error("JSON Error:", e.message);
+        // If it's a 404, Chrome will show 'Initializing' forever
+        if (e.message.includes('404')) {
+            select.innerHTML = '<option value="">⚠️ Channel File Missing</option>';
+        }
+    }
+}
+
 </script>
 </body>
 </html>
