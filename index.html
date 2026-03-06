@@ -193,19 +193,20 @@
 </head>
 <body>
 
-    <div class="title">MSTV NETWORK</div>
+<div class="title">MSTV NETWORK</div>
     
-    <div class="device-notice">
-        Compatible with Android devices. For best experience use <strong>Chrome Browser</strong>
-    </div>
+<div class="device-notice">
+    Compatible with Android devices. For best experience use <strong>Chrome Browser</strong>
+</div>
 
-    <div class="channel-select">
-        <select id="channel-select" aria-label="Select TV Channel">
-            <option value="">👉📺 Loading Channels...</option>
-        </select>
-    </div>
+<div class="channel-select">
+    <select id="channel-select" aria-label="Select TV Channel">
+        <option value="">👉📺 Loading Channels...</option>
+    </select>
+</div>
+
 <div class="player-container">
-    <!-- The Loading Spinner is now INSIDE here -->
+    <!-- Center the loading spinner inside this container -->
     <div id="loading">⌛ Loading Stream...</div>
     
     <div id="live-stamp">LIVE</div>
@@ -214,8 +215,10 @@
     
     <video id="video-player" playsinline></video>
     
-    <iframe id="iframe-player" allowfullscreen></div>
+    <!-- FIXED: Added correct closing tag for iframe -->
+    <iframe id="iframe-player" allowfullscreen></iframe>
 </div>
+
 <footer class="site-footer">
     <div class="container">
         <!-- Section 1: Trending & Sports (High Volume) -->
