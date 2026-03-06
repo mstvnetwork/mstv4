@@ -12,55 +12,36 @@
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <meta name="googlebot" content="max-image-preview:large">
 
-<!-- Canonical & Performance Hints -->
 <link rel="canonical" href="https://mstvnet.netlify.app">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
 <link rel="preload" href="./channels.json" as="fetch" crossorigin="anonymous">
 
-<!-- Theme Color & Favicon -->
+<!-- Player Libraries -->
+<script defer src="./shaka.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- Theme & Favicon -->
 <meta name="theme-color" content="#0f172a">
 <link rel="icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
 <link rel="apple-touch-icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
 
-<!-- Open Graph (Facebook / WhatsApp) -->
-<meta property="og:locale" content="en_US">
-<meta property="og:type" content="website">
-<meta property="og:title" content="MSTV Network: Live Star Sports, Zee TV & Punjabi Entertainment">
-<meta property="og:description" content="Free 24/7 streaming of Star Sports Hindi, Zee TV, and top Punjabi channels. High-quality live TV for mobile and desktop.">
-<meta property="og:url" content="https://mstvnet.netlify.app">
-<meta property="og:site_name" content="MSTV Network">
-<meta property="og:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
-<meta property="og:image:secure_url" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:type" content="image/png">
-<meta property="fb:app_id" content="123456789012345">
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MSTV Network: Live Star Sports, Zee TV & Punjabi TV">
-<meta name="twitter:description" content="Watch Star Sports Hindi live for cricket and Zee TV dramas free on MSTV Network.">
-<meta name="twitter:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
-
-<!-- Player Libraries (HLS & Shaka) -->
-<script defer src="./shaka.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
 <style>
-  html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
-  .title { font-size:2em; margin:40px 0 10px; font-weight:bold; text-align:center; color:#90EE90; }
-  .device-notice { font-size:0.9em; color:grey; text-align:center; margin-bottom:20px; }
-  .channel-select { margin-bottom:3vh; width:90%; max-width:400px; }
-  select { width:100%; padding:0.8em; font-size:1em; border-radius:12px; border:none; background:#1A1D20; color:#90EE90; cursor:pointer; box-shadow:0 4px 10px rgba(0,255,160,0.2); transition: transform 0.2s ease; }
-  select:hover { transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,255,160,0.3); }
-  .player-container { position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:#141618; display:flex; align-items:center; justify-content:center; border-radius:15px; overflow:hidden; margin-bottom:10px; }
-  video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:15px; display:none; }
-  #placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:1.5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
-  #loading { color:#90EE90; font-weight:bold; margin-bottom:20px; display:none; text-align:center; }
-  .site-footer { background:transparent; text-align:center; padding:20px 10px; font-size:0.9em; margin-top:40px; border-top:1px solid #222; color:#555; }
+html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
+.title { font-size:2.2em; margin:50px 0 10px; font-weight:bold; text-align:center; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
+.device-notice { font-size: 0.9em; color: grey; text-align: center; margin-bottom: 25px; max-width: 80%; line-height: 1.4; opacity: 0.8; }
+.channel-select { margin-bottom:3vh; width:90%; max-width:400px; }
+select { width:100%; padding:0.8em; font-size:1.1em; border-radius:12px; border:none; background:linear-gradient(145deg,#1A1D20,#141618); color:#90EE90; cursor:pointer; box-shadow:0 4px 15px rgba(0,255,160,0.2); transition:transform 0.2s ease, box-shadow 0.2s ease; }
+select:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,255,160,0.3); }
+.player-container { position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:linear-gradient(135deg,#141618,#1A1D20); display:flex; align-items:center; justify-content:center; color:#90EE90; font-weight:bold; text-align:center; border-radius:15px; box-shadow:0 8px 25px rgba(0,255,160,0.2); overflow:hidden; margin-bottom:10px; }
+video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:15px; display:none; }
+#loading { color: #90EE90; font-weight: bold; margin-bottom: 20px; display: none; }
+#placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:1.5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
+#live-stamp { position: absolute; top: 5px; left: 5px; background: #E50914; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; letter-spacing: 1px; z-index: 50; display: none; box-shadow: 0 0 12px rgba(229, 9, 20, 0.6); }
 </style>
 </head>
+
 <body>
 
 <div class="title">MSTV NETWORK</div>
@@ -68,7 +49,7 @@
 
 <div class="channel-select">
   <select id="channel-select" aria-label="Select TV Channel">
-    <option value="">👉📺 Click & Select Channel</option>
+    <option value="">👉📺 Click & Select</option>
   </select>
 </div>
 
@@ -78,10 +59,15 @@
   <div id="placeholder" aria-live="polite">⬆️ Select a Channel Above</div>
   <video id="video-player" autoplay playsinline controls></video>
   <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+  <div id="live-stamp">MSTV Network</div>
 </div>
 
 <footer class="site-footer">
-  © 2026 MSTV Network • Free Online TV Hub
+  <div class="container">
+    <div class="copyright" style="text-align: center; margin-top: 20px; opacity: 0.7;">
+      © 2026 MSTV Network • Free Online TV Hub
+    </div>
+  </div>
 </footer>
 
 <script defer>
@@ -96,21 +82,28 @@ let channels = [];
 let hls = null;
 let shakaPlayer = null;
 
-async function stopAll(){
-  loader.style.display = 'none';
+async function stopAll() {
+  loader.style.display='none';
   if(hls){ hls.destroy(); hls=null; }
   if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer=null; }
-  video.pause(); video.removeAttribute('src'); video.load();
-  iframe.removeAttribute('src'); iframe.src='about:blank';
-  video.style.display='none'; iframe.style.display='none';
-  placeholder.style.display='none';
+
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+
+  iframe.removeAttribute('src');
+  iframe.src='about:blank';
+
+  video.style.display='none';
+  iframe.style.display='none';
+  placeholder.style.display='flex';
 }
 
 function renderDropdown(data){
   channels = data;
   select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
   data.forEach((ch,i)=>{
-    const opt=document.createElement('option');
+    const opt=document.createElement("option");
     opt.value=i;
     opt.textContent=ch.name;
     select.appendChild(opt);
@@ -118,20 +111,26 @@ function renderDropdown(data){
 }
 
 async function loadChannels(){
-  const cached = localStorage.getItem('channels_cache');
+  const cached = localStorage.getItem("channels_cache");
   if(cached) renderDropdown(JSON.parse(cached));
   try{
     const res = await fetch(JSON_URL,{cache:'force-cache'});
     const data = await res.json();
     localStorage.setItem('channels_cache',JSON.stringify(data));
     renderDropdown(data);
-  }catch(e){ console.error('Channels load failed', e); }
+  } catch(e){
+    console.error('Channels load failed', e);
+  }
 }
 
 async function playChannel(index){
-  const channel = channels[index]; if(!channel) return;
+  const channel = channels[index];
+  if(!channel) return;
+
   await stopAll();
-  loader.style.display='block'; placeholder.style.display='none';
+  loader.style.display='block';
+  placeholder.style.display='none';
+
   if(channel.type==='iframe'){
     iframe.style.display='block';
     iframe.src = channel.url;
@@ -144,7 +143,7 @@ async function playChannel(index){
 
   if(isHls){
     if(window.Hls && Hls.isSupported()){
-      hls = new Hls({enableWorker:true, lowLatencyMode:true, startLevel:-1});
+      hls = new Hls({ enableWorker:true, lowLatencyMode:true, startLevel:-1 });
       hls.loadSource(channel.url);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, ()=>video.play());
@@ -158,16 +157,26 @@ async function playChannel(index){
   if(window.shaka && shaka.Player.isBrowserSupported()){
     shaka.polyfill.installAll();
     shakaPlayer = new shaka.Player(video);
-    shakaPlayer.configure({streaming:{bufferingGoal:10, rebufferingGoal:0.5, lowLatencyMode:true}});
-    try{ await shakaPlayer.load(channel.url); video.play(); } catch(e){ console.error('Shaka error', e); loader.style.display='none'; }
+    shakaPlayer.configure({ streaming:{ bufferingGoal:10, rebufferingGoal:0.5, lowLatencyMode:true } });
+    try{
+      await shakaPlayer.load(channel.url);
+      video.play();
+    } catch(e){
+      console.error('Shaka error', e);
+      loader.style.display='none';
+      placeholder.style.display='flex';
+    }
   }
 }
 
 video.onplaying = ()=>{ loader.style.display='none'; };
 select.onchange = ()=>{ if(select.value!=='') playChannel(select.value); };
+
 loadChannels();
-  </script>
-  <script type="application/ld+json">
+</script>
+
+<!-- Optimized JSON-LD for SEO, placed at bottom to avoid blocking -->
+<script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "VideoObject",
@@ -185,14 +194,13 @@ loadChannels();
       "url": "https://mstvnet.netlify.app/logo.png"
     }
   },
-  "regionsAllowed": ["IN","PK","US","CA","GB"],
   "interactionStatistic": {
     "@type": "InteractionCounter",
     "interactionType": "https://schema.org/WatchAction",
     "userInteractionCount": 1800
   }
 }
-  </script>
+</script>
 
 </body>
 </html>
