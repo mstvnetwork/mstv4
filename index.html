@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:,">
-
-    <title>Global Performance Player</title>
+    <title>High Performance Player</title>
     
-    <!-- 1. CORRECT LIBRARIES -->
-    <script src="shaka.js"></script> <!-- Local Shaka -->
-    <script src="https://cdn.jsdelivr.net"></script> <!-- HLS Fallback -->
+    <!-- 1. FIXED LIBRARIES: Ensure these are at the top -->
+    <script src="shaka.js"></script>
+    <script src="https://cdn.jsdelivr.net"></script>
 
     <style>
         body { margin: 0; background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
@@ -26,8 +24,8 @@
 
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
-    <!-- Allow attribute is CRITICAL for iframes to play encrypted or autoplaying video -->
-    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    <!-- Allow permissions to stop policy violations -->
+    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
     <video id="video-player" playsinline controls></video>
     <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center;">Select a channel</div>
 </div>
@@ -35,48 +33,30 @@
 <div class="controls">
     <select id="channel-select"><option value="">⌛ Loading...</option></select>
 </div>
-    <script>
-    // 1. Core Elements & Variables
+
+<script>
     const select = document.getElementById('channel-select');
     const videoPlayer = document.getElementById('video-player');
     const iframePlayer = document.getElementById('iframe-player');
     const loader = document.getElementById('loader-overlay');
-    const liveStamp = document.getElementById('live-stamp');
-    const placeholder = document.getElementById('placeholder');
     
-    const JSON_URL = "./channel.json";
+    // Check if filename is channel.json or channels.json in your repo!
+    const JSON_URL = "./channel.json"; 
     let hlsInstance = null;
     let shakaInstance = null;
     let channelsData = [];
 
-    // 2. Ultra-Fast Memory Wipe (Prevents Lagging)
     async function stopAllPlayback() {
-        if (hlsInstance) {
-            hlsInstance.stopLoad();
-            hlsInstance.detachMedia();
-            hlsInstance.destroy();
-            hlsInstance = null;
-        }
-        if (shakaInstance) {
-            try {
-                await shakaInstance.detach(); 
-                await shakaInstance.destroy();
-            } catch (e) {}
-            shakaInstance = null;
-        }
-        // Force the browser to dump video RAM
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+        if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
         videoPlayer.pause();
         videoPlayer.removeAttribute('src'); 
         videoPlayer.load(); 
-        
         videoPlayer.style.display = 'none';
         iframePlayer.src = "";
         iframePlayer.style.display = 'none';
-        if (liveStamp) liveStamp.style.display = 'none';
-        if (placeholder) placeholder.style.display = 'none';
     }
 
-    // 3. UI Rendering & LocalStorage (Instant Loading)
     function renderDropdown(data) {
         channelsData = data;
         select.innerHTML = '<option value="">👉📺 Select Channel</option>';
@@ -93,53 +73,42 @@
         if (cached) renderDropdown(JSON.parse(cached));
         try {
             const res = await fetch(JSON_URL);
+            const contentType = res.headers.get("content-type");
+            if (!res.ok || !contentType.includes("application/json")) throw new Error("Not a JSON file");
             const data = await res.json();
             localStorage.setItem('channels_cache', JSON.stringify(data));
             renderDropdown(data);
-        } catch (e) { console.error("Fetch Error", e); }
+        } catch (e) { console.error("JSON Error:", e.message); }
     }
 
-    // 4. Playback Engine (Speed Optimized for 3G/4G/5G)
     async function playChannel(index) {
         const channel = channelsData[index];
         if (!channel) return;
-
         await stopAllPlayback();
         loader.style.display = 'flex';
 
         if (channel.type === 'iframe') {
             iframePlayer.style.display = 'block';
             iframePlayer.src = channel.url;
-            // Loader hides automatically for iframes
             loader.style.display = 'none';
             return;
         }
 
         videoPlayer.style.display = 'block';
-
-        // SPEED FIX: Use HLS.js by default for instant startup
         if (channel.type === 'hls' || channel.url.includes('.m3u8')) {
             loadHlsFast(channel.url);
-        } 
-        // Use Shaka ONLY for specific DASH/Shaka types
-        else {
+        } else {
             loadShakaFast(channel.url);
         }
     }
 
     function loadHlsFast(url) {
-        if (Hls.isSupported()) {
-            hlsInstance = new Hls({
-                startLevel: 0,           // Forces lowest quality for instant play
-                maxBufferLength: 10,     // Prevents memory clog on mobile
-                enableWorker: false,     // Faster startup on low-end CPUs
-                fragLoadingMaxRetry: 3   // Good for spotty 3G
-            });
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            hlsInstance = new Hls({ startLevel: 0, enableWorker: false });
             hlsInstance.loadSource(url);
             hlsInstance.attachMedia(videoPlayer);
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
         } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-            // Safari/iOS Native (Absolute fastest)
             videoPlayer.src = url;
             videoPlayer.play();
         }
@@ -148,30 +117,16 @@
     async function loadShakaFast(url) {
         if (shaka.Player.isBrowserSupported()) {
             shaka.polyfill.installAll();
-            shakaInstance = new shaka.Player(videoPlayer);
-            shakaInstance.configure({
-                streaming: { 
-                    rebufferingGoal: 1,  // Start play as soon as 1s is ready
-                    bufferingGoal: 5     // Limit data waste
-                },
-                abr: { defaultBandwidthEstimate: 500000 }
-            });
+            shakaInstance = new shaka.Player(); // No mediaElement in constructor
+            await shakaInstance.attach(videoPlayer); // Modern attach method
+            shakaInstance.configure({ streaming: { rebufferingGoal: 1 } });
             try { await shakaInstance.load(url); } catch (e) { console.error(e); }
         }
     }
 
-    // 5. Event Listeners (Precise Loader Hiding)
     select.onchange = () => { if(select.value !== "") playChannel(select.value); };
-    videoPlayer.onplaying = () => { 
-        loader.style.display = 'none'; 
-        if(liveStamp) liveStamp.style.display='block'; 
-    };
-    videoPlayer.onwaiting = () => { loader.style.display = 'flex'; };
-
+    videoPlayer.onplaying = () => { loader.style.display = 'none'; };
     loadChannels();
 </script>
-
-
-
 </body>
 </html>
