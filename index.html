@@ -166,7 +166,33 @@ async function playChannel(index){
 video.onplaying = ()=>{ loader.style.display='none'; };
 select.onchange = ()=>{ if(select.value!=='') playChannel(select.value); };
 loadChannels();
-</script>
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  "name": "MSTV Network: Live TV Streaming",
+  "description": "Watch Star Sports Hindi, Zee TV, TV9 Hindi, and Punjabi channels like Chardikla Time TV & Aastha live online in HD.",
+  "thumbnailUrl": "https://mstvnet.netlify.app/mstv-thumbnail.png",
+  "uploadDate": "2026-03-05T08:00:00+05:30",
+  "embedUrl": "https://mstvnet.netlify.app",
+  "isLiveBroadcast": true,
+  "publisher": {
+    "@type": "Organization",
+    "name": "MSTV Network",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://mstvnet.netlify.app/logo.png"
+    }
+  },
+  "regionsAllowed": ["IN","PK","US","CA","GB"],
+  "interactionStatistic": {
+    "@type": "InteractionCounter",
+    "interactionType": "https://schema.org/WatchAction",
+    "userInteractionCount": 1800
+  }
+}
+  </script>
 
 </body>
 </html>
