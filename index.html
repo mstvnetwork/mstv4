@@ -249,8 +249,8 @@
         </div>
     </div>
 </footer>
- <script>
-                const select = document.getElementById('channel-select');
+ <script> 
+  const select = document.getElementById('channel-select');
 const videoPlayer = document.getElementById('video-player');
 const iframePlayer = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
@@ -263,55 +263,60 @@ let channelsData = [];
 let lastKnownJsonContent = null;
 const JSON_URL = "./channels.json";
 
-// 1. GLOBAL POLYFILL: Ensures Shaka works on all international browsers
+// 1. GLOBAL COMPATIBILITY: Install Shaka Polyfills for iOS/Safari support
 if (window.shaka) { shaka.polyfill.installAll(); }
 
-function showLoading(show) { if(loading) loading.style.display = show ? 'block' : 'none'; }
+function showLoading(show) { 
+    if(loading) loading.style.display = show ? 'block' : 'none'; 
+}
 
-
-           // Add these to your existing global variables
-let shakaPlayer = null;
-
+// 2. THE "TOTAL SILENCE" RESET: Kills Ghost Audio & Library Locks
 async function stopAllPlayback() {
-    // 1. Kill Hls.js
+    // Stop Hls.js
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     
-    // 2. Kill Shaka Player (Completely)
+    // Stop Shaka Player (DRM Cleanup)
     if (shakaPlayer) { 
         try { await shakaPlayer.destroy(); } catch(e) {} 
         shakaPlayer = null; 
     }
     
-    // 3. Reset Video Element to kill Ghost Audio & Shaka Lock
+    // Flush Video Buffer to kill background sound
     videoPlayer.pause();
     videoPlayer.muted = true;
     videoPlayer.src = "";
     videoPlayer.removeAttribute('src'); 
-    videoPlayer.load(); // Flushes the buffer
+    videoPlayer.load(); 
 
+    // Reset Iframe to kill its audio
     iframePlayer.src = 'about:blank';
+    
+    // Reset UI
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'none';
     liveStamp.style.display = 'none';
-    videoPlayer.muted = false;
+    videoPlayer.muted = false; // Prepare for next channel
 }
 
+// 3. MAIN PLAYBACK LOGIC (HLS, DASH/ClearKey, Iframe)
 async function playChannel(channel) {
     showLoading(true);
     placeholder.style.display = 'none';
     
-    await stopAllPlayback(); // Wait for absolute silence/cleanup
-
+    // Wait for absolute cleanup before starting new stream
+    await stopAllPlayback();
+    
     if (!channel) { 
         placeholder.style.display = 'flex'; 
         showLoading(false); 
         return; 
     }
 
+    // A: HLS Stream Logic (.m3u8)
     if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            hlsInstance = new Hls({ startLevel: 0 }); // Global Speed: Start fast
+            hlsInstance = new Hls({ startLevel: 0 }); // Global Speed: Start fast on 4G
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
@@ -319,13 +324,21 @@ async function playChannel(channel) {
                 showLoading(false); 
                 liveStamp.style.display = 'block'; 
             });
+        } 
+        else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+            videoPlayer.src = channel.url;
+            videoPlayer.play().then(() => {
+                showLoading(false);
+                liveStamp.style.display = 'block';
+            });
         }
     } 
+    // B: DASH Stream Logic (.mpd with ClearKeys)
     else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
 
-        // CLEARKEY FIX: Configure keys BEFORE loading the manifest
+        // CLEARKEY INJECTION: Only triggers if keyId/key exist in JSON
         if (channel.keyId && channel.key) {
             shakaPlayer.configure({
                 drm: {
@@ -336,9 +349,15 @@ async function playChannel(channel) {
             });
         }
 
-        // GLOBAL RESILIENCE: High buffer for 4G stability
+        // GLOBAL RESILIENCE: High buffer for 4G stability in Tokyo/London
         shakaPlayer.configure({
-            streaming: { bufferingGoal: 20, rebufferingGoal: 2, stallEnabled: true }
+            streaming: { 
+                bufferingGoal: 20, 
+                rebufferingGoal: 2, 
+                stallEnabled: true,
+                retryParameters: { maxAttempts: 5 }
+            },
+            abr: { defaultBandwidthEstimate: 1000000 }
         });
 
         try {
@@ -347,10 +366,11 @@ async function playChannel(channel) {
             showLoading(false);
             liveStamp.style.display = 'block';
         } catch (e) { 
-            console.error("Shaka Error:", e.code, e); 
+            console.error("Shaka DRM Error:", e); 
             showLoading(false); 
         }
     }
+    // C: Iframe Logic
     else if (channel.type === 'iframe') {
         iframePlayer.src = channel.url;
         iframePlayer.style.display = 'block';
@@ -359,46 +379,7 @@ async function playChannel(channel) {
     }
 }
 
-        
-
-        // 2. Global Performance Config (4G/5G Resilience)
-        shakaPlayer.configure({
-            streaming: {
-                bufferingGoal: 20, 
-                rebufferingGoal: 2,
-                stallEnabled: true
-            }
-        });
-
-        // 3. Buffer Listener for Spinner
-        shakaPlayer.addEventListener('buffering', (data) => {
-            showLoading(data.buffering); 
-        });
-
-        try {
-            await shakaPlayer.load(channel.url);
-            // Spinner is hidden by the global videoPlayer.onplaying listener
-            videoPlayer.play();
-        } catch (e) { 
-            console.error("Shaka DRM/Load Error:", e);
-            showLoading(false); 
-        }
-    }
-
-    else if (channel.type === 'iframe') {
-        iframePlayer.src = channel.url;
-        iframePlayer.style.display = 'block';
-        // Iframes don't have a 'playing' event, so we use onload
-        iframePlayer.onload = () => {
-            showLoading(false);
-            liveStamp.style.display = 'block';
-        };
-    }
-}
-
-
-
-// 4. SMART FETCH: Prevents "Fragility" and DOM Thrashing
+// 4. SMART FETCH: Prevents "Fragility" and DOM Thrashing (10 Min Interval)
 async function fetchChannelsJson() {
     try {
         const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
@@ -408,26 +389,29 @@ async function fetchChannelsJson() {
         if (lastKnownJsonContent !== jsonString) {
             lastKnownJsonContent = jsonString;
             channelsData = json;
-            const currentSelection = select.value;
+            const currentVal = select.value;
             select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
-            channelsData.forEach((channel, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = channel.name;
-                select.appendChild(option);
+            channelsData.forEach((ch, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = ch.name;
+                select.appendChild(opt);
             });
-            select.value = currentSelection;
+            select.value = currentVal;
         }
     } catch (e) { console.error('JSON Error:', e); }
 }
 
+// 5. EVENT LISTENERS
 select.addEventListener('change', () => {
-    const index = select.value;
-    playChannel(index === '' ? null : channelsData[index]);
+    const idx = select.value;
+    playChannel(idx === '' ? null : channelsData[idx]);
 });
 
+// STARTUP
 fetchChannelsJson();
-setInterval(fetchChannelsJson, 600000); // 10-Minute interval for network stability
+setInterval(fetchChannelsJson, 600000); // Check for list updates every 10 minutes
+
 
 </script>
 </body>
