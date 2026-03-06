@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://googleads.g.doubleclick.net">
-<link rel="preconnect" href="https://www.googletagservices.com">
-<!-- Add the main domain of your stream providers here -->
-<link rel="dns-prefetch" href="https://your-iframe-provider.com">
-
-    <title>Global High-Speed Player</title>
+    <title>Global Performance Player</title>
     
-    <!-- 1. FIXED LIBRARIES: Chrome-Safe CDN Links -->
-    <script src="shaka.js"></script> <!-- Local file in your root -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+    <!-- 1. PRE-CONNECT: Speeds up external iframe handshakes -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <!-- DNS prefetch is a low-cost hint for other possible origins -->
+    <link rel="dns-prefetch" href="https://www.googletagservices.com">
+
+    <!-- 2. LIBRARIES -->
+    <script src="shaka.js"></script>
+    <script src="https://cdnjs.cloudflare.com"></script>
 
     <style>
         body { margin: 0; background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
@@ -29,14 +30,10 @@
 
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
-    <iframe id="iframe-player" 
-    allow="autoplay; encrypted-media; fullscreen" 
-    allowfullscreen="true" 
-    referrerpolicy="no-referrer">
-</iframe>
-
+    <!-- Removed loading="lazy" for maximum priority on click -->
+    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen="true" referrerpolicy="no-referrer"></iframe>
     <video id="video-player" playsinline controls></video>
-    <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Choose a channel</div>
+    <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Select a channel</div>
 </div>
 
 <div class="controls">
@@ -49,25 +46,31 @@
     const iframePlayer = document.getElementById('iframe-player');
     const loader = document.getElementById('loader-overlay');
     
-    // --- FILENAME CONFIGURATION ---
-    // If your file is named 'channel.json', remove the 's' here.
+    // --- POINTED TO CHANNELS.JSON ---
     const JSON_URL = "./channels.json"; 
 
     let hlsInstance = null;
     let shakaInstance = null;
     let channelsData = [];
 
+    // IFRAME-KILL: Wipes memory and stops background data session
     async function stopAll() {
-    async function stopAll() {
-    loader.style.display = 'none';
-    // ... your Shaka/HLS cleanup ...
-
-    // KILL IFRAME IMMEDIATELY
-    iframePlayer.removeAttribute('src'); 
-    iframePlayer.src = "about:blank"; // This wipes the external site from memory
-    iframePlayer.style.display = 'none';
-}
-
+        loader.style.display = 'none';
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+        if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
+        
+        videoPlayer.pause();
+        videoPlayer.removeAttribute('src'); 
+        videoPlayer.load(); 
+        
+        // Force-kill the iframe portal to save 3G/4G bandwidth
+        iframePlayer.removeAttribute('src');
+        iframePlayer.src = "about:blank"; 
+        
+        videoPlayer.style.display = 'none';
+        iframePlayer.style.display = 'none';
+        document.getElementById('placeholder').style.display = 'none';
+    }
 
     function renderDropdown(data) {
         channelsData = data;
@@ -83,23 +86,13 @@
     async function loadChannels() {
         const cached = localStorage.getItem('channels_cache');
         if (cached) renderDropdown(JSON.parse(cached));
-
         try {
             const res = await fetch(JSON_URL);
-            if (!res.ok) throw new Error("File not found");
-            
-            const contentType = res.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) throw new Error("Invalid format");
-
+            if (!res.ok) throw new Error("List not found");
             const data = await res.json();
             localStorage.setItem('channels_cache', JSON.stringify(data));
             renderDropdown(data);
-        } catch (e) {
-            console.error("List Error:", e.message);
-            if (!localStorage.getItem('channels_cache')) {
-                select.innerHTML = `<option value="">⚠️ Error: ${e.message}</option>`;
-            }
-        }
+        } catch (e) { console.error(e); }
     }
 
     async function playChannel(index) {
@@ -110,6 +103,7 @@
 
         if (channel.type === 'iframe') {
             iframePlayer.style.display = 'block';
+            // Setting src starts the pre-connected handshake
             iframePlayer.src = channel.url;
             iframePlayer.onload = () => { loader.style.display = 'none'; };
         } else {
@@ -124,7 +118,7 @@
             } else if (typeof shaka !== 'undefined' && shaka.Player.isBrowserSupported()) {
                 shaka.polyfill.installAll();
                 shakaInstance = new shaka.Player();
-                await shakaInstance.attach(videoPlayer); // Modern attach method
+                await shakaInstance.attach(videoPlayer);
                 shakaInstance.configure({ streaming: { rebufferingGoal: 1 } });
                 try { await shakaInstance.load(channel.url); videoPlayer.play(); } 
                 catch (e) { loader.style.display = 'none'; }
@@ -134,7 +128,6 @@
 
     select.onchange = () => { if(select.value !== "") playChannel(select.value); };
     videoPlayer.onplaying = () => { loader.style.display = 'none'; };
-    
     loadChannels();
 </script>
 </body>
