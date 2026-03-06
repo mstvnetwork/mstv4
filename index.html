@@ -36,6 +36,7 @@
     <select id="channel-select"><option value="">⌛ Loading...</option></select>
 </div>
     <script>
+    // 1. Core Elements & Variables
     const select = document.getElementById('channel-select');
     const videoPlayer = document.getElementById('video-player');
     const iframePlayer = document.getElementById('iframe-player');
@@ -48,17 +49,14 @@
     let shakaInstance = null;
     let channelsData = [];
 
-    // 1. FAST CLEANUP: The "Kill" Function
+    // 2. Ultra-Fast Memory Wipe (Prevents Lagging)
     async function stopAllPlayback() {
-        // Stop HLS.js immediately
         if (hlsInstance) {
-            hlsInstance.stopLoad(); // Stop downloading data NOW
+            hlsInstance.stopLoad();
             hlsInstance.detachMedia();
             hlsInstance.destroy();
             hlsInstance = null;
         }
-
-        // Stop Shaka immediately
         if (shakaInstance) {
             try {
                 await shakaInstance.detach(); 
@@ -66,13 +64,11 @@
             } catch (e) {}
             shakaInstance = null;
         }
-
-        // HARD RESET Video Element (Clears browser RAM/Buffer)
+        // Force the browser to dump video RAM
         videoPlayer.pause();
         videoPlayer.removeAttribute('src'); 
         videoPlayer.load(); 
         
-        // UI Reset
         videoPlayer.style.display = 'none';
         iframePlayer.src = "";
         iframePlayer.style.display = 'none';
@@ -80,7 +76,7 @@
         if (placeholder) placeholder.style.display = 'none';
     }
 
-    // 2. RENDER LOGIC
+    // 3. UI Rendering & LocalStorage (Instant Loading)
     function renderDropdown(data) {
         channelsData = data;
         select.innerHTML = '<option value="">👉📺 Select Channel</option>';
@@ -92,70 +88,90 @@
         });
     }
 
-    // 3. FETCH LOGIC (Global Edge Optimized)
-    async function playChannel(index) {
-    const channel = channelsData[index];
-    if (!channel) return;
-
-    await stopAllPlayback();
-    loader.style.display = 'flex';
-
-    if (channel.type === 'iframe') {
-        iframePlayer.style.display = 'block';
-        iframePlayer.src = channel.url;
-        loader.style.display = 'none';
-        return;
+    async function loadChannels() {
+        const cached = localStorage.getItem('channels_cache');
+        if (cached) renderDropdown(JSON.parse(cached));
+        try {
+            const res = await fetch(JSON_URL);
+            const data = await res.json();
+            localStorage.setItem('channels_cache', JSON.stringify(data));
+            renderDropdown(data);
+        } catch (e) { console.error("Fetch Error", e); }
     }
 
-    videoPlayer.style.display = 'block';
+    // 4. Playback Engine (Speed Optimized for 3G/4G/5G)
+    async function playChannel(index) {
+        const channel = channelsData[index];
+        if (!channel) return;
 
-    // 1. If it's HLS, use HLS.js immediately (Fastest startup)
-    if (channel.type === 'hls' || channel.url.includes('.m3u8')) {
-        tryHls(channel.url);
-    } 
-    // 2. Only use Shaka for specific 'shaka' or DASH channels
-    else if (channel.type === 'shaka' || channel.url.includes('.mpd')) {
+        await stopAllPlayback();
+        loader.style.display = 'flex';
+
+        if (channel.type === 'iframe') {
+            iframePlayer.style.display = 'block';
+            iframePlayer.src = channel.url;
+            // Loader hides automatically for iframes
+            loader.style.display = 'none';
+            return;
+        }
+
+        videoPlayer.style.display = 'block';
+
+        // SPEED FIX: Use HLS.js by default for instant startup
+        if (channel.type === 'hls' || channel.url.includes('.m3u8')) {
+            loadHlsFast(channel.url);
+        } 
+        // Use Shaka ONLY for specific DASH/Shaka types
+        else {
+            loadShakaFast(channel.url);
+        }
+    }
+
+    function loadHlsFast(url) {
+        if (Hls.isSupported()) {
+            hlsInstance = new Hls({
+                startLevel: 0,           // Forces lowest quality for instant play
+                maxBufferLength: 10,     // Prevents memory clog on mobile
+                enableWorker: false,     // Faster startup on low-end CPUs
+                fragLoadingMaxRetry: 3   // Good for spotty 3G
+            });
+            hlsInstance.loadSource(url);
+            hlsInstance.attachMedia(videoPlayer);
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+        } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari/iOS Native (Absolute fastest)
+            videoPlayer.src = url;
+            videoPlayer.play();
+        }
+    }
+
+    async function loadShakaFast(url) {
         if (shaka.Player.isBrowserSupported()) {
             shaka.polyfill.installAll();
             shakaInstance = new shaka.Player(videoPlayer);
-            // Minimal config for speed
             shakaInstance.configure({
-                streaming: { rebufferingGoal: 1, bufferingGoal: 5 }
+                streaming: { 
+                    rebufferingGoal: 1,  // Start play as soon as 1s is ready
+                    bufferingGoal: 5     // Limit data waste
+                },
+                abr: { defaultBandwidthEstimate: 500000 }
             });
-            try {
-                await shakaInstance.load(channel.url);
-            } catch (e) { console.error("Shaka failed", e); }
+            try { await shakaInstance.load(url); } catch (e) { console.error(e); }
         }
     }
-}
 
-function tryHls(url) {
-    // Check if the browser can play HLS natively (like Safari) or via HLS.js
-    if (Hls.isSupported()) {
-        hlsInstance = new Hls({
-            startLevel: 0,           // Start at lowest quality immediately
-            enableWorker: false,     // Disabling worker can actually reduce latency on some mobile CPUs
-            fragLoadingMaxRetry: 5,  // Better for 3G/4G
-            manifestLoadingTimeOut: 10000
-        });
-        hlsInstance.loadSource(url);
-        hlsInstance.attachMedia(videoPlayer);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
-    } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native fallback (Safari/iOS) is the absolute fastest
-        videoPlayer.src = url;
-        videoPlayer.play();
-    }
-}
-
-
-    // Event Listeners
+    // 5. Event Listeners (Precise Loader Hiding)
     select.onchange = () => { if(select.value !== "") playChannel(select.value); };
-    videoPlayer.onplaying = () => { loader.style.display = 'none'; if(liveStamp) liveStamp.style.display='block'; };
+    videoPlayer.onplaying = () => { 
+        loader.style.display = 'none'; 
+        if(liveStamp) liveStamp.style.display='block'; 
+    };
     videoPlayer.onwaiting = () => { loader.style.display = 'flex'; };
 
     loadChannels();
 </script>
+
+
 
 </body>
 </html>
