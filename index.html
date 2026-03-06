@@ -93,67 +93,61 @@
     }
 
     // 3. FETCH LOGIC (Global Edge Optimized)
-    async function loadChannels() {
-        const cached = localStorage.getItem('channels_cache');
-        if (cached) renderDropdown(JSON.parse(cached));
-
-        try {
-            const res = await fetch(JSON_URL);
-            const data = await res.json();
-            localStorage.setItem('channels_cache', JSON.stringify(data));
-            renderDropdown(data);
-        } catch (e) { console.error("Update failed", e); }
-    }
-
-    // 4. PLAYBACK LOGIC (High Performance)
     async function playChannel(index) {
-        const channel = channelsData[index];
-        if (!channel) return;
+    const channel = channelsData[index];
+    if (!channel) return;
 
-        await stopAllPlayback(); // Wipe memory before starting new stream
-        loader.style.display = 'flex';
+    await stopAllPlayback();
+    loader.style.display = 'flex';
 
-        if (channel.type === 'iframe') {
-            iframePlayer.style.display = 'block';
-            iframePlayer.src = channel.url;
-            loader.style.display = 'none';
-        } else {
-            videoPlayer.style.display = 'block';
-            
-            // Performance Tuning for 3G/4G/5G
-            if (shaka.Player.isBrowserSupported()) {
-                shaka.polyfill.installAll();
-                shakaInstance = new shaka.Player(videoPlayer);
-                shakaInstance.configure({
-                    abr: { defaultBandwidthEstimate: 500000 },
-                    streaming: { 
-                        rebufferingGoal: 1, // Start playing with almost 0 buffer
-                        bufferingGoal: 5,   // Don't waste data
-                        lowLatencyMode: true 
-                    }
-                });
-                try {
-                    await shakaInstance.load(channel.url);
-                    videoPlayer.play();
-                } catch (e) { tryHls(channel.url); }
-            } else {
-                tryHls(channel.url);
-            }
-        }
+    if (channel.type === 'iframe') {
+        iframePlayer.style.display = 'block';
+        iframePlayer.src = channel.url;
+        loader.style.display = 'none';
+        return;
     }
 
-    function tryHls(url) {
-        if (Hls.isSupported()) {
-            hlsInstance = new Hls({ 
-                startLevel: 0, 
-                maxBufferLength: 10,
-                enableWorker: true // Use background thread for speed
+    videoPlayer.style.display = 'block';
+
+    // 1. If it's HLS, use HLS.js immediately (Fastest startup)
+    if (channel.type === 'hls' || channel.url.includes('.m3u8')) {
+        tryHls(channel.url);
+    } 
+    // 2. Only use Shaka for specific 'shaka' or DASH channels
+    else if (channel.type === 'shaka' || channel.url.includes('.mpd')) {
+        if (shaka.Player.isBrowserSupported()) {
+            shaka.polyfill.installAll();
+            shakaInstance = new shaka.Player(videoPlayer);
+            // Minimal config for speed
+            shakaInstance.configure({
+                streaming: { rebufferingGoal: 1, bufferingGoal: 5 }
             });
-            hlsInstance.loadSource(url);
-            hlsInstance.attachMedia(videoPlayer);
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+            try {
+                await shakaInstance.load(channel.url);
+            } catch (e) { console.error("Shaka failed", e); }
         }
     }
+}
+
+function tryHls(url) {
+    // Check if the browser can play HLS natively (like Safari) or via HLS.js
+    if (Hls.isSupported()) {
+        hlsInstance = new Hls({
+            startLevel: 0,           // Start at lowest quality immediately
+            enableWorker: false,     // Disabling worker can actually reduce latency on some mobile CPUs
+            fragLoadingMaxRetry: 5,  // Better for 3G/4G
+            manifestLoadingTimeOut: 10000
+        });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(videoPlayer);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+    } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native fallback (Safari/iOS) is the absolute fastest
+        videoPlayer.src = url;
+        videoPlayer.play();
+    }
+}
+
 
     // Event Listeners
     select.onchange = () => { if(select.value !== "") playChannel(select.value); };
