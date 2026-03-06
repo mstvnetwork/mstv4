@@ -1,6 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Disable Zoom (Mobile) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <script>
+        // Stop External Redirection
+        document.addEventListener("DOMContentLoaded", function() {
+            document.body.addEventListener("click", function(e) {
+                var target = e.target;
+                // Check if the clicked element is an anchor
+                if (target.tagName === "A") {
+                    var href = target.getAttribute("href");
+                    // If href starts with http/https and is not on the same domain
+                    if (href && href.startsWith("http") && !href.includes(window.location.hostname)) {
+                        e.preventDefault();
+                        alert("External links are disabled.");
+                    }
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <a href="https://google.com">External Link (Blocked)</a>
+    <a href="/internal-page.html">Internal Link (Allowed)</a>
+</body>
+</html>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Performance Player</title>
