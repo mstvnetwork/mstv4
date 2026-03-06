@@ -35,9 +35,7 @@
 <div class="controls">
     <select id="channel-select"><option value="">⌛ Loading...</option></select>
 </div>
-
-<script>
-    // 1. Declare ALL variables ONCE at the top
+    <script>
     const select = document.getElementById('channel-select');
     const videoPlayer = document.getElementById('video-player');
     const iframePlayer = document.getElementById('iframe-player');
@@ -49,25 +47,32 @@
     let hlsInstance = null;
     let shakaInstance = null;
     let channelsData = [];
-    let retryTimer = null; // Defined here once
 
-    // 2. Clear previous playback (High Performance)
-    async function stopAll() {
-        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
-        
-        if (shakaInstance) {
-            try { await shakaInstance.destroy(); } catch (e) {}
-            shakaInstance = null;
-        }
+    // 1. FAST CLEANUP: The "Kill" Function
+    async function stopAllPlayback() {
+        // Stop HLS.js immediately
         if (hlsInstance) {
+            hlsInstance.stopLoad(); // Stop downloading data NOW
+            hlsInstance.detachMedia();
             hlsInstance.destroy();
             hlsInstance = null;
         }
 
+        // Stop Shaka immediately
+        if (shakaInstance) {
+            try {
+                await shakaInstance.detach(); 
+                await shakaInstance.destroy();
+            } catch (e) {}
+            shakaInstance = null;
+        }
+
+        // HARD RESET Video Element (Clears browser RAM/Buffer)
         videoPlayer.pause();
         videoPlayer.removeAttribute('src'); 
         videoPlayer.load(); 
         
+        // UI Reset
         videoPlayer.style.display = 'none';
         iframePlayer.src = "";
         iframePlayer.style.display = 'none';
@@ -75,13 +80,10 @@
         if (placeholder) placeholder.style.display = 'none';
     }
 
-    // 3. UI and Fetch Logic
-    function toggleLoader(show) { if(loader) loader.style.display = show ? 'flex' : 'none'; }
-
+    // 2. RENDER LOGIC
     function renderDropdown(data) {
         channelsData = data;
-        window.channelsData = data; 
-        select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
+        select.innerHTML = '<option value="">👉📺 Select Channel</option>';
         data.forEach((ch, i) => {
             const opt = document.createElement('option');
             opt.value = i;
@@ -90,73 +92,76 @@
         });
     }
 
+    // 3. FETCH LOGIC (Global Edge Optimized)
     async function loadChannels() {
         const cached = localStorage.getItem('channels_cache');
         if (cached) renderDropdown(JSON.parse(cached));
 
         try {
             const res = await fetch(JSON_URL);
-            if (!res.ok) throw new Error('File not found');
             const data = await res.json();
             localStorage.setItem('channels_cache', JSON.stringify(data));
             renderDropdown(data);
-        } catch (e) { console.error("JSON Load Error", e); }
+        } catch (e) { console.error("Update failed", e); }
     }
 
-    // 4. Playback Logic
+    // 4. PLAYBACK LOGIC (High Performance)
     async function playChannel(index) {
         const channel = channelsData[index];
         if (!channel) return;
 
-        await stopAll();
-        toggleLoader(true);
+        await stopAllPlayback(); // Wipe memory before starting new stream
+        loader.style.display = 'flex';
 
         if (channel.type === 'iframe') {
             iframePlayer.style.display = 'block';
             iframePlayer.src = channel.url;
-            toggleLoader(false);
-            if (liveStamp) liveStamp.style.display = 'block';
+            loader.style.display = 'none';
         } else {
             videoPlayer.style.display = 'block';
             
-            // Global Performance: Try Shaka first
+            // Performance Tuning for 3G/4G/5G
             if (shaka.Player.isBrowserSupported()) {
                 shaka.polyfill.installAll();
                 shakaInstance = new shaka.Player(videoPlayer);
                 shakaInstance.configure({
                     abr: { defaultBandwidthEstimate: 500000 },
-                    streaming: { rebufferingGoal: 2, bufferingGoal: 10 }
+                    streaming: { 
+                        rebufferingGoal: 1, // Start playing with almost 0 buffer
+                        bufferingGoal: 5,   // Don't waste data
+                        lowLatencyMode: true 
+                    }
                 });
                 try {
                     await shakaInstance.load(channel.url);
-                    toggleLoader(false);
-                    if (liveStamp) liveStamp.style.display = 'block';
-                } catch (e) { tryHlsFallback(channel.url); }
+                    videoPlayer.play();
+                } catch (e) { tryHls(channel.url); }
             } else {
-                tryHlsFallback(channel.url);
+                tryHls(channel.url);
             }
         }
     }
 
-    function tryHlsFallback(url) {
+    function tryHls(url) {
         if (Hls.isSupported()) {
-            hlsInstance = new Hls({ startLevel: 0 });
+            hlsInstance = new Hls({ 
+                startLevel: 0, 
+                maxBufferLength: 10,
+                enableWorker: true // Use background thread for speed
+            });
             hlsInstance.loadSource(url);
             hlsInstance.attachMedia(videoPlayer);
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                videoPlayer.play();
-                toggleLoader(false);
-                if (liveStamp) liveStamp.style.display = 'block';
-            });
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
         }
     }
 
-    // 5. Event Listeners
+    // Event Listeners
     select.onchange = () => { if(select.value !== "") playChannel(select.value); };
-    videoPlayer.addEventListener('waiting', () => toggleLoader(true));
-    videoPlayer.addEventListener('playing', () => toggleLoader(false));
+    videoPlayer.onplaying = () => { loader.style.display = 'none'; if(liveStamp) liveStamp.style.display='block'; };
+    videoPlayer.onwaiting = () => { loader.style.display = 'flex'; };
 
     loadChannels();
 </script>
+
 </body>
 </html>
