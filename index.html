@@ -213,44 +213,57 @@
     }
 
     // 2. Optimized Playback for 3G/4G/5G
-    async function playChannel(channel) {
-        if (!channel) return;
+    async function playChannel(index) {
+    const channel = channelsData[index];
+    if (!channel) return;
+
+    await stopAll(); // Cleans up previous video/shaka/hls instances
+    toggleLoader(true);
+
+    // FIX 1: Handle iframes separately (Shaka cannot "play" an iframe)
+    if (channel.type === 'iframe') {
+        iframePlayer.src = channel.url;
+        iframePlayer.style.display = 'block';
+        videoPlayer.style.display = 'none'; // Hide video element
+        toggleLoader(false);
+        liveStamp.style.display = 'block';
+        return; // Stop here for iframes
+    } 
+
+    // FIX 2: Handle Video types (shaka or hls)
+    videoPlayer.style.display = 'block';
+    iframePlayer.style.display = 'none';
+
+    // Start Shaka for BOTH 'shaka' and 'hls' types if supported
+    if (shaka.Player.isBrowserSupported()) {
+        shaka.polyfill.installAll(); // Required for cross-browser stability
+        shakaInstance = new shaka.Player(videoPlayer);
         
-        // Cleanup previous instances
-        if (hlsInstance) hlsInstance.destroy();
-        if (shakaInstance) await shakaInstance.destroy();
+        shakaInstance.configure({
+            abr: { defaultBandwidthEstimate: 500000 },
+            streaming: { rebufferingGoal: 2, bufferingGoal: 10 }
+        });
 
-        if (channel.type === 'shaka' || channel.type === 'hls') {
-            videoPlayer.style.display = 'block';
-            
-            // Install Shaka Polyfills (Required for mobile stability)
-            shaka.polyfill.installAll();
-
-            if (shaka.Player.isBrowserSupported()) {
-                shakaInstance = new shaka.Player(videoPlayer);
-                
-                // PERFORMANCE TUNING: Fast-start on slow networks
-                shakaInstance.configure({
-                    streaming: {
-                        rebufferingGoal: 2,   // Start playing after 2s of data (reduces "black screen")
-                        bufferingGoal: 10,    // Don't over-download on mobile data
-                        lowLatencyMode: true  // Speed up initial segment fetch
-                    },
-                    manifest: {
-                        dash: { ignoreMinBufferTime: true } // Bypass long DASH wait times
-                    },
-                    abr: { defaultBandwidthEstimate: 500000 } // Start at 3G quality (fastest load)
-                });
-
-                await shakaInstance.load(channel.url);
-            } else if (Hls.isSupported()) {
-                // HLS.js Fallback optimized for mobile
-                hlsInstance = new Hls({ startLevel: 0, maxBufferLength: 15 });
-                hlsInstance.loadSource(channel.url);
-                hlsInstance.attachMedia(videoPlayer);
-            }
+        try {
+            await shakaInstance.load(channel.url);
+        } catch (e) {
+            console.error("Shaka failed, trying HLS.js fallback", e);
+            tryHlsFallback(channel.url);
         }
+    } else {
+        tryHlsFallback(channel.url);
     }
+}
+
+function tryHlsFallback(url) {
+    if (Hls.isSupported()) {
+        hlsInstance = new Hls({ startLevel: 0 });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(videoPlayer);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+    }
+}
+
 
     select.onchange = () => playChannel(window.channelsData[select.value]);
     loadChannels();
