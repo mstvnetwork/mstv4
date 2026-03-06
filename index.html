@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Fast Player</title>
     
-    <script src="shaka.js"></script>
-    <script src="https://cdn.jsdelivr.net"></script>
+    <!-- 1. Shaka Player (Local - Ensure filename is exactly shaka.js) -->
+<script src="shaka.js"></script>
+
+<!-- 2. HLS.js (Fixed CDN Link - Do not use the base jsdelivr.com link) -->
+<script src="https://cdn.jsdelivr.net"></script>
+
 
     <style>
         body { margin: 0; background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
@@ -142,7 +146,7 @@
     }
 
     async function loadChannels() {
-    // 1. Show cached list immediately so Chrome isn't stuck on "Initializing"
+    // 1. Load from cache IMMEDIATELY so Chrome isn't stuck
     const cached = localStorage.getItem('channels_cache');
     if (cached) {
         try {
@@ -151,26 +155,26 @@
     }
 
     try {
-        // 2. Use a path-safe fetch
-        const res = await fetch('./channel.json'); 
+        // 2. Fetch with a 'cache: no-cache' flag to bypass Netlify edge lag
+        const res = await fetch('./channel.json', { cache: "no-cache" });
         
-        // 3. Handle the 'Unexpected Token <' error (404 pages)
-        if (!res.ok) throw new Error("Channel file not found (404)");
-        
-        const data = await res.json();
-        if (!Array.isArray(data)) throw new Error("JSON is not a list");
+        // 3. Strict check: If Netlify sends a 404 HTML page, STOP
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || (contentType && contentType.includes("text/html"))) {
+            throw new Error("Channel file missing or moved");
+        }
 
+        const data = await res.json();
         localStorage.setItem('channels_cache', JSON.stringify(data));
         renderDropdown(data);
-    } catch (e) { 
-        console.error("Chrome Fetch Error:", e.message);
-        // If everything fails, show a manual refresh option
+    } catch (e) {
+        console.error("Fetch failed:", e.message);
+        // If cache is empty and fetch fails, give the user a clear message
         if (!localStorage.getItem('channels_cache')) {
-            select.innerHTML = '<option value="">⚠️ Error: Please refresh page</option>';
+            select.innerHTML = '<option value="">⚠️ List Unavailable - Please Refresh</option>';
         }
     }
 }
-
 
 </script>
 </body>
