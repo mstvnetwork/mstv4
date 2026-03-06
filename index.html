@@ -3,49 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Fast Player</title>
+    <title>Global High-Speed Player</title>
     
-    <!-- 1. Shaka Player (Local - Ensure filename is exactly shaka.js) -->
-<script src="shaka.js"></script>
-
-<!-- 2. HLS.js (Fixed CDN Link - Do not use the base jsdelivr.com link) -->
-<script src="https://cdn.jsdelivr.net"></script>
-
+    <!-- 1. FIXED LIBRARIES: Chrome-Safe CDN Links -->
+    <script src="shaka.js"></script> <!-- Local file in your root -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
 
     <style>
         body { margin: 0; background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-        
-        .player-container { 
-            position: relative; 
-            width: 100%; 
-            max-width: 800px; 
-            aspect-ratio: 16 / 9; 
-            background: #000; 
-            margin-top: 20px; 
-            overflow: hidden;
-        }
-
+        .player-container { position: relative; width: 100%; max-width: 800px; aspect-ratio: 16 / 9; background: #000; margin-top: 20px; overflow: hidden; }
         video, iframe { width: 100%; height: 100%; border: none; display: none; }
-
-        /* --- MODERN UNIVERSAL SPINNER --- */
-        #loader-overlay { 
-            position: absolute; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            display: none; align-items: center; justify-content: center; 
-            background: #000; /* Solid black hides any ugly background loading */
-            z-index: 10; 
-        }
-
-        .spinner { 
-            width: 50px; height: 50px; 
-            border: 3px solid rgba(255,255,255,0.1); 
-            border-top: 3px solid #00d2ff; /* Modern cyan color */
-            border-radius: 50%; 
-            animation: spin 0.6s linear infinite; 
-        }
-
+        #loader-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; background: #000; z-index: 10; }
+        .spinner { width: 45px; height: 45px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #00d2ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .controls { margin: 20px; width: 90%; max-width: 400px; position: relative; z-index: 20; }
         select { width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; background: #222; color: #fff; border: 1px solid #444; }
     </style>
@@ -53,16 +23,10 @@
 <body>
 
 <div class="player-container">
-    <!-- This overlay handles all formats -->
     <div id="loader-overlay"><div class="spinner"></div></div>
-    
     <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen="true"></iframe>
-
     <video id="video-player" playsinline controls></video>
-    
-    <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#555;">
-        📺 Choose a channel to begin
-    </div>
+    <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Choose a channel</div>
 </div>
 
 <div class="controls">
@@ -74,17 +38,17 @@
     const videoPlayer = document.getElementById('video-player');
     const iframePlayer = document.getElementById('iframe-player');
     const loader = document.getElementById('loader-overlay');
-    const placeholder = document.getElementById('placeholder');
     
-    const JSON_URL = "./channel.json"; 
+    // --- FILENAME CONFIGURATION ---
+    // If your file is named 'channel.json', remove the 's' here.
+    const JSON_URL = "./channels.json"; 
+
     let hlsInstance = null;
     let shakaInstance = null;
     let channelsData = [];
 
-    function showLoader(show) { loader.style.display = show ? 'flex' : 'none'; }
-
     async function stopAll() {
-        showLoader(false);
+        loader.style.display = 'none';
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
         if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
         videoPlayer.pause();
@@ -93,48 +57,8 @@
         videoPlayer.style.display = 'none';
         iframePlayer.src = "";
         iframePlayer.style.display = 'none';
-        placeholder.style.display = 'none';
     }
 
-    // --- Iframe format specifically needs this to hide spinner ---
-    iframePlayer.onload = () => { showLoader(false); };
-
-    // --- Video formats (HLS/Shaka) need these ---
-    videoPlayer.onplaying = () => { showLoader(false); };
-    videoPlayer.onwaiting = () => { showLoader(true); }; // Re-show if buffering on 3G
-
-    async function playChannel(index) {
-        const channel = channelsData[index];
-        if (!channel) return;
-        
-        await stopAll();
-        showLoader(true); // Appear immediately for any format
-
-        if (channel.type === 'iframe') {
-            iframePlayer.style.display = 'block';
-            iframePlayer.src = channel.url;
-            // Spinner hides via iframePlayer.onload
-        } else {
-            videoPlayer.style.display = 'block';
-            const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
-
-            if (isHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
-                hlsInstance = new Hls({ startLevel: 0, enableWorker: false });
-                hlsInstance.loadSource(channel.url);
-                hlsInstance.attachMedia(videoPlayer);
-                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
-            } else if (shaka.Player.isBrowserSupported()) {
-                shaka.polyfill.installAll();
-                shakaInstance = new shaka.Player();
-                await shakaInstance.attach(videoPlayer);
-                shakaInstance.configure({ streaming: { rebufferingGoal: 1 } });
-                try { await shakaInstance.load(channel.url); videoPlayer.play(); } 
-                catch (e) { showLoader(false); }
-            }
-        }
-    }
-
-    // --- UI/JSON Logic ---
     function renderDropdown(data) {
         channelsData = data;
         select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
@@ -147,37 +71,61 @@
     }
 
     async function loadChannels() {
-    // 1. Load from cache IMMEDIATELY so Chrome isn't stuck
-    const cached = localStorage.getItem('channels_cache');
-    if (cached) {
+        const cached = localStorage.getItem('channels_cache');
+        if (cached) renderDropdown(JSON.parse(cached));
+
         try {
-            renderDropdown(JSON.parse(cached));
-        } catch(e) { localStorage.removeItem('channels_cache'); }
-    }
+            const res = await fetch(JSON_URL);
+            if (!res.ok) throw new Error("File not found");
+            
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) throw new Error("Invalid format");
 
-    try {
-        // 2. Fetch with a 'cache: no-cache' flag to bypass Netlify edge lag
-        const res = await fetch('./channel.json', { cache: "no-cache" });
-        
-        // 3. Strict check: If Netlify sends a 404 HTML page, STOP
-        const contentType = res.headers.get("content-type");
-        if (!res.ok || (contentType && contentType.includes("text/html"))) {
-            throw new Error("Channel file missing or moved");
-        }
-
-        const data = await res.json();
-        localStorage.setItem('channels_cache', JSON.stringify(data));
-        renderDropdown(data);
-    } catch (e) {
-        console.error("Fetch failed:", e.message);
-        // If cache is empty and fetch fails, give the user a clear message
-        if (!localStorage.getItem('channels_cache')) {
-            select.innerHTML = '<option value="">⚠️ List Unavailable - Please Refresh</option>';
+            const data = await res.json();
+            localStorage.setItem('channels_cache', JSON.stringify(data));
+            renderDropdown(data);
+        } catch (e) {
+            console.error("List Error:", e.message);
+            if (!localStorage.getItem('channels_cache')) {
+                select.innerHTML = `<option value="">⚠️ Error: ${e.message}</option>`;
+            }
         }
     }
-}
 
+    async function playChannel(index) {
+        const channel = channelsData[index];
+        if (!channel) return;
+        await stopAll();
+        loader.style.display = 'flex';
 
+        if (channel.type === 'iframe') {
+            iframePlayer.style.display = 'block';
+            iframePlayer.src = channel.url;
+            iframePlayer.onload = () => { loader.style.display = 'none'; };
+        } else {
+            videoPlayer.style.display = 'block';
+            const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
+
+            if (isHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
+                hlsInstance = new Hls({ startLevel: 0, enableWorker: false });
+                hlsInstance.loadSource(channel.url);
+                hlsInstance.attachMedia(videoPlayer);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+            } else if (typeof shaka !== 'undefined' && shaka.Player.isBrowserSupported()) {
+                shaka.polyfill.installAll();
+                shakaInstance = new shaka.Player();
+                await shakaInstance.attach(videoPlayer); // Modern attach method
+                shakaInstance.configure({ streaming: { rebufferingGoal: 1 } });
+                try { await shakaInstance.load(channel.url); videoPlayer.play(); } 
+                catch (e) { loader.style.display = 'none'; }
+            }
+        }
+    }
+
+    select.onchange = () => { if(select.value !== "") playChannel(select.value); };
+    videoPlayer.onplaying = () => { loader.style.display = 'none'; };
+    
+    loadChannels();
 </script>
 </body>
 </html>
