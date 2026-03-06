@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-</head>
-<body>
-    <a href="https://google.com">External Link (Blocked)</a>
-    <a href="/internal-page.html">Internal Link (Allowed)</a>
-</body>
-</html>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Performance Player</title>
@@ -39,7 +31,7 @@
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
     <!-- Removed loading="lazy" for maximum priority on click -->
-    <iframe src="page.html" sandbox="allow-scripts"></iframe>
+    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen="true" referrerpolicy="no-referrer"></iframe>
     <video id="video-player" playsinline controls></video>
     <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Select a channel</div>
 </div>
