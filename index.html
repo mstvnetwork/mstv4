@@ -241,8 +241,7 @@
  <script>
     
     const select = document.getElementById('channel-select');
-const videoPlayer = document.getElementById('video-player');
-const iframePlayer = document.getElementById('iframe-player');
+const container = document.querySelector('.player-container');
 const placeholder = document.getElementById('placeholder');
 const loading = document.getElementById('loading');
 const liveStamp = document.getElementById('live-stamp');
@@ -253,72 +252,87 @@ let channelsData = [];
 let lastKnownJsonContent = null;
 const JSON_URL = "./channels.json";
 
-// 1. Initialize Shaka Support
+// 1. Initialize Shaka Polyfills
 if (window.shaka) { shaka.polyfill.installAll(); }
 
-// 2. Clear UI and Stop Ghost Audio
-async function stopAllPlayback() {
-    videoPlayer.pause();
-    videoPlayer.muted = true; 
-    videoPlayer.src = "";
-    videoPlayer.removeAttribute('src');
-    videoPlayer.load();
+function showLoading(show) { if(loading) loading.style.display = show ? 'block' : 'none'; }
 
+// 2. The "Nuclear" Reset: Recreates the Video Element to kill Audio & Shaka State
+async function resetPlayer() {
+    showLoading(true);
+    
+    // Kill Hls.js
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    
+    // Kill Shaka
     if (shakaPlayer) { 
         try { await shakaPlayer.destroy(); } catch(e){} 
         shakaPlayer = null; 
     }
 
-    iframePlayer.src = "about:blank";
-    videoPlayer.style.display = 'none';
-    iframePlayer.style.display = 'none';
+    // Kill Iframe Audio
+    const iframe = document.getElementById('iframe-player');
+    iframe.src = "about:blank";
+    iframe.style.display = 'none';
+
+    // REMOVE and RE-CREATE the Video Element (This kills Ghost Audio 100%)
+    const oldVideo = document.getElementById('video-player');
+    const newVideo = document.createElement('video');
+    newVideo.id = 'video-player';
+    newVideo.autoplay = true;
+    newVideo.playsInline = true;
+    newVideo.style.display = 'none';
+    
+    oldVideo.replaceWith(newVideo);
     liveStamp.style.display = 'none';
-    videoPlayer.muted = false;
+    
+    return newVideo;
 }
 
-// 3. Play Channel Logic
+// 3. Main Play Logic
 async function playChannel(channel) {
-    if(loading) loading.style.display = 'block';
+    const videoElement = await resetPlayer(); // Get a fresh, silent video tag
     placeholder.style.display = 'none';
-    await stopAllPlayback();
 
     if (!channel) {
         placeholder.style.display = 'flex';
-        if(loading) loading.style.display = 'none';
+        showLoading(false);
         return;
     }
 
     if (channel.type === 'hls') {
-        videoPlayer.style.display = 'block';
+        videoElement.style.display = 'block';
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
             hlsInstance = new Hls();
             hlsInstance.loadSource(channel.url);
-            hlsInstance.attachMedia(videoPlayer);
+            hlsInstance.attachMedia(videoElement);
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                videoPlayer.play();
-                if(loading) loading.style.display = 'none';
+                videoElement.play();
+                showLoading(false);
                 liveStamp.style.display = 'block';
             });
         }
-    } else if (channel.type === 'dash') {
-        videoPlayer.style.display = 'block';
-        shakaPlayer = new shaka.Player(videoPlayer);
+    } 
+    else if (channel.type === 'dash') {
+        videoElement.style.display = 'block';
+        shakaPlayer = new shaka.Player(videoElement);
         try {
             await shakaPlayer.load(channel.url);
-            videoPlayer.play();
-            if(loading) loading.style.display = 'none';
+            videoElement.play();
+            showLoading(false);
             liveStamp.style.display = 'block';
-        } catch (e) { if(loading) loading.style.display = 'none'; }
-    } else if (channel.type === 'iframe') {
-        iframePlayer.src = channel.url;
-        iframePlayer.style.display = 'block';
-        if(loading) loading.style.display = 'none';
+        } catch (e) { console.error("Shaka Load Error", e); showLoading(false); }
+    } 
+    else if (channel.type === 'iframe') {
+        const iframe = document.getElementById('iframe-player');
+        iframe.src = channel.url;
+        iframe.style.display = 'block';
+        showLoading(false);
         liveStamp.style.display = 'block';
     }
 }
 
-// 4. Fetch Channels (The reason your list stopped loading)
+// 4. Channel List Logic (10 Minute Interval)
 async function fetchChannelsJson() {
     try {
         const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
@@ -328,26 +342,24 @@ async function fetchChannelsJson() {
         if (lastKnownJsonContent !== jsonString) {
             lastKnownJsonContent = jsonString;
             channelsData = json;
-            const currentVal = select.value;
+            const currentSelection = select.value;
             select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
-            channelsData.forEach((channel, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = channel.name;
-                select.appendChild(option);
+            channelsData.forEach((ch, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = ch.name;
+                select.appendChild(opt);
             });
-            select.value = currentVal;
+            select.value = currentSelection;
         }
-    } catch (e) { console.error("List Load Error:", e); }
+    } catch (e) { console.error("JSON Fetch Error", e); }
 }
 
-// 5. Event Listeners
 select.addEventListener('change', () => {
-    const index = select.value;
-    playChannel(index === '' ? null : channelsData[index]);
+    const idx = select.value;
+    playChannel(idx === '' ? null : channelsData[idx]);
 });
 
-// Start the app
 fetchChannelsJson();
 setInterval(fetchChannelsJson, 600000); 
 
