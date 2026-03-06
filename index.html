@@ -268,30 +268,39 @@ if (window.shaka) { shaka.polyfill.installAll(); }
 
 function showLoading(show) { if(loading) loading.style.display = show ? 'block' : 'none'; }
 
-// 2. CLEANUP: Kills Ghost Audio and prevents Library Conflicts
+
+           // Add these to your existing global variables
+let shakaPlayer = null;
+
 async function stopAllPlayback() {
+    // 1. Kill Hls.js
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    
+    // 2. Kill Shaka Player (Completely)
     if (shakaPlayer) { 
         try { await shakaPlayer.destroy(); } catch(e) {} 
         shakaPlayer = null; 
     }
     
+    // 3. Reset Video Element to kill Ghost Audio & Shaka Lock
     videoPlayer.pause();
+    videoPlayer.muted = true;
     videoPlayer.src = "";
-    videoPlayer.removeAttribute('src'); // Crucial: Unlocks the video tag for the next library
-    videoPlayer.load(); 
+    videoPlayer.removeAttribute('src'); 
+    videoPlayer.load(); // Flushes the buffer
 
-    iframePlayer.src = 'about:blank'; // Kills iframe audio instantly
-    
+    iframePlayer.src = 'about:blank';
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'none';
     liveStamp.style.display = 'none';
+    videoPlayer.muted = false;
 }
 
 async function playChannel(channel) {
-    showLoading(true); // Start spinner immediately
+    showLoading(true);
     placeholder.style.display = 'none';
-    await stopAllPlayback();
+    
+    await stopAllPlayback(); // Wait for absolute silence/cleanup
 
     if (!channel) { 
         placeholder.style.display = 'flex'; 
@@ -299,35 +308,24 @@ async function playChannel(channel) {
         return; 
     }
 
-    // NEW: Global "Hide Spinner" listener for the video element
-    // This triggers ONLY when the first frame is actually rendered
-    videoPlayer.onplaying = () => {
-        showLoading(false); 
-        liveStamp.style.display = 'block';
-    };
-
     if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            hlsInstance = new Hls();
+            hlsInstance = new Hls({ startLevel: 0 }); // Global Speed: Start fast
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
                 videoPlayer.play(); 
-                // Note: showLoading(false) is handled by onplaying above
+                showLoading(false); 
+                liveStamp.style.display = 'block'; 
             });
-        } 
-        else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-            videoPlayer.src = channel.url;
-            videoPlayer.play();
         }
     } 
-        else if (channel.type === 'dash') {
+    else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
 
-        // 1. RE-ADD YOUR CLEARKEYS CONFIGURATION
-        // Make sure your channels.json includes 'keyId' and 'key' for DASH types
+        // CLEARKEY FIX: Configure keys BEFORE loading the manifest
         if (channel.keyId && channel.key) {
             shakaPlayer.configure({
                 drm: {
@@ -337,6 +335,31 @@ async function playChannel(channel) {
                 }
             });
         }
+
+        // GLOBAL RESILIENCE: High buffer for 4G stability
+        shakaPlayer.configure({
+            streaming: { bufferingGoal: 20, rebufferingGoal: 2, stallEnabled: true }
+        });
+
+        try {
+            await shakaPlayer.load(channel.url);
+            videoPlayer.play();
+            showLoading(false);
+            liveStamp.style.display = 'block';
+        } catch (e) { 
+            console.error("Shaka Error:", e.code, e); 
+            showLoading(false); 
+        }
+    }
+    else if (channel.type === 'iframe') {
+        iframePlayer.src = channel.url;
+        iframePlayer.style.display = 'block';
+        showLoading(false);
+        liveStamp.style.display = 'block';
+    }
+}
+
+        
 
         // 2. Global Performance Config (4G/5G Resilience)
         shakaPlayer.configure({
