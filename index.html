@@ -32,7 +32,8 @@
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
     <!-- Removed loading="lazy" for maximum priority on click -->
-    
+    <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+        
     <video id="video-player" playsinline controls></video>
     <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Select a channel</div>
 </div>
