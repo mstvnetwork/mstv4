@@ -322,20 +322,46 @@ async function playChannel(channel) {
             videoPlayer.play();
         }
     } 
-    else if (channel.type === 'dash') {
+        else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
-        
-        // Add Shaka's internal buffering listener for mid-stream stalls
+
+        // 1. RE-ADD YOUR CLEARKEYS CONFIGURATION
+        // Make sure your channels.json includes 'keyId' and 'key' for DASH types
+        if (channel.keyId && channel.key) {
+            shakaPlayer.configure({
+                drm: {
+                    clearKeys: {
+                        [channel.keyId]: channel.key
+                    }
+                }
+            });
+        }
+
+        // 2. Global Performance Config (4G/5G Resilience)
+        shakaPlayer.configure({
+            streaming: {
+                bufferingGoal: 20, 
+                rebufferingGoal: 2,
+                stallEnabled: true
+            }
+        });
+
+        // 3. Buffer Listener for Spinner
         shakaPlayer.addEventListener('buffering', (data) => {
             showLoading(data.buffering); 
         });
 
         try {
             await shakaPlayer.load(channel.url);
+            // Spinner is hidden by the global videoPlayer.onplaying listener
             videoPlayer.play();
-        } catch (e) { showLoading(false); }
+        } catch (e) { 
+            console.error("Shaka DRM/Load Error:", e);
+            showLoading(false); 
+        }
     }
+
     else if (channel.type === 'iframe') {
         iframePlayer.src = channel.url;
         iframePlayer.style.display = 'block';
