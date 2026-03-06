@@ -37,38 +37,51 @@
 </div>
 
 <script>
+    // 1. Declare ALL variables ONCE at the top
     const select = document.getElementById('channel-select');
     const videoPlayer = document.getElementById('video-player');
     const iframePlayer = document.getElementById('iframe-player');
     const loader = document.getElementById('loader-overlay');
+    const liveStamp = document.getElementById('live-stamp');
     const placeholder = document.getElementById('placeholder');
     
+    const JSON_URL = "./channel.json";
+    let hlsInstance = null;
     let shakaInstance = null;
-    let hlsInstance = null;
-    let hlsInstance = null;
-let shakaInstance = null;
-let channelsData = [];
-let retryTimer = null; // <--- ADD THIS LINE HERE
+    let channelsData = [];
+    let retryTimer = null; // Defined here once
 
+    // 2. Clear previous playback (High Performance)
+    async function stopAll() {
+        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+        
+        if (shakaInstance) {
+            try { await shakaInstance.destroy(); } catch (e) {}
+            shakaInstance = null;
+        }
+        if (hlsInstance) {
+            hlsInstance.destroy();
+            hlsInstance = null;
+        }
 
-    function toggleLoader(show) { loader.style.display = show ? 'flex' : 'none'; }
-
-    // --- CHANNEL LOADING ---
-    async function loadChannels() {
-        const cached = localStorage.getItem('channels_cache');
-        if (cached) renderDropdown(JSON.parse(cached));
-
-        try {
-            const res = await fetch("./channels.json");
-            const data = await res.json();
-            localStorage.setItem('channels_cache', JSON.stringify(data));
-            renderDropdown(data);
-        } catch (e) { console.error("JSON Error", e); }
+        videoPlayer.pause();
+        videoPlayer.removeAttribute('src'); 
+        videoPlayer.load(); 
+        
+        videoPlayer.style.display = 'none';
+        iframePlayer.src = "";
+        iframePlayer.style.display = 'none';
+        if (liveStamp) liveStamp.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'none';
     }
 
+    // 3. UI and Fetch Logic
+    function toggleLoader(show) { if(loader) loader.style.display = show ? 'flex' : 'none'; }
+
     function renderDropdown(data) {
-        window.channelsData = data; // Crucial for global access
-        select.innerHTML = '<option value="">👉📺 Select Channel</option>';
+        channelsData = data;
+        window.channelsData = data; 
+        select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
         data.forEach((ch, i) => {
             const opt = document.createElement('option');
             opt.value = i;
@@ -77,86 +90,55 @@ let retryTimer = null; // <--- ADD THIS LINE HERE
         });
     }
 
-    async function stopAll() {
-    // Check if retryTimer exists before clearing to avoid the error
-    if (typeof retryTimer !== 'undefined' && retryTimer) {
-        clearTimeout(retryTimer);
-        retryTimer = null;
-    }
+    async function loadChannels() {
+        const cached = localStorage.getItem('channels_cache');
+        if (cached) renderDropdown(JSON.parse(cached));
 
-    // 1. Kill Shaka (Heavy Engine)
-    if (shakaInstance) {
         try {
-            await shakaInstance.detach(); 
-            await shakaInstance.destroy();
-            shakaInstance = null;
-        } catch (e) { console.error("Shaka cleanup error", e); }
+            const res = await fetch(JSON_URL);
+            if (!res.ok) throw new Error('File not found');
+            const data = await res.json();
+            localStorage.setItem('channels_cache', JSON.stringify(data));
+            renderDropdown(data);
+        } catch (e) { console.error("JSON Load Error", e); }
     }
 
-    // 2. Kill HLS.js (Light Engine)
-    if (hlsInstance) {
-        try {
-            hlsInstance.stopLoad();
-            hlsInstance.detachMedia();
-            hlsInstance.destroy();
-            hlsInstance = null;
-        } catch (e) { console.error("HLS cleanup error", e); }
-    }
-
-    // 3. Clear Video Buffer (Fixes the switching lag)
-    videoPlayer.pause();
-    videoPlayer.removeAttribute('src'); 
-    videoPlayer.load(); 
-    
-    // 4. UI Hide
-    videoPlayer.style.display = 'none';
-    iframePlayer.src = "";
-    iframePlayer.style.display = 'none';
-    if (liveStamp) liveStamp.style.display = 'none';
-    if (placeholder) placeholder.style.display = 'none';
-}
-
-
-
+    // 4. Playback Logic
     async function playChannel(index) {
-        const channel = window.channelsData[index];
+        const channel = channelsData[index];
         if (!channel) return;
 
         await stopAll();
         toggleLoader(true);
 
-        // 1. IFRAME CHANNELS
         if (channel.type === 'iframe') {
             iframePlayer.style.display = 'block';
             iframePlayer.src = channel.url;
             toggleLoader(false);
-            return;
-        }
-
-        // 2. VIDEO CHANNELS (HLS/SHAKA)
-        videoPlayer.style.display = 'block';
-
-        if (shaka.Player.isBrowserSupported()) {
-            shaka.polyfill.installAll();
-            shakaInstance = new shaka.Player(videoPlayer);
-            shakaInstance.configure({
-                abr: { defaultBandwidthEstimate: 500000 },
-                streaming: { rebufferingGoal: 2, bufferingGoal: 10 }
-            });
-
-            try {
-                await shakaInstance.load(channel.url);
-                toggleLoader(false);
-            } catch (e) {
-                console.error("Shaka failed, trying HLS.js", e);
-                tryHls(channel.url);
-            }
+            if (liveStamp) liveStamp.style.display = 'block';
         } else {
-            tryHls(channel.url);
+            videoPlayer.style.display = 'block';
+            
+            // Global Performance: Try Shaka first
+            if (shaka.Player.isBrowserSupported()) {
+                shaka.polyfill.installAll();
+                shakaInstance = new shaka.Player(videoPlayer);
+                shakaInstance.configure({
+                    abr: { defaultBandwidthEstimate: 500000 },
+                    streaming: { rebufferingGoal: 2, bufferingGoal: 10 }
+                });
+                try {
+                    await shakaInstance.load(channel.url);
+                    toggleLoader(false);
+                    if (liveStamp) liveStamp.style.display = 'block';
+                } catch (e) { tryHlsFallback(channel.url); }
+            } else {
+                tryHlsFallback(channel.url);
+            }
         }
     }
 
-    function tryHls(url) {
+    function tryHlsFallback(url) {
         if (Hls.isSupported()) {
             hlsInstance = new Hls({ startLevel: 0 });
             hlsInstance.loadSource(url);
@@ -164,13 +146,17 @@ let retryTimer = null; // <--- ADD THIS LINE HERE
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                 videoPlayer.play();
                 toggleLoader(false);
+                if (liveStamp) liveStamp.style.display = 'block';
             });
         }
     }
 
+    // 5. Event Listeners
     select.onchange = () => { if(select.value !== "") playChannel(select.value); };
+    videoPlayer.addEventListener('waiting', () => toggleLoader(true));
+    videoPlayer.addEventListener('playing', () => toggleLoader(false));
+
     loadChannels();
 </script>
-
 </body>
 </html>
