@@ -268,52 +268,77 @@ function stopAllPlayback() {
     iframePlayer.style.display = 'none';
     liveStamp.style.display = 'none';
 }
-
 async function playChannel(channel) {
-    showLoading(true);
+    // 1. Force Spinner ON immediately
+    if(loading) loading.style.display = 'block'; 
     placeholder.style.display = 'none';
-    stopAllPlayback();
     
+    // 2. Kill everything before starting new stream
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    if (shakaPlayer) { 
+        await shakaPlayer.destroy(); 
+        shakaPlayer = null; 
+    }
+    
+    videoPlayer.pause();
+    videoPlayer.src = "";
+    videoPlayer.removeAttribute('src'); // Essential to clear the "Shaka" state
+    videoPlayer.load(); 
+    
+    videoPlayer.style.display = 'none';
+    iframePlayer.style.display = 'none';
+    liveStamp.style.display = 'none';
+
     if (!channel) { 
         placeholder.style.display = 'flex'; 
-        showLoading(false); 
+        if(loading) loading.style.display = 'none';
         return; 
     }
 
     if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
+        // Check for Hls.js support (Chrome/Firefox/Android)
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
             hlsInstance = new Hls();
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
-                videoPlayer.play(); 
-                showLoading(false); 
-                liveStamp.style.display = 'block'; 
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                videoPlayer.play();
+                if(loading) loading.style.display = 'none'; // Hide spinner
+                liveStamp.style.display = 'block';
+            });
+        } 
+        // Fallback for Safari/iPhone (Native HLS)
+        else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+            videoPlayer.src = channel.url;
+            videoPlayer.play().then(() => {
+                if(loading) loading.style.display = 'none';
+                liveStamp.style.display = 'block';
             });
         }
-    } else if (channel.type === 'dash') {
+    } 
+    else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
         
-        // Optimize for 4G/Global Networks
-        shakaPlayer.configure({
-            streaming: { bufferingGoal: 20, rebufferingGoal: 3, stallEnabled: true }
-        });
-
         try {
             await shakaPlayer.load(channel.url);
             videoPlayer.play();
-            showLoading(false);
+            if(loading) loading.style.display = 'none';
             liveStamp.style.display = 'block';
-        } catch (e) { console.error('Shaka Error:', e); showLoading(false); }
-    } else if (channel.type === 'iframe') {
+        } catch (e) {
+            console.error("Shaka Error:", e);
+            if(loading) loading.style.display = 'none';
+        }
+    } 
+    else if (channel.type === 'iframe') {
         iframePlayer.src = channel.url;
         iframePlayer.style.display = 'block';
-        showLoading(false);
+        if(loading) loading.style.display = 'none';
         liveStamp.style.display = 'block';
     }
 }
+
 
 async function fetchChannelsJson() {
     try {
