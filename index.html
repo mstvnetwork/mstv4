@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://googleads.g.doubleclick.net">
+<link rel="preconnect" href="https://www.googletagservices.com">
+<!-- Add the main domain of your stream providers here -->
+<link rel="dns-prefetch" href="https://your-iframe-provider.com">
+
     <title>Global High-Speed Player</title>
     
     <!-- 1. FIXED LIBRARIES: Chrome-Safe CDN Links -->
@@ -24,7 +29,12 @@
 
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
-    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen="true"></iframe>
+    <iframe id="iframe-player" 
+    allow="autoplay; encrypted-media; fullscreen" 
+    allowfullscreen="true" 
+    referrerpolicy="no-referrer">
+</iframe>
+
     <video id="video-player" playsinline controls></video>
     <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Choose a channel</div>
 </div>
@@ -48,16 +58,16 @@
     let channelsData = [];
 
     async function stopAll() {
-        loader.style.display = 'none';
-        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-        if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
-        videoPlayer.pause();
-        videoPlayer.removeAttribute('src'); 
-        videoPlayer.load(); 
-        videoPlayer.style.display = 'none';
-        iframePlayer.src = "";
-        iframePlayer.style.display = 'none';
-    }
+    async function stopAll() {
+    loader.style.display = 'none';
+    // ... your Shaka/HLS cleanup ...
+
+    // KILL IFRAME IMMEDIATELY
+    iframePlayer.removeAttribute('src'); 
+    iframePlayer.src = "about:blank"; // This wipes the external site from memory
+    iframePlayer.style.display = 'none';
+}
+
 
     function renderDropdown(data) {
         channelsData = data;
