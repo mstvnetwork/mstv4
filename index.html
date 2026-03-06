@@ -258,27 +258,56 @@ if (window.shaka) { shaka.polyfill.installAll(); }
 
 function showLoading(show) { if(loading) loading.style.display = show ? 'block' : 'none'; }
 
-function stopAllPlayback() {
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-    if (shakaPlayer) { shakaPlayer.destroy(); shakaPlayer = null; }
+async function stopAllPlayback() {
+    // 1. Force Mute and Pause the actual element immediately
     videoPlayer.pause();
+    videoPlayer.muted = true; 
     videoPlayer.src = "";
+    videoPlayer.removeAttribute('src');
+    videoPlayer.load(); // This "flushes" the audio buffer
+
+    // 2. Kill HLS.js instance
+    if (hlsInstance) {
+        hlsInstance.detachMedia();
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
+
+    // 3. Kill Shaka Player instance (Wait for it to finish)
+    if (shakaPlayer) {
+        try {
+            await shakaPlayer.detach();
+            await shakaPlayer.destroy();
+        } catch (e) { console.error("Shaka Cleanup Error:", e); }
+        shakaPlayer = null;
+    }
+
+    // 4. Reset Iframe
+    iframePlayer.src = "about:blank"; // Clears iframe audio/video
+    
+    // 5. Reset UI
     videoPlayer.style.display = 'none';
-    iframePlayer.src = '';
     iframePlayer.style.display = 'none';
     liveStamp.style.display = 'none';
+    videoPlayer.muted = false; // Unmute for the NEXT channel
 }
+
 async function playChannel(channel) {
-    // 1. Force Spinner ON immediately
-    if(loading) loading.style.display = 'block'; 
+    if(loading) loading.style.display = 'block';
     placeholder.style.display = 'none';
-    
-    // 2. Kill everything before starting new stream
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-    if (shakaPlayer) { 
-        await shakaPlayer.destroy(); 
-        shakaPlayer = null; 
+
+    // Await the full cleanup to ensure old audio is DEAD
+    await stopAllPlayback();
+
+    if (!channel) {
+        placeholder.style.display = 'flex';
+        if(loading) loading.style.display = 'none';
+        return;
     }
+
+    // ... [Rest of your play logic for HLS, DASH, and Iframe remains the same] ...
+}
+
     
     videoPlayer.pause();
     videoPlayer.src = "";
