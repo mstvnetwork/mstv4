@@ -72,17 +72,38 @@
         });
     }
 
-    // --- PLAYBACK LOGIC ---
     async function stopAll() {
-        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-        if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
-        videoPlayer.pause();
-        videoPlayer.src = "";
-        videoPlayer.style.display = 'none';
-        iframePlayer.src = "";
-        iframePlayer.style.display = 'none';
-        placeholder.style.display = 'none';
+    clearTimeout(retryTimer);
+    
+    // 1. Kill Shaka Instance immediately
+    if (shakaInstance) {
+        try {
+            await shakaInstance.detach(); // Detach from video element first
+            await shakaInstance.destroy(); 
+        } catch (e) { console.error("Shaka destroy error", e); }
+        shakaInstance = null;
     }
+
+    // 2. Kill HLS.js Instance immediately
+    if (hlsInstance) {
+        hlsInstance.stopLoad(); // Stop downloading segments NOW
+        hlsInstance.detachMedia();
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
+
+    // 3. HARD RESET the video element to clear the buffer
+    videoPlayer.pause();
+    videoPlayer.removeAttribute('src'); // Removes the ghost link
+    videoPlayer.load(); // Forces the browser to flush the video memory
+    
+    // 4. UI Reset
+    videoPlayer.style.display = 'none';
+    iframePlayer.src = "";
+    iframePlayer.style.display = 'none';
+    liveStamp.style.display = 'none';
+}
+
 
     async function playChannel(index) {
         const channel = window.channelsData[index];
