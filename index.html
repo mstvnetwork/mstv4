@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <title>Global Performance Player</title>
     
     <!-- 1. PRE-CONNECT: Speeds up external iframe handshakes -->
@@ -31,7 +32,7 @@
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
     <!-- Removed loading="lazy" for maximum priority on click -->
-    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen="true" referrerpolicy="no-referrer"></iframe>
+    
     <video id="video-player" playsinline controls></video>
     <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Select a channel</div>
 </div>
