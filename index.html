@@ -110,6 +110,46 @@
         } catch (e) { console.error(e); }
     }
 
+    function loadHlsFast(url) {
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        hlsInstance = new Hls({
+            startLevel: 0,
+            maxBufferLength: 20,
+            enableWorker: false
+        });
+        
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(videoPlayer);
+
+        // --- FATAL ERROR RECOVERY ---
+        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log("Network error, retrying...");
+                        hlsInstance.startLoad(); // Try to reload segments
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log("Media error, recovering...");
+                        hlsInstance.recoverMediaError(); // Try to fix buffer issues
+                        break;
+                    default:
+                        console.log("Unrecoverable error, destroying and restarting...");
+                        hlsInstance.destroy();
+                        loadHlsFast(url); // Hard restart
+                        break;
+                }
+            }
+        });
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+    } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+        videoPlayer.src = url;
+        videoPlayer.play();
+    }
+}
+
+
     async function playChannel(index) {
         const channel = channelsData[index];
         if (!channel) return;
