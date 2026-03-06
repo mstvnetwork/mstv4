@@ -1,26 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Disable Zoom (Mobile) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <script>
-        // Stop External Redirection
-        document.addEventListener("DOMContentLoaded", function() {
-            document.body.addEventListener("click", function(e) {
-                var target = e.target;
-                // Check if the clicked element is an anchor
-                if (target.tagName === "A") {
-                    var href = target.getAttribute("href");
-                    // If href starts with http/https and is not on the same domain
-                    if (href && href.startsWith("http") && !href.includes(window.location.hostname)) {
-                        e.preventDefault();
-                        alert("External links are disabled.");
-                    }
-                }
-            });
-        });
-    </script>
 </head>
 <body>
     <a href="https://google.com">External Link (Blocked)</a>
@@ -58,7 +39,7 @@
 <div class="player-container">
     <div id="loader-overlay"><div class="spinner"></div></div>
     <!-- Removed loading="lazy" for maximum priority on click -->
-    <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen="true" referrerpolicy="no-referrer"></iframe>
+    <iframe src="page.html" sandbox="allow-scripts"></iframe>
     <video id="video-player" playsinline controls></video>
     <div id="placeholder" style="height:100%; display:flex; align-items:center; justify-content:center; color:#666;">📺 Select a channel</div>
 </div>
