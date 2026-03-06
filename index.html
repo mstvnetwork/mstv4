@@ -300,31 +300,36 @@ async function playChannel(channel) {
         return; 
     }
 
-    if (channel.type === 'hls') {
+        if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            hlsInstance = new Hls({
-                // LOW NETWORK OPTIMIZATION: More aggressive buffering for HLS
-                maxBufferLength: 30,
-                startLevel: 0 // Start at lowest quality to ensure instant play on 4G
-            });
+            hlsInstance = new Hls();
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
+            
+            // This is the missing part!
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
-                videoPlayer.play(); 
-                showLoading(false); 
-                liveStamp.style.display = 'block'; 
+                videoPlayer.play().then(() => {
+                    showLoading(false); // Hide spinner when HLS starts
+                    liveStamp.style.display = 'block'; 
+                });
             });
-        } 
-        else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-            // NATIVE IOS SUPPORT: Ensures it works on iPhones in any country
+
+            // Error handling for slow global networks
+            hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) { showLoading(false); }
+            });
+
+        } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native Safari/iPhone support
             videoPlayer.src = channel.url;
             videoPlayer.play().then(() => {
                 showLoading(false);
                 liveStamp.style.display = 'block';
             });
         }
-    } 
+    }
+
     else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
