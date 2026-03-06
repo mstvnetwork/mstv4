@@ -142,32 +142,35 @@
     }
 
     async function loadChannels() {
-    // 1. Check Cache first (Instant display)
+    // 1. Show cached list immediately so Chrome isn't stuck on "Initializing"
     const cached = localStorage.getItem('channels_cache');
-    if (cached) renderDropdown(JSON.parse(cached));
+    if (cached) {
+        try {
+            renderDropdown(JSON.parse(cached));
+        } catch(e) { localStorage.removeItem('channels_cache'); }
+    }
 
     try {
-        // 2. Use a relative path that works on Netlify
+        // 2. Use a path-safe fetch
         const res = await fetch('./channel.json'); 
         
-        // 3. Verify it's actually JSON before parsing
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            throw new TypeError("Oops, we didn't get JSON!");
-        }
-
+        // 3. Handle the 'Unexpected Token <' error (404 pages)
+        if (!res.ok) throw new Error("Channel file not found (404)");
+        
         const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("JSON is not a list");
+
         localStorage.setItem('channels_cache', JSON.stringify(data));
         renderDropdown(data);
     } catch (e) { 
-        console.error("JSON Error:", e.message);
-        // If it's a 404, Chrome will show 'Initializing' forever
-        if (e.message.includes('404')) {
-            select.innerHTML = '<option value="">⚠️ Channel File Missing</option>';
+        console.error("Chrome Fetch Error:", e.message);
+        // If everything fails, show a manual refresh option
+        if (!localStorage.getItem('channels_cache')) {
+            select.innerHTML = '<option value="">⚠️ Error: Please refresh page</option>';
         }
     }
 }
+
 
 </script>
 </body>
