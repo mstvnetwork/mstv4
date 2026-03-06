@@ -239,7 +239,7 @@
     </div>
 </footer>
  <script>
-    const select = document.getElementById('channel-select');
+                const select = document.getElementById('channel-select');
 const videoPlayer = document.getElementById('video-player');
 const iframePlayer = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
@@ -247,34 +247,31 @@ const loading = document.getElementById('loading');
 const liveStamp = document.getElementById('live-stamp');
 
 let hlsInstance = null;
-let shakaPlayer = null; // Added to track Shaka separately
+let shakaPlayer = null; 
 let channelsData = [];
 let lastKnownJsonContent = null;
 const JSON_URL = "./channels.json";
 
+// 1. GLOBAL POLYFILL: Ensures Shaka works on all international browsers
+if (window.shaka) { shaka.polyfill.installAll(); }
+
 function showLoading(show) { if(loading) loading.style.display = show ? 'block' : 'none'; }
 
-// NEW: Combined cleanup to kill background audio and library conflicts
+// 2. CLEANUP: Kills Ghost Audio and prevents Library Conflicts
 async function stopAllPlayback() {
-    // Stop Hls.js
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-    
-    // Stop Shaka Player completely
     if (shakaPlayer) { 
         try { await shakaPlayer.destroy(); } catch(e) {} 
         shakaPlayer = null; 
     }
     
-    // Reset video element to kill ghost audio
     videoPlayer.pause();
     videoPlayer.src = "";
-    videoPlayer.removeAttribute('src'); // Essential to clear Shaka/HLS "lock"
+    videoPlayer.removeAttribute('src'); // Crucial: Unlocks the video tag for the next library
     videoPlayer.load(); 
 
-    // Reset iframe to stop its audio
-    iframePlayer.src = 'about:blank';
+    iframePlayer.src = 'about:blank'; // Kills iframe audio instantly
     
-    // Reset UI
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'none';
     liveStamp.style.display = 'none';
@@ -284,8 +281,7 @@ async function playChannel(channel) {
     showLoading(true);
     placeholder.style.display = 'none';
     
-    // Ensure everything is stopped before starting new channel
-    await stopAllPlayback();
+    await stopAllPlayback(); // Wait for full cleanup to prevent audio overlap
     
     if (!channel) { 
         placeholder.style.display = 'flex'; 
@@ -295,9 +291,12 @@ async function playChannel(channel) {
 
     if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
-        // Use Hls.js if supported
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            hlsInstance = new Hls();
+            hlsInstance = new Hls({
+                // LOW NETWORK OPTIMIZATION: More aggressive buffering for HLS
+                maxBufferLength: 30,
+                startLevel: 0 // Start at lowest quality to ensure instant play on 4G
+            });
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
             hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
@@ -306,8 +305,8 @@ async function playChannel(channel) {
                 liveStamp.style.display = 'block'; 
             });
         } 
-        // Fallback for Safari/iOS native playback
         else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+            // NATIVE IOS SUPPORT: Ensures it works on iPhones in any country
             videoPlayer.src = channel.url;
             videoPlayer.play().then(() => {
                 showLoading(false);
@@ -315,10 +314,21 @@ async function playChannel(channel) {
             });
         }
     } 
-    // Logic for DASH using Shaka
     else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
+        
+        // 3. GLOBAL PERFORMANCE CONFIG: Buffer more for 4G, load fast on 5G
+        shakaPlayer.configure({
+            streaming: {
+                bufferingGoal: 20, // 20s buffer to survive 4G signal drops
+                rebufferingGoal: 2,
+                stallEnabled: true,
+                retryParameters: { maxAttempts: 5, baseDelay: 1000 }
+            },
+            abr: { defaultBandwidthEstimate: 1000000 } // Assume 1Mbps to start fast
+        });
+
         try {
             await shakaPlayer.load(channel.url);
             videoPlayer.play();
@@ -329,11 +339,12 @@ async function playChannel(channel) {
     else if (channel.type === 'iframe') {
         iframePlayer.src = channel.url;
         iframePlayer.style.display = 'block';
-        showLoading(false);
-        liveStamp.style.display = 'block';
+        showLoading(true); // Keep loading visible while iframe loads
+        iframePlayer.onload = () => { showLoading(false); liveStamp.style.display = 'block'; };
     }
 }
 
+// 4. SMART FETCH: Prevents "Fragility" and DOM Thrashing
 async function fetchChannelsJson() {
     try {
         const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
@@ -343,6 +354,7 @@ async function fetchChannelsJson() {
         if (lastKnownJsonContent !== jsonString) {
             lastKnownJsonContent = jsonString;
             channelsData = json;
+            const currentSelection = select.value;
             select.innerHTML = '<option value="">👉📺 Click & Select Channel</option>';
             channelsData.forEach((channel, index) => {
                 const option = document.createElement('option');
@@ -350,6 +362,7 @@ async function fetchChannelsJson() {
                 option.textContent = channel.name;
                 select.appendChild(option);
             });
+            select.value = currentSelection;
         }
     } catch (e) { console.error('JSON Error:', e); }
 }
@@ -360,7 +373,7 @@ select.addEventListener('change', () => {
 });
 
 fetchChannelsJson();
-setInterval(fetchChannelsJson, 600000); // 10-Minute interval for stability
+setInterval(fetchChannelsJson, 600000); // 10-Minute interval for network stability
 
 </script>
 </body>
