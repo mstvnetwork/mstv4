@@ -289,76 +289,65 @@ async function stopAllPlayback() {
 }
 
 async function playChannel(channel) {
-    showLoading(true);
+    showLoading(true); // Start spinner immediately
     placeholder.style.display = 'none';
-    
-    await stopAllPlayback(); // Wait for full cleanup to prevent audio overlap
-    
+    await stopAllPlayback();
+
     if (!channel) { 
         placeholder.style.display = 'flex'; 
         showLoading(false); 
         return; 
     }
 
-        if (channel.type === 'hls') {
+    // NEW: Global "Hide Spinner" listener for the video element
+    // This triggers ONLY when the first frame is actually rendered
+    videoPlayer.onplaying = () => {
+        showLoading(false); 
+        liveStamp.style.display = 'block';
+    };
+
+    if (channel.type === 'hls') {
         videoPlayer.style.display = 'block';
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
             hlsInstance = new Hls();
             hlsInstance.loadSource(channel.url);
             hlsInstance.attachMedia(videoPlayer);
-            
-            // This is the missing part!
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
-                videoPlayer.play().then(() => {
-                    showLoading(false); // Hide spinner when HLS starts
-                    liveStamp.style.display = 'block'; 
-                });
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                videoPlayer.play(); 
+                // Note: showLoading(false) is handled by onplaying above
             });
-
-            // Error handling for slow global networks
-            hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) { showLoading(false); }
-            });
-
-        } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-            // Native Safari/iPhone support
+        } 
+        else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
             videoPlayer.src = channel.url;
-            videoPlayer.play().then(() => {
-                showLoading(false);
-                liveStamp.style.display = 'block';
-            });
+            videoPlayer.play();
         }
-    }
-
+    } 
     else if (channel.type === 'dash') {
         videoPlayer.style.display = 'block';
         shakaPlayer = new shaka.Player(videoPlayer);
         
-        // 3. GLOBAL PERFORMANCE CONFIG: Buffer more for 4G, load fast on 5G
-        shakaPlayer.configure({
-            streaming: {
-                bufferingGoal: 20, // 20s buffer to survive 4G signal drops
-                rebufferingGoal: 2,
-                stallEnabled: true,
-                retryParameters: { maxAttempts: 5, baseDelay: 1000 }
-            },
-            abr: { defaultBandwidthEstimate: 1000000 } // Assume 1Mbps to start fast
+        // Add Shaka's internal buffering listener for mid-stream stalls
+        shakaPlayer.addEventListener('buffering', (data) => {
+            showLoading(data.buffering); 
         });
 
         try {
             await shakaPlayer.load(channel.url);
             videoPlayer.play();
-            showLoading(false);
-            liveStamp.style.display = 'block';
-        } catch (e) { console.error(e); showLoading(false); }
+        } catch (e) { showLoading(false); }
     }
     else if (channel.type === 'iframe') {
         iframePlayer.src = channel.url;
         iframePlayer.style.display = 'block';
-        showLoading(true); // Keep loading visible while iframe loads
-        iframePlayer.onload = () => { showLoading(false); liveStamp.style.display = 'block'; };
+        // Iframes don't have a 'playing' event, so we use onload
+        iframePlayer.onload = () => {
+            showLoading(false);
+            liveStamp.style.display = 'block';
+        };
     }
 }
+
+
 
 // 4. SMART FETCH: Prevents "Fragility" and DOM Thrashing
 async function fetchChannelsJson() {
