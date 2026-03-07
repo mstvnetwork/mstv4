@@ -172,18 +172,14 @@ async function playChannel(index){
   loader.style.display = 'block';
   placeholder.style.display = 'none';
 
-  // Show live stamp only for live channels
-  if(channel.isLive) {
-    liveStamp.style.display = 'block';
-  } else {
-    liveStamp.style.display = 'none';
-  }
+  // Show live stamp for live channels
+  liveStamp.style.display = channel.isLive ? 'block' : 'none';
 
   if(channel.type === 'iframe'){
     iframe.style.display = 'block';
     iframe.src = channel.url;
     iframe.onload = () => { loader.style.display = 'none'; };
-    return;
+    return; // okay here, after setting up iframe
   }
 
   video.style.display = 'block';
@@ -199,7 +195,7 @@ async function playChannel(index){
       video.src = channel.url;
       video.play();
     }
-    return;
+    return; // okay here, after HLS is initialized
   }
 
   if(window.shaka && shaka.Player.isBrowserSupported()){
