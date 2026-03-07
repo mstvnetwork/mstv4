@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="your-verification-code">
-
+<meta name="language" content="English">
 <!-- Primary SEO -->
 <title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket Streaming</title>
 
@@ -17,6 +17,9 @@
 
 <!-- Canonical -->
 <link rel="canonical" href="https://mstvnet.netlify.app">
+<link rel="alternate" hreflang="en">
+<link rel="alternate" hreflang="en-IN" href="https://mstvnet.netlify.app/">
+<link rel="pingback" href="https://mstvnet.netlify.app/xmlrpc.php">
 <meta name="googlebot" content="index,follow">
 
 <!-- Open Graph (Social SEO) -->
@@ -110,61 +113,67 @@ video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; borde
   <div id="live-stamp">MSTV Network</div>
 </div>
 
-
 <script defer>
 const select = document.getElementById('channel-select');
 const video = document.getElementById('video-player');
 const iframe = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
 const loader = document.getElementById('loading');
+const liveStamp = document.getElementById('live-stamp');
 const JSON_URL = './channels.json';
 
 let channels = [];
 let hls = null;
 let shakaPlayer = null;
 
+// Stop any playing video/iframe
 async function stopAll() {
-  loader.style.display='none';
-  if(hls){ hls.destroy(); hls=null; }
-  if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer=null; }
+  loader.style.display = 'none';
+  liveStamp.style.display = 'none';
+
+  if(hls){ hls.destroy(); hls = null; }
+  if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
 
   video.pause();
   video.removeAttribute('src');
   video.load();
 
   iframe.removeAttribute('src');
-  iframe.src='about:blank';
+  iframe.src = 'about:blank';
 
-  video.style.display='none';
-  iframe.style.display='none';
-  placeholder.style.display='flex';
+  video.style.display = 'none';
+  iframe.style.display = 'none';
+  placeholder.style.display = 'flex';
 }
 
+// Populate channel dropdown
 function renderDropdown(data){
   channels = data;
   select.innerHTML = '<option value="">📱Click & Select Channel</option>';
-  data.forEach((ch,i)=>{
-    const opt=document.createElement("option");
-    opt.value=i;
-    opt.textContent=ch.name;
+  data.forEach((ch, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = ch.name;
     select.appendChild(opt);
   });
 }
 
+// Load channels from JSON (with localStorage caching)
 async function loadChannels(){
   const cached = localStorage.getItem("channels_cache");
   if(cached) renderDropdown(JSON.parse(cached));
-  try{
-    const res = await fetch(JSON_URL,{cache:'force-cache'});
+
+  try {
+    const res = await fetch(JSON_URL, { cache: 'force-cache' });
     const data = await res.json();
-    localStorage.setItem('channels_cache',JSON.stringify(data));
+    localStorage.setItem('channels_cache', JSON.stringify(data));
     renderDropdown(data);
   } catch(e){
     console.error('Channels load failed', e);
   }
 }
 
-async function playChannel(index){
+// Play selected channel
 async function playChannel(index){
   const channel = channels[index];
   if(!channel) return;
@@ -173,16 +182,18 @@ async function playChannel(index){
   loader.style.display = 'block';
   placeholder.style.display = 'none';
 
-  // Show live stamp for live channels
+  // Show live stamp if channel is live
   liveStamp.style.display = channel.isLive ? 'block' : 'none';
 
+  // Iframe stream
   if(channel.type === 'iframe'){
     iframe.style.display = 'block';
     iframe.src = channel.url;
     iframe.onload = () => { loader.style.display = 'none'; };
-    return; // okay here, after setting up iframe
+    return;
   }
 
+  // Video stream
   video.style.display = 'block';
   const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
 
@@ -196,13 +207,15 @@ async function playChannel(index){
       video.src = channel.url;
       video.play();
     }
-    return; // okay here, after HLS is initialized
+    return;
   }
 
+  // Shaka player
   if(window.shaka && shaka.Player.isBrowserSupported()){
     shaka.polyfill.installAll();
     shakaPlayer = new shaka.Player(video);
     shakaPlayer.configure({ streaming:{ bufferingGoal:10, rebufferingGoal:0.5, lowLatencyMode:true } });
+
     try{
       await shakaPlayer.load(channel.url);
       video.play();
@@ -214,6 +227,16 @@ async function playChannel(index){
     }
   }
 }
+
+// Hide loader when video starts
+video.onplaying = () => { loader.style.display = 'none'; };
+
+// Play selected channel from dropdown
+select.onchange = () => { if(select.value !== '') playChannel(select.value); };
+
+// Initialize
+loadChannels();
+</script>
 
 <!-- JSON-LD for SEO -->
 <script type="application/ld+json">
