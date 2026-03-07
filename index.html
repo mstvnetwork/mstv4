@@ -165,6 +165,7 @@ async function loadChannels(){
 }
 
 async function playChannel(index){
+async function playChannel(index){
   const channel = channels[index];
   if(!channel) return;
 
@@ -213,20 +214,6 @@ async function playChannel(index){
     }
   }
 }
-
-// Hide loader once video starts playing
-video.onplaying = () => { loader.style.display = 'none'; };
-
-// Play channel on select change
-select.onchange = () => { if(select.value !== '') playChannel(select.value); };
-
-loadChannels();
-
-video.onplaying = ()=>{ loader.style.display='none'; };
-select.onchange = ()=>{ if(select.value!=='') playChannel(select.value); };
-
-loadChannels();
-</script>
 
 <!-- JSON-LD for SEO -->
 <script type="application/ld+json">
