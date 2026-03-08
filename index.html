@@ -80,98 +80,6 @@
     <div id="channel-list"></div>
 </div>
 
-<script>
-
-  // AGGRESSIVE: Unregister HLS from Shaka so it ONLY handles DASH
-if (window.shaka) {
-    shaka.media.ManifestParser.unregisterParserByExtension('m3u8');
-    shaka.media.ManifestParser.unregisterParserByMime('application/x-mpegurl');
-    shaka.media.ManifestParser.unregisterParserByMime('application/vnd.apple.mpegurl');
-}
-
-const video = document.getElementById('video-player');
-const iframe = document.getElementById('iframe-player');
-const loader = document.getElementById('loading');
-const placeholder = document.getElementById('player-placeholder');
-const displayName = document.getElementById('display-name');
-
-let channels = [], hls = null, shakaPlayer = null;
-
-async function stopAll() {
-    loader.style.display = 'none';
-
-    // 1. Aggressively kill Shaka
-    if (shakaPlayer) {
-        try {
-            await shakaPlayer.detach(); // Disconnect from video element
-            await shakaPlayer.destroy(); // Wipe from memory
-        } catch (e) { console.error("Shaka cleanup error", e); }
-        shakaPlayer = null;
-    }
-
-    // 2. Aggressively kill HLS.js
-    if (hls) {
-        hls.detachMedia(); // Disconnect from video element
-        hls.destroy(); // Wipe from memory
-        hls = null;
-    }
-
-    // 3. Factory Reset the Video Element
-    video.pause();
-    video.src = "";
-    video.load(); // Force browser to release the stream buffer
-    video.removeAttribute("src"); // Remove any remaining trace
-    
-    // 4. Reset Iframe
-    iframe.src = 'about:blank';
-    iframe.removeAttribute("src");
-
-    // Hide everything for a clean slate
-    video.style.display = 'none';
-    iframe.style.display = 'none';
-}
-
-async function playChannel(index) {
-    const ch = channels[index];
-    if (!ch) return;
-
-    await stopAll(); // Cleans video, destroys existing HLS/Shaka
-    
-    placeholder.style.display = 'none';
-    loader.style.display = 'block';
-    displayName.textContent = ch.name;
-
-    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
-    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
-
-    // 1. IFRAME (Isolated)
-    if (ch.type === 'iframe') {
-        iframe.style.display = 'block';
-        iframe.src = ch.url;
-        return;
-    }
-
-    video.style.display = 'block';
-
-    // 2. HLS.js (Priority Engine)
-    // If it's HLS, we skip Shaka entirely
-    if (isHls) {
-        if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0 });
-            hls.loadSource(ch.url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            return; // STOP HERE: Do not let Shaka touch this
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = ch.url;
-            return;
-        }
-    }
-
-    // 3. SHAKA (DASH Exclusive)
-    // Only enters here if the URL is DASH (.mpd)
-    if (isDash && window.shaka && shaka.Player.isBrowserSupported()) {
-        shaka.polyfill.installAll();
         shakaPlayer = new shaka.Player(video);
         shakaPlayer.configure({ streaming: { rebufferingGoal: 1, bufferingGoal: 4 } });
         try {
@@ -182,6 +90,69 @@ async function playChannel(index) {
 }
 
 
+<script>
+const video = document.getElementById('video-player');
+const iframe = document.getElementById('iframe-player');
+const loader = document.getElementById('loading');
+const placeholder = document.getElementById('player-placeholder');
+const displayName = document.getElementById('display-name');
+
+let channels = [], hls = null, shakaPlayer = null;
+
+async function stopAll() {
+    loader.style.display = 'none';
+    if(hls){ hls.destroy(); hls = null; }
+    if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
+    video.pause();
+    video.src = "";
+    video.load();
+    iframe.src = 'about:blank';
+    video.style.display = 'none';
+    iframe.style.display = 'none';
+}
+
+async function playChannel(index) {
+    const ch = channels[index];
+    await stopAll();
+    
+    // Hide placeholder & show loader
+    placeholder.style.display = 'none';
+    loader.style.display = 'block';
+    displayName.textContent = ch.name;
+
+    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
+    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
+
+    if (ch.type === 'iframe') {
+        iframe.style.display = 'block';
+        iframe.src = ch.url;
+        iframe.onload = () => loader.style.display = 'none';
+        return;
+    }
+
+    video.style.display = 'block';
+    if (isHls) {
+        // HLS.js logic (Fast Start)
+        if (window.Hls && Hls.isSupported()) {
+            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0, enableWorker: true });
+            hls.loadSource(ch.url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else { video.src = ch.url; video.play(); }
+    } else if (isDash) {
+        // SHAKA strictly for .mpd
+        if (window.shaka && shaka.Player.isBrowserSupported()) {
+            shaka.polyfill.installAll();
+            shakaPlayer = new shaka.Player(video);
+            shakaPlayer.configure({ streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true } });
+            try { await shakaPlayer.load(ch.url); video.play(); } catch(e) { console.error(e); }
+        }
+    }
+}
+
+// Hide loader when video actually starts playing
+video.onplaying = () => loader.style.display = 'none';
+
 function renderSidebar(data) {
     channels = data;
     const list = document.getElementById('channel-list');
@@ -190,7 +161,6 @@ function renderSidebar(data) {
         card.className = "channel-card";
         card.innerHTML = `<img src="${ch.logo || ''}" loading="lazy"><div class="name">${ch.name}</div>`;
         card.onclick = () => {
-            window.scrollTo({top: 0, behavior: 'smooth'});
             document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             playChannel(i);
