@@ -1,12 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MSTV Network | Premium Player</title>
-    <script defer src="./shaka.js"></script>
-    <script defer src="https://cdn.jsdelivr.net"></script>
-    <style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google-site-verification" content="your-verification-code">
+<meta name="language" content="English">
+<!-- Primary SEO -->
+<title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket Streaming</title>
+
+<meta name="description" content="Watch Indian TV channels live online including Hindi entertainment, Punjabi TV, religious channels and live cricket streaming. MSTV Network offers free HD streaming on mobile and desktop.">
+
+<meta name="keywords" content="watch indian tv online free, punjabi tv live streaming, hindi tv channels live, free cricket streaming online, religious channels live, gurbani live streaming, indian live tv website, mstv network">
+
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+<!-- Canonical -->
+<link rel="canonical" href="https://mstvnet.netlify.app">
+<link rel="alternate" hreflang="en">
+<link rel="alternate" hreflang="en-IN" href="https://mstvnet.netlify.app/">
+<link rel="pingback" href="https://mstvnet.netlify.app/xmlrpc.php">
+<meta name="googlebot" content="index,follow">
+
+<!-- Open Graph (Social SEO) -->
+<meta property="og:title" content="MSTV Network - Watch Indian TV Channels Live">
+<meta property="og:description" content="Stream Indian, Punjabi and religious TV channels online including live cricket matches. Free HD streaming on MSTV Network.">
+<meta property="og:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
+<meta property="og:url" content="https://mstvnet.netlify.app">
+<meta property="og:type" content="website">
+
+<!-- Twitter SEO -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MSTV Network Live TV">
+<meta name="twitter:description" content="Watch Indian TV, Punjabi channels and cricket streaming online for free.">
+<meta name="twitter:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
+
+<!-- Performance -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://gc.zgo.at">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+<link rel="preload" href="./channels.json" as="fetch" crossorigin="anonymous">
+
+<!-- Player Libraries -->
+<script defer src="./shaka.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- Favicon -->
+<link rel="icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
+<link rel="apple-touch-icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
+
+<meta name="theme-color" content="#0f172a">
+
+<!-- Structured Data for Google -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebSite",
+ "name": "MSTV Network",
+ "url": "https://mstvnet.netlify.app",
+ "description": "Free live streaming website for Indian TV channels, Punjabi TV, cricket matches and religious broadcasts.",
+ "potentialAction": {
+   "@type": "SearchAction",
+   "target": "https://mstvnet.netlify.app/?search={search_term}",
+   "query-input": "required name=search_term"
+ }
+}
+</script>
+
+
+<style>
+html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
+.title { font-size:2.2em; margin:50px 0 10px; font-weight:bold; text-align:center; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
+h1{
+font-size:18px;
+font-weight:600;
+margin:20px 0;
+text-align:center;
+}
+
   :root { --accent: #90EE90; --bg: #0F1115; --card-bg: #1A1D22; }
   
   body { 
