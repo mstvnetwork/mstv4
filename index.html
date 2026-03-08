@@ -243,7 +243,6 @@ allow="autoplay; encrypted-media; picture-in-picture"></iframe>
 
 <script>
 
-const select=null;
 const video=document.getElementById('video-player');
 const iframe=document.getElementById('iframe-player');
 const placeholder=document.getElementById('placeholder');
@@ -251,22 +250,31 @@ const loader=document.getElementById('loading');
 const liveStamp=document.getElementById('live-stamp');
 const JSON_URL='./channels.json';
 
-let channels=[];
+let channels=[];        // filtered list
+let allChannels=[];     // master list
+
 let rendered=0;
 const batchSize=24;
 
 let hls=null;
 let shakaPlayer=null;
 
-/* stop playback */
+/* STOP PLAYBACK */
 
 async function stopAll(){
 
 loader.style.display='none';
 liveStamp.style.display='none';
 
-if(hls){hls.destroy();hls=null;}
-if(shakaPlayer){await shakaPlayer.destroy();shakaPlayer=null;}
+if(hls){
+hls.destroy();
+hls=null;
+}
+
+if(shakaPlayer){
+await shakaPlayer.destroy();
+shakaPlayer=null;
+}
 
 video.pause();
 video.removeAttribute('src');
@@ -278,9 +286,10 @@ iframe.src='about:blank';
 video.style.display='none';
 iframe.style.display='none';
 placeholder.style.display='flex';
+
 }
 
-/* play channel */
+/* PLAY CHANNEL */
 
 async function playChannel(index){
 
@@ -294,12 +303,21 @@ placeholder.style.display='none';
 
 liveStamp.style.display=channel.isLive?'block':'none';
 
+/* iframe streams */
+
 if(channel.type==='iframe'){
+
 iframe.style.display='block';
 iframe.src=channel.url;
-iframe.onload=()=>loader.style.display='none';
+
+iframe.onload=()=>{
+loader.style.display='none';
+};
+
 return;
 }
+
+/* video streams */
 
 video.style.display='block';
 
@@ -307,12 +325,19 @@ const isHls=channel.type==='hls'||channel.url.includes('.m3u8');
 
 if(isHls){
 
-if(window.Hls&&Hls.isSupported()){
+if(window.Hls && Hls.isSupported()){
 
-hls=new Hls({enableWorker:true});
+hls=new Hls({
+enableWorker:true,
+lowLatencyMode:true
+});
+
 hls.loadSource(channel.url);
 hls.attachMedia(video);
-hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play());
+
+hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+video.play();
+});
 
 }else if(video.canPlayType('application/vnd.apple.mpegurl')){
 
@@ -324,26 +349,38 @@ video.play();
 return;
 }
 
-if(window.shaka&&shaka.Player.isBrowserSupported()){
+/* shaka streams */
+
+if(window.shaka && shaka.Player.isBrowserSupported()){
 
 shaka.polyfill.installAll();
+
 shakaPlayer=new shaka.Player(video);
 
 try{
+
 await shakaPlayer.load(channel.url);
 video.play();
+
 }catch(e){
+
+console.error(e);
+
 loader.style.display='none';
 placeholder.style.display='flex';
-}
+liveStamp.style.display='none';
 
 }
 
 }
 
-video.onplaying=()=>loader.style.display='none';
+}
 
-/* auto logo */
+video.onplaying=()=>{
+loader.style.display='none';
+};
+
+/* AUTO LOGO */
 
 function getLogo(name){
 
@@ -351,7 +388,7 @@ return `https://logo.clearbit.com/${name.replace(/\s/g,'').toLowerCase()}.com`;
 
 }
 
-/* render channels lazy */
+/* RENDER CHANNELS */
 
 function renderMore(){
 
@@ -366,7 +403,7 @@ const index=rendered+i;
 const card=document.createElement("div");
 card.className="channel-card";
 
-const logo=ch.logo||getLogo(ch.name);
+const logo=ch.logo || getLogo(ch.name);
 
 card.innerHTML=`
 <img loading="lazy" src="${logo}">
@@ -383,13 +420,23 @@ rendered+=batchSize;
 
 }
 
-/* scroll lazy */
+/* RESET GRID */
+
+function resetGrid(){
+
+document.getElementById("channel-grid").innerHTML="";
+rendered=0;
+renderMore();
+
+}
+
+/* LAZY LOAD ON SCROLL */
 
 window.addEventListener("scroll",()=>{
 
-if(window.innerHeight+window.scrollY>=document.body.offsetHeight-300){
+if(window.innerHeight + window.scrollY >= document.body.offsetHeight-300){
 
-if(rendered<channels.length){
+if(rendered < channels.length){
 renderMore();
 }
 
@@ -397,56 +444,58 @@ renderMore();
 
 });
 
-/* load channels */
+/* LOAD CHANNEL LIST */
 
 async function loadChannels(){
 
 try{
 
-const res=await fetch(JSON_URL);
+const res=await fetch(JSON_URL,{cache:"force-cache"});
 const data=await res.json();
 
-channels=data;
+allChannels=data;
+channels=[...allChannels];
 
-renderMore();
+resetGrid();
 
 }catch(e){
 
-console.log(e);
+console.error("Channels load failed",e);
 
 }
 
 }
 
-/* search */
+/* FAST SEARCH */
 
-document.getElementById("search").addEventListener("input",function(){
+const search=document.getElementById("search");
 
-const q=this.value.toLowerCase();
+search.addEventListener("input",function(){
 
-document.getElementById("channel-grid").innerHTML="";
-rendered=0;
+const q=this.value.trim().toLowerCase();
 
-channels=channels.filter(c=>c.name.toLowerCase().includes(q));
+/* reset if empty */
 
-renderMore();
+if(q===""){
+
+channels=[...allChannels];
+resetGrid();
+return;
+
+}
+
+/* filter master list */
+
+channels=allChannels.filter(ch =>
+ch.name.toLowerCase().includes(q)
+);
+
+resetGrid();
 
 });
+
+/* INITIALIZE */
 
 loadChannels();
 
 </script>
-
-<footer class="site-footer">
-
-<h2>Watch Indian TV Channels Online</h2>
-
-<p>
-MSTV Network streams Indian television channels including Hindi entertainment,
-Punjabi TV, religious broadcasts and cricket streaming.
-</p>
-
-</footer>
-
-</body>
-</html>
