@@ -3,181 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="your-verification-code">
-    <meta name="language" content="English">
-
-    <!-- Primary SEO -->
-    <title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket</title>
-    <meta name="description" content="Watch Indian TV channels live online including Hindi entertainment, Punjabi TV, religious channels and live cricket streaming. MSTV Network offers free HD streaming.">
-    <meta name="keywords" content="watch indian tv online free, punjabi tv live streaming, hindi tv channels live, free cricket streaming, gurbani live streaming, mstv network">
-    <meta name="robots" content="index, follow, max-image-preview:large">
+    <title>MSTV Network | Watch Indian TV & Live Cricket</title>
+    <meta name="description" content="Stream Indian, Punjabi and religious TV channels live. MSTV Network offers free HD streaming.">
+    
+    <!-- SEO & Performance -->
     <link rel="canonical" href="https://mstvnet.netlify.app">
-
-    <!-- Social SEO (Open Graph & Twitter) -->
-    <meta property="og:title" content="MSTV Network - Watch Indian TV Channels Live">
-    <meta property="og:description" content="Stream Indian, Punjabi and religious TV channels online including live cricket matches. Free HD streaming.">
-    <meta property="og:image" content="https://mstvnet.netlify.app">
-    <meta property="og:url" content="https://mstvnet.netlify.app">
-    <meta name="twitter:card" content="summary_large_image">
-
-    <!-- Performance & Player Libraries -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preload" href="./channels.json" as="fetch" crossorigin="anonymous">
     <script defer src="./shaka.js"></script>
     <script defer src="https://cdn.jsdelivr.net"></script>
 
     <style>
         html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
-        header { width: 100%; text-align: center; }
         .title { font-size:2.2em; margin:50px 0 10px; font-weight:bold; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
-        h1 { font-size:18px; font-weight:600; margin:20px 0; text-align:center; }
-        .channel-select { margin-bottom:3vh; width:90%; max-width:400px; }
-        select { width:100%; padding:0.8em; font-size:1.1em; border-radius:12px; border:none; background:#1A1D20; color:#90EE90; cursor:pointer; box-shadow:0 4px 15px rgba(0,255,160,0.2); }
-        .player-container { position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:#141618; display:flex; align-items:center; justify-content:center; border-radius:15px; box-shadow:0 8px 25px rgba(0,255,160,0.2); overflow:hidden; margin-bottom:10px; }
-        video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; display:none; }
-        #loading { color: #90EE90; font-weight: bold; margin-bottom: 20px; display: none; }
-        #placeholder { font-size:5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
-        #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; z-index: 50; display: none; }
-        .seo-section { width:90%; max-width:900px; margin-top:30px; text-align:left; }
-        .channel-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:15px; list-style:none; padding:0; margin-top:20px; }
-        .channel-grid li { background:#1A1D20; padding:12px; border-radius:10px; text-align:center; border:1px solid #333; cursor:pointer; transition: 0.3s; }
-        .channel-grid li:hover { border-color: #90EE90; background: #25282c; }
-        .site-footer { width:100%; max-width:900px; margin-top:40px; padding:20px 10px; text-align:center; font-size:0.9rem; color:#777; border-top:1px solid #222; }
+        .channel-select { margin-bottom:20px; width:90%; max-width:400px; }
+        select { width:100%; padding:12px; border-radius:12px; border:none; background:#1A1D20; color:#90EE90; cursor:pointer; }
+        .player-container { position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:#141618; border-radius:15px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+        video, iframe { position:absolute; width:100%; height:100%; border:none; display:none; }
+        #loading { color: #90EE90; margin: 10px 0; display: none; }
+        
+        /* Category Button Styles */
+        .category-nav { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+        .cat-btn { background: #1A1D20; color: #90EE90; border: 1px solid #333; padding: 8px 16px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .cat-btn:hover, .cat-btn.active { background: #90EE90; color: #000; }
+
+        .site-footer { width:100%; max-width:900px; margin-top:40px; padding:20px; text-align:center; border-top:1px solid #222; color:#777; }
     </style>
 </head>
 
 <body>
-    <header>
-        <div class="title">MSTV NETWORK</div>
-    </header>
+    <div class="title">MSTV NETWORK</div>
+    <h1>Watch Live TV Channels</h1>
 
-    <main>
-        <h1>MSTV Network – Watch Indian, Punjabi & Religious TV Channels Live</h1>
+    <!-- Category Filter (SEO & UX) -->
+    <nav class="category-nav">
+        <button class="cat-btn active" onclick="filterChannels('All', this)">All</button>
+        <button class="cat-btn" onclick="filterChannels('Punjabi', this)">Punjabi</button>
+        <button class="cat-btn" onclick="filterChannels('Hindi', this)">Hindi</button>
+        <button class="cat-btn" onclick="filterChannels('Religious', this)">Religious</button>
+        <button class="cat-btn" onclick="filterChannels('Cricket', this)">Cricket</button>
+    </nav>
 
-        <div class="channel-select">
-            <select id="channel-select" aria-label="Select TV Channel">
-                <option value="">📱 Loading Channels...</option>
-            </select>
-        </div>
+    <div class="channel-select">
+        <select id="channel-select" aria-label="Select TV Channel">
+            <option value="">📱 Loading...</option>
+        </select>
+    </div>
 
-        <div id="loading">🌀 Wait Loading...</div>
+    <div id="loading">🌀 Buffering...</div>
 
-        <div class="player-container">
-            <div id="placeholder" aria-live="polite">📺</div>
-            <video id="video-player" autoplay playsinline controls></video>
-            <iframe id="iframe-player" loading="lazy" sandbox="allow-scripts allow-same-origin" allow="autoplay; encrypted-media"></iframe>
-            <div id="live-stamp">LIVE</div>
-        </div>
-
-        <!-- SEO Content: Visible to both users and bots -->
-        <section class="seo-section">
-            <h2>Popular Live Channels</h2>
-            <p>Select from our extensive list of live Punjabi, Hindi, and Religious channels for high-quality streaming.</p>
-            <ul id="channel-grid" class="channel-grid">
-                <!-- Dynamically populated, but indexable once rendered -->
-                <li>Live TV Channels</li>
-                <li>Punjabi Entertainment</li>
-                <li>Gurbani & Religious</li>
-            </ul>
-        </section>
-    </main>
+    <div class="player-container">
+        <div id="placeholder" style="font-size:5em;">📺</div>
+        <video id="video-player" autoplay playsinline controls></video>
+        <iframe id="iframe-player" loading="lazy"></iframe>
+    </div>
 
     <footer class="site-footer">
-        <h2>About MSTV Network</h2>
-        <p>MSTV Network provides free streaming of <strong>Indian TV channels</strong> including Hindi entertainment, Punjabi news, and live sports. No registration required.</p>
-        <div class="copyright">© 2026 MSTV Network. All Rights Reserved.</div>
+        <p>© 2026 MSTV Network. Use the category buttons above to find your favourite live streams instantly.</p>
     </footer>
 
     <script>
         const select = document.getElementById('channel-select');
-        const grid = document.getElementById('channel-grid');
         const video = document.getElementById('video-player');
         const iframe = document.getElementById('iframe-player');
         const placeholder = document.getElementById('placeholder');
         const loader = document.getElementById('loading');
-        const liveStamp = document.getElementById('live-stamp');
-        const JSON_URL = './channels.json';
+        
+        let allChannels = []; // Store full list
 
-        let channels = [];
-        let hls = null;
-        let shakaPlayer = null;
-
-        async function loadChannels() {
+        // 1. Load data once
+        async function init() {
             try {
-                const res = await fetch(JSON_URL, { cache: 'force-cache' });
-                channels = await res.json();
-                renderUI(channels);
+                const res = await fetch('./channels.json');
+                if (!res.ok) throw new Error("JSON not found");
+                allChannels = await res.json();
+                populateDropdown(allChannels);
             } catch(e) {
-                console.error('Failed to load channels', e);
+                select.innerHTML = '<option>⚠️ Load Error</option>';
             }
         }
 
-        function renderUI(data) {
-            select.innerHTML = '<option value="">📱 Click & Select Channel</option>';
-            grid.innerHTML = '';
-            data.forEach((ch, i) => {
+        // 2. Populate Dropdown
+        function populateDropdown(list) {
+            select.innerHTML = '<option value="">📱 Select Channel (' + list.length + ')</option>';
+            list.forEach((ch) => {
                 const opt = document.createElement("option");
-                opt.value = i;
+                // Store the URL directly in the value to avoid index mismatch after filtering
+                opt.value = JSON.stringify(ch); 
                 opt.textContent = ch.name;
                 select.appendChild(opt);
-
-                const li = document.createElement("li");
-                li.textContent = ch.name;
-                li.onclick = () => { select.value = i; playChannel(i); };
-                grid.appendChild(li);
             });
         }
 
-        async function playChannel(index) {
-            const ch = channels[index];
-            if(!ch) return;
+        // 3. Category Filter Logic
+        function filterChannels(category, btn) {
+            // UI Update: Highlight active button
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-            // Update Dynamic SEO Title
-            document.title = `Watching ${ch.name} Live | MSTV Network`;
+            // Logic: Filter and Re-populate
+            const filtered = (category === 'All') 
+                ? allChannels 
+                : allChannels.filter(ch => ch.category === category);
+            
+            populateDropdown(filtered);
+        }
 
-            await stopAll();
+        // 4. Play Function
+        async function playChannel(dataStr) {
+            if(!dataStr) return;
+            const ch = JSON.parse(dataStr);
+            
+            document.title = `Watching ${ch.name} | MSTV Network`;
             loader.style.display = 'block';
             placeholder.style.display = 'none';
-            liveStamp.style.display = ch.isLive ? 'block' : 'none';
+            video.style.display = 'none';
+            iframe.style.display = 'none';
 
             if(ch.type === 'iframe') {
-                iframe.style.display = 'block';
                 iframe.src = ch.url;
-                iframe.onload = () => { loader.style.display = 'none'; };
+                iframe.style.display = 'block';
+                iframe.onload = () => loader.style.display = 'none';
             } else {
                 video.style.display = 'block';
-                // Add your existing HLS / Shaka logic here
-                loader.style.display = 'none';
+                video.src = ch.url; // Simplified; use your HLS logic here
+                video.onplaying = () => loader.style.display = 'none';
             }
         }
 
-        async function stopAll() {
-            if(hls) { hls.destroy(); hls = null; }
-            if(shakaPlayer) { await shakaPlayer.destroy(); shakaPlayer = null; }
-            video.pause();
-            video.style.display = 'none';
-            iframe.style.display = 'none';
-            iframe.src = 'about:blank';
-        }
-
         select.onchange = () => playChannel(select.value);
-        loadChannels();
-    </script>
-
-    <!-- Structured Data at bottom for loading speed -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "VideoObject",
-      "name": "MSTV Network Live TV Streaming",
-      "description": "Stream Indian and Punjabi TV channels live online for free.",
-      "thumbnailUrl": "https://mstvnet.netlify.app",
-      "uploadDate": "2024-03-05T08:00:00+05:30",
-      "publication": {
-        "@type": "BroadcastEvent",
-        "isLiveBroadcast": true
-      }
-    }
+        init();
     </script>
 </body>
 </html>
