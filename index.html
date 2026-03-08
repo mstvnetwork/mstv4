@@ -192,56 +192,64 @@ video.onplaying = () => loader.style.display = 'none';
 function renderSidebar(data) {
     channels = data;
     const list = document.getElementById('channel-list');
+    list.innerHTML = ''; // Clear to prevent duplicates on refresh
     data.forEach((ch, i) => {
         const card = document.createElement("div");
         card.className = "channel-card";
-        card.innerHTML = `<img src="${ch.logo || ''}" loading="lazy"><div class="name">${ch.name}</div>`;
+        // SPEED FIX: Use a default icon if logo is missing to prevent layout shift
+        const logoSrc = ch.logo || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+        card.innerHTML = `<img src="${logoSrc}" loading="lazy"><div class="name">${ch.name}</div>`;
         card.onclick = () => {
+            // Smoothly jump back to player on mobile when a channel is picked
+            window.scrollTo({top: 0, behavior: 'smooth'}); 
             document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             playChannel(i);
         };
         list.appendChild(card);
     });
+
+    // Append the SEO Footer AFTER the list is loaded
+    const footer = document.createElement('footer');
+    footer.style.cssText = "padding: 30px 15px; border-top: 1px solid #222; margin-top: 20px; color: #666; font-size: 0.85rem; text-align: center;";
+    footer.innerHTML = `
+        <p>© 2026 MSTV Network. Watch Indian, Punjabi & Religious TV Channels Live.</p>
+        <p style="font-size:0.7rem; opacity:0.6;">All streams are hosted on third-party servers.</p>
+    `;
+    list.appendChild(footer);
 }
 
-fetch('./channels.json').then(r => r.json()).then(renderSidebar);
+// SPEED FIX: Error handling for fetch
+fetch('./channels.json')
+    .then(r => { if(!r.ok) throw new Error(); return r.json(); })
+    .then(renderSidebar)
+    .catch(() => { document.getElementById('channel-list').innerHTML = '<p style="text-align:center; padding:20px;">⚠️ Failed to load channels. Please refresh.</p>'; });
 </script>
 
 <!-- GoatCounter Analytics -->
-<script async data-goatcounter="https://mstv.goatcounter.com/count"
-src="https://gc.zgo.at/count.js"></script>
+<script async data-goatcounter="https://mstv.goatcounter.com/count" src="https://gc.zgo.at/count.js"></script>
+
+<!-- Hidden SEO Keywords -->
 <section style="display:none;">
 Indian TV live streaming, Punjabi channels online, religious TV live,
 gurbani live streaming, cricket matches online, Hindi entertainment channels.
 </section>
 
-<!-- JSON-LD for SEO -->
+<!-- JSON-LD for Google -->
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
  "@type": "VideoObject",
  "name": "MSTV Network Live TV Streaming",
- "description": "Watch Indian TV channels, Punjabi entertainment, religious broadcasts and live cricket streaming online for free on MSTV Network.",
+ "description": "Watch Indian TV channels, Punjabi entertainment, religious broadcasts and live cricket streaming online for free.",
  "thumbnailUrl": "https://mstvnet.netlify.app/mstv-thumbnail.png",
  "uploadDate": "2026-03-05T08:00:00+05:30",
- "embedUrl": "https://mstvnet.netlify.app",
- "contentUrl": "https://mstvnet.netlify.app",
  "isLiveBroadcast": true,
- "mainEntityOfPage": {
-   "@type": "WebPage",
-   "@id": "https://mstvnet.netlify.app"
- },
  "publisher": {
    "@type": "Organization",
-   "name": "MSTV Network",
-   "logo": {
-     "@type": "ImageObject",
-     "url": "https://mstvnet.netlify.app/mstv-thumbnail.png"
-   }
+   "name": "MSTV Network"
  }
 }
-
 </script>
 </body>
-</head>
+</html>
