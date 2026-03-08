@@ -81,6 +81,14 @@
 </div>
 
 <script>
+
+  // AGGRESSIVE: Unregister HLS from Shaka so it ONLY handles DASH
+if (window.shaka) {
+    shaka.media.ManifestParser.unregisterParserByExtension('m3u8');
+    shaka.media.ManifestParser.unregisterParserByMime('application/x-mpegurl');
+    shaka.media.ManifestParser.unregisterParserByMime('application/vnd.apple.mpegurl');
+}
+
 const video = document.getElementById('video-player');
 const iframe = document.getElementById('iframe-player');
 const loader = document.getElementById('loading');
@@ -127,8 +135,7 @@ async function playChannel(index) {
     const ch = channels[index];
     if (!ch) return;
 
-    // WAIT for complete cleanup before starting new engine
-    await stopAll();
+    await stopAll(); // Cleans video, destroys existing HLS/Shaka
     
     placeholder.style.display = 'none';
     loader.style.display = 'block';
@@ -137,54 +144,43 @@ async function playChannel(index) {
     const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
     const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
 
-    // IFRAME Engine (Strictly Sandboxed)
+    // 1. IFRAME (Isolated)
     if (ch.type === 'iframe') {
         iframe.style.display = 'block';
         iframe.src = ch.url;
-        iframe.onload = () => loader.style.display = 'none';
         return;
     }
 
     video.style.display = 'block';
 
-    // ENGINE A: DASH EXCLUSIVE (Shaka)
-    if (isDash) {
-        if (window.shaka && shaka.Player.isBrowserSupported()) {
-            shaka.polyfill.installAll();
-            shakaPlayer = new shaka.Player(video);
-            
-            // Speed settings for low-network
-            shakaPlayer.configure({
-                streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true }
-            });
-
-            try {
-                await shakaPlayer.load(ch.url);
-                video.play().catch(() => {});
-            } catch (e) { console.error('DASH Fail', e); }
-        }
-        return; // EXIT: Ensure HLS engine is never even looked at
-    }
-
-    // ENGINE B: HLS EXCLUSIVE (Hls.js)
-    if (isHls || ch.type === 'hls') {
+    // 2. HLS.js (Priority Engine)
+    // If it's HLS, we skip Shaka entirely
+    if (isHls) {
         if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ 
-                capLevelToPlayerSize: true, 
-                startLevel: 0, // Instant play on low speed
-                enableWorker: true,
-                appendErrorMaxRetry: 3 
-            });
+            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0 });
             hls.loadSource(ch.url);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            return; // STOP HERE: Do not let Shaka touch this
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Native Safari fallback
             video.src = ch.url;
-            video.play().catch(() => {});
+            return;
         }
     }
+
+    // 3. SHAKA (DASH Exclusive)
+    // Only enters here if the URL is DASH (.mpd)
+    if (isDash && window.shaka && shaka.Player.isBrowserSupported()) {
+        shaka.polyfill.installAll();
+        shakaPlayer = new shaka.Player(video);
+        shakaPlayer.configure({ streaming: { rebufferingGoal: 1, bufferingGoal: 4 } });
+        try {
+            await shakaPlayer.load(ch.url);
+            video.play();
+        } catch (e) { console.error('DASH load failed', e); }
+    }
 }
+
 
 function renderSidebar(data) {
     channels = data;
