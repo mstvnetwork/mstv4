@@ -3,93 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MSTV Network | Watch Live TV</title>
-    <!-- Essential Libraries -->
-    <script src="https://cdn.jsdelivr.net"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<style>
-    /* 1. Reset & General Layout */
-    html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
+    <title>MSTV Network | Premium Live TV Dashboard</title>
     
-    .title { font-size:2.2em; margin:20px 0 10px; font-weight:bold; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
+    <!-- Player Libraries -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net"></script>
 
-    /* 2. Sticky Player Container */
-    .player-container { 
-        position: -webkit-sticky; 
-        position: sticky; 
-        top: 0; 
-        z-index: 1000; /* Keeps it above the scrolling list */
-        width: 100%; 
-        max-width: 900px; 
-        aspect-ratio: 16/9; 
-        background: #000; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5); 
-    }
+    <style>
+        :root { --bg: #0A0C10; --sidebar: #161B22; --card: #1C2128; --accent: #00FF9D; --text: #E6EDF3; --border: #30363D; }
+        
+        * { box-sizing: border-box; }
+        body { margin:0; display:flex; background: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; overflow: hidden; }
 
-    video, iframe { position:absolute; width:100%; height:100%; border:none; display:none; }
-    #loading { color:#90EE90; margin:10px; display:none; font-weight: bold; }
+        /* Sidebar Navigation */
+        .sidebar { width: 260px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-bottom: 30px; letter-spacing: 1px; }
+        .category-nav { display: flex; flex-direction: column; gap: 8px; }
+        .cat-btn { background: transparent; color: #8B949E; border: none; padding: 12px; text-align: left; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .cat-btn:hover, .cat-btn.active { background: #21262D; color: var(--accent); }
 
-    /* 3. Scrollable Channel Grid */
-    .channel-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-        gap: 15px; 
-        width: 90%; 
-        max-width: 900px; 
-        list-style: none; 
-        padding: 20px 0 100px; /* Extra padding at bottom for easy scrolling */
-        margin: 0;
-    }
+        /* Main Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+        /* Sticky Header (Search + Player) */
+        .sticky-header { position: sticky; top: 0; background: var(--bg); z-index: 100; border-bottom: 1px solid var(--border); padding: 15px 30px; }
+        
+        .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .search-box input { background: var(--card); border: 1px solid var(--border); padding: 10px 15px; border-radius: 8px; color: white; width: 300px; outline: none; }
+        .search-box input:focus { border-color: var(--accent); }
+        
+        .view-controls { display: flex; gap: 5px; }
+        .toggle-btn { background: var(--card); border: 1px solid var(--border); color: #8B949E; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+        .toggle-btn.active { color: var(--accent); border-color: var(--accent); }
 
-    .channel-grid li { 
-        background: #1A1D20; 
-        padding: 15px; 
-        border-radius: 12px; 
-        text-align: center; 
-        font-size: 0.9em; 
-        border: 1px solid #333; 
-        cursor: pointer; 
-        transition: transform 0.2s, background 0.3s; 
-    }
+        /* Player Section */
+        .player-container { width: 100%; max-width: 850px; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        video, iframe { width:100%; height:100%; border:none; display:none; position: absolute; }
+        #placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #484F58; text-align: center; }
+        #loading { position: absolute; top: 10px; right: 10px; color: var(--accent); display: none; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; }
 
-    .channel-grid li:hover { 
-        background: #25282c; 
-        transform: translateY(-3px); 
-        border-color: #90EE90; 
-    }
-</style>
+        /* Scrollable List Section */
+        .grid-section { flex: 1; overflow-y: auto; padding: 25px 30px; }
+        .section-title { font-size: 1.2rem; margin-bottom: 20px; font-weight: 600; color: #8B949E; }
 
+        /* Grid vs List Modes */
+        .channel-container { display: grid; list-style: none; padding: 0; margin: 0; gap: 20px; }
+        
+        /* Grid Mode Styles */
+        .grid-mode { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        .grid-mode .channel-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .grid-mode .channel-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .grid-mode .channel-icon { font-size: 2rem; display: block; margin-bottom: 10px; }
+
+        /* List Mode Styles */
+        .list-mode { grid-template-columns: 1fr; }
+        .list-mode .channel-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
+        .list-mode .channel-icon { font-size: 1.2rem; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+            .main-content { overflow: visible; }
+            .grid-section { overflow: visible; }
+            .search-box input { width: 100%; }
+        }
+    </style>
+</head>
 <body>
-    <div class="title">MSTV NETWORK</div>
 
-    <!-- The Sticky Player -->
-    <div class="player-container">
-        <div id="placeholder" style="font-size:4em;">📺</div>
-        <video id="video-player" autoplay playsinline controls></video>
-        <iframe id="iframe-player"></iframe>
-        <div id="loading" style="position:absolute;">🌀 Loading...</div>
-    </div>
+    <aside class="sidebar">
+        <div class="logo">MSTV NETWORK</div>
+        <nav class="category-nav">
+            <button class="cat-btn active" onclick="filterChannels('All', this)">📺 All Channels</button>
+            <button class="cat-btn" onclick="filterChannels('Punjabi', this)">🌾 Punjabi</button>
+            <button class="cat-btn" onclick="filterChannels('Hindi', this)">🎬 Hindi</button>
+            <button class="cat-btn" onclick="filterChannels('Religious', this)">🙏 Religious</button>
+            <button class="cat-btn" onclick="filterChannels('Cricket', this)">🏏 Cricket</button>
+        </nav>
+    </aside>
 
-    <!-- The Scrollable List -->
-    <ul id="channel-grid" class="channel-grid">
-        <!-- Script will populate this -->
-    </ul>
-</body>
+    <main class="main-content">
+        <header class="sticky-header">
+            <div class="top-controls">
+                <div class="search-box">
+                    <input type="text" id="search-bar" placeholder="Search channels..." onkeyup="handleSearch()">
+                </div>
+                <div class="view-controls">
+                    <button id="grid-view-btn" class="toggle-btn active" onclick="changeView('grid')">Grid</button>
+                    <button id="list-view-btn" class="toggle-btn" onclick="changeView('list')">List</button>
+                </div>
+            </div>
 
-    <ul id="channel-grid" class="channel-grid"></ul>
+            <div class="player-container">
+                <div id="placeholder">
+                    <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📺</span>
+                    Select a channel to start watching
+                </div>
+                <video id="video-player" autoplay playsinline controls></video>
+                <iframe id="iframe-player"></iframe>
+                <div id="loading">🌀 Loading...</div>
+            </div>
+        </header>
+
+        <section class="grid-section">
+            <div class="section-title" id="current-category">All Channels</div>
+            <ul id="channel-list" class="channel-container grid-mode">
+                <!-- Data populated by JS -->
+            </ul>
+        </section>
+    </main>
 
     <script>
-        const select = document.getElementById('channel-select');
-        const grid = document.getElementById('channel-grid');
+        const channelList = document.getElementById('channel-list');
         const video = document.getElementById('video-player');
         const iframe = document.getElementById('iframe-player');
         const loader = document.getElementById('loading');
         const placeholder = document.getElementById('placeholder');
-
+        
         let allChannels = [];
+        let currentCategory = 'All';
+        let currentView = 'grid';
         let hls = null;
         let shakaPlayer = null;
 
@@ -99,80 +133,78 @@
                 allChannels = await res.json();
                 renderUI(allChannels);
             } catch(e) {
-                select.innerHTML = '<option>⚠️ Error loading JSON</option>';
+                console.error("Failed to load JSON", e);
+                channelList.innerHTML = "<li>Error loading channels. Check your JSON file.</li>";
             }
         }
 
         function renderUI(list) {
-            select.innerHTML = '<option value="">📱 Select Channel</option>';
-            if(grid) grid.innerHTML = '';
+            channelList.innerHTML = '';
             list.forEach((ch) => {
-                const opt = document.createElement("option");
-                opt.value = JSON.stringify(ch);
-                opt.textContent = ch.name;
-                select.appendChild(opt);
-
-                const li = document.createElement("li");
-                li.textContent = ch.name;
+                const li = document.createElement('li');
+                li.className = 'channel-card';
+                const icon = ch.category === 'Cricket' ? '🏏' : '📺';
+                li.innerHTML = `<span class="channel-icon">${icon}</span> <span>${ch.name}</span>`;
                 li.onclick = () => playChannel(ch);
-                if(grid) grid.appendChild(li);
+                channelList.appendChild(li);
             });
         }
 
-        function filterChannels(category, btn) {
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const filtered = (category === 'All') ? allChannels : allChannels.filter(c => c.category === category);
+        function handleSearch() {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filtered = allChannels.filter(ch => {
+                const matchesSearch = ch.name.toLowerCase().includes(query);
+                const matchesCat = currentCategory === 'All' || ch.category === currentCategory;
+                return matchesSearch && matchesCat;
+            });
             renderUI(filtered);
         }
 
+        function filterChannels(category, btn) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('current-category').textContent = `${category} Channels`;
+            handleSearch();
+        }
+
+        function changeView(mode) {
+            currentView = mode;
+            channelList.className = `channel-container ${mode}-mode`;
+            document.getElementById('grid-view-btn').classList.toggle('active', mode === 'grid');
+            document.getElementById('list-view-btn').classList.toggle('active', mode === 'list');
+        }
+
         async function playChannel(ch) {
-            if(!ch) return;
             document.title = `Watching ${ch.name} | MSTV Network`;
             await stopAll();
-            
             loader.style.display = 'block';
             placeholder.style.display = 'none';
 
-            const isWebpage = ch.url.includes('#') || ch.url.includes('.html') || ch.type === 'iframe';
+            // Route to Iframe if URL is an embed page
+            const isEmbed = ch.url.includes('.html') || ch.url.includes('#') || ch.type === 'iframe';
 
-            if(isWebpage) {
+            if (isEmbed) {
                 iframe.style.display = 'block';
                 iframe.src = ch.url;
                 iframe.onload = () => loader.style.display = 'none';
             } else {
                 video.style.display = 'block';
-                
-                // --- HLS LOGIC (.m3u8) ---
-                if (ch.url.toLowerCase().includes('.m3u8')) {
+                // Handle HLS
+                if (ch.url.includes('.m3u8') || ch.type === 'hls') {
                     if (Hls.isSupported()) {
-                        hls = new Hls();
-                        hls.loadSource(ch.url);
-                        hls.attachMedia(video);
+                        hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
                         hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                        video.src = ch.url;
-                        video.play();
-                    }
+                    } else { video.src = ch.url; video.play(); }
                 } 
-                // --- DASH LOGIC (.mpd or Shaka) ---
+                // Handle Shaka (DASH/ClearKey)
                 else {
                     shaka.polyfill.installAll();
                     if (shaka.Player.isBrowserSupported()) {
                         shakaPlayer = new shaka.Player(video);
-                        
-                        // Apply ClearKeys if they exist in your JSON
-                        if (ch.clearKeys) {
-                            shakaPlayer.configure({ drm: { clearKeys: ch.clearKeys } });
-                        }
-
-                        try {
-                            await shakaPlayer.load(ch.url);
-                            video.play();
-                        } catch(e) {
-                            console.error("Shaka error", e);
-                            loader.style.display = 'none';
-                        }
+                        if(ch.clearKeys) shakaPlayer.configure({ drm: { clearKeys: ch.clearKeys } });
+                        try { await shakaPlayer.load(ch.url); video.play(); } 
+                        catch(e) { console.error("Shaka fail", e); loader.style.display = 'none'; }
                     }
                 }
             }
@@ -182,16 +214,12 @@
             loader.style.display = 'none';
             if(hls) { hls.destroy(); hls = null; }
             if(shakaPlayer) { await shakaPlayer.destroy(); shakaPlayer = null; }
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
+            video.pause(); video.removeAttribute('src'); video.load();
             video.style.display = 'none';
-            iframe.style.display = 'none';
-            iframe.src = 'about:blank';
+            iframe.style.display = 'none'; iframe.src = 'about:blank';
         }
 
         video.onplaying = () => loader.style.display = 'none';
-        select.onchange = () => { if(select.value) playChannel(JSON.parse(select.value)); };
         init();
     </script>
 </body>
