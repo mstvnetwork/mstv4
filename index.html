@@ -51,6 +51,13 @@
 
 <meta name="theme-color" content="#0f172a">
 <style>
+.title { font-size:2.2em; margin:50px 0 10px; font-weight:bold; text-align:center; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
+h1{
+font-size:18px;
+font-weight:600;
+margin:20px 0;
+text-align:center;
+}
   :root { --accent: #00FFA3; --bg: #0F1115; --card: #1A1D22; }
   body { 
     margin: 0; background: var(--bg); color: #fff; font-family: system-ui, sans-serif;
@@ -92,6 +99,9 @@
 
 
 <body>
+    <div class="title">MSTV NETWORK</div>
+
+<h1>MSTV Network – Watch Indian, Punjabi & Religious TV Channels Live</h1>
 <div id="main-view">
     <div class="player-container">
         <!-- Placeholder - disappears on play -->
@@ -106,12 +116,12 @@
         <iframe id="iframe-player" allow="autoplay; encrypted-media"></iframe>
     </div>
     <div class="channel-details">
-        <h1 id="display-name" style="font-size: 1.1rem; margin:0; color:var(--accent);">MSTV NETWORK</h1>
+        <h1 id="display-name" style="font-size: 1.1rem; margin:0; color:var(--accent);">📲 Select Channel</h1>
     </div>
 </div>
 
 <div id="sidebar">
-    <div class="sidebar-header">Live Channels</div>
+    <div class="sidebar-header">Scroll ⬇️⬆️</div>
     <div id="channel-list"></div>
 </div>
 
@@ -195,6 +205,42 @@ function renderSidebar(data) {
 }
 
 fetch('./channels.json').then(r => r.json()).then(renderSidebar);
+</script>
+
+<!-- GoatCounter Analytics -->
+<script async data-goatcounter="https://mstv.goatcounter.com/count"
+src="https://gc.zgo.at/count.js"></script>
+<section style="display:none;">
+Indian TV live streaming, Punjabi channels online, religious TV live,
+gurbani live streaming, cricket matches online, Hindi entertainment channels.
+</section>
+
+<!-- JSON-LD for SEO -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "VideoObject",
+ "name": "MSTV Network Live TV Streaming",
+ "description": "Watch Indian TV channels, Punjabi entertainment, religious broadcasts and live cricket streaming online for free on MSTV Network.",
+ "thumbnailUrl": "https://mstvnet.netlify.app/mstv-thumbnail.png",
+ "uploadDate": "2026-03-05T08:00:00+05:30",
+ "embedUrl": "https://mstvnet.netlify.app",
+ "contentUrl": "https://mstvnet.netlify.app",
+ "isLiveBroadcast": true,
+ "mainEntityOfPage": {
+   "@type": "WebPage",
+   "@id": "https://mstvnet.netlify.app"
+ },
+ "publisher": {
+   "@type": "Organization",
+   "name": "MSTV Network",
+   "logo": {
+     "@type": "ImageObject",
+     "url": "https://mstvnet.netlify.app/mstv-thumbnail.png"
+   }
+ }
+}
+
 </script>
 </body>
 </head>
