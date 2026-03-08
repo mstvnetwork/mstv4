@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MSTV Network | Premium Live TV Dashboard</title>
     
-    <!-- Player Libraries -->
-    <script src="https://cdn.jsdelivr.net"></script>
-    <script src="https://cdn.jsdelivr.net"></script>
+    <!-- Add Mux.js BEFORE Shaka Player for HLS support in Chrome/DASH players -->
+<script src="https://cdnjs.cloudflare.com"></script>
+<script src="https://cdn.jsdelivr.net"></script>
+<script src="https://cdn.jsdelivr.net"></script>
 
     <style>
         :root { --bg: #0A0C10; --sidebar: #161B22; --card: #1C2128; --accent: #00FF9D; --text: #E6EDF3; --border: #30363D; }
@@ -176,39 +177,61 @@
         }
 
         async function playChannel(ch) {
-            document.title = `Watching ${ch.name} | MSTV Network`;
-            await stopAll();
-            loader.style.display = 'block';
-            placeholder.style.display = 'none';
+    if(!ch) return;
+    document.title = `Watching ${ch.name} | MSTV Network`;
+    await stopAll();
+    
+    loader.style.display = 'block';
+    placeholder.style.display = 'none';
 
-            // Route to Iframe if URL is an embed page
-            const isEmbed = ch.url.includes('.html') || ch.url.includes('#') || ch.type === 'iframe';
+    // 1. Check for Embed/Iframe first
+    const isEmbed = ch.url.includes('.html') || ch.url.includes('#') || ch.type === 'iframe';
+    if (isEmbed) {
+        iframe.style.display = 'block';
+        iframe.src = ch.url;
+        iframe.onload = () => loader.style.display = 'none';
+        return;
+    }
 
-            if (isEmbed) {
-                iframe.style.display = 'block';
-                iframe.src = ch.url;
-                iframe.onload = () => loader.style.display = 'none';
-            } else {
-                video.style.display = 'block';
-                // Handle HLS
-                if (ch.url.includes('.m3u8') || ch.type === 'hls') {
-                    if (Hls.isSupported()) {
-                        hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
-                        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                    } else { video.src = ch.url; video.play(); }
-                } 
-                // Handle Shaka (DASH/ClearKey)
-                else {
-                    shaka.polyfill.installAll();
-                    if (shaka.Player.isBrowserSupported()) {
-                        shakaPlayer = new shaka.Player(video);
-                        if(ch.clearKeys) shakaPlayer.configure({ drm: { clearKeys: ch.clearKeys } });
-                        try { await shakaPlayer.load(ch.url); video.play(); } 
-                        catch(e) { console.error("Shaka fail", e); loader.style.display = 'none'; }
-                    }
-                }
+    video.style.display = 'block';
+
+    // 2. Route to HLS.js for .m3u8 (More stable for standard HLS)
+    if (ch.url.toLowerCase().includes('.m3u8')) {
+        if (Hls.isSupported()) {
+            hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+            hls.loadSource(ch.url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log("Autoplay blocked")));
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = ch.url; // Native support (Safari)
+        }
+    } 
+    // 3. Route everything else (DASH/MPD) to Shaka Player
+    else {
+        shaka.polyfill.installAll();
+        if (shaka.Player.isBrowserSupported()) {
+            shakaPlayer = new shaka.Player(video);
+            
+            // Critical for ClearKey DASH streams
+            if (ch.clearKeys) {
+                shakaPlayer.configure({
+                    drm: { clearKeys: ch.clearKeys },
+                    streaming: { rebufferingGoal: 2 } // Faster loading
+                });
+            }
+
+            try {
+                await shakaPlayer.load(ch.url);
+                video.play();
+            } catch(e) {
+                console.error("Shaka Playback Error Code:", e.code, e);
+                // If Shaka fails, attempt one last fallback
+                video.src = ch.url;
             }
         }
+    }
+}
+
 
         async function stopAll() {
             loader.style.display = 'none';
