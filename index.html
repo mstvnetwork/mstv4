@@ -76,6 +76,8 @@ text-align:center;
   .player-container { width: 100%; aspect-ratio: 16/9; position: relative; }
   video, iframe { width: 100%; height: 100%; border: none; display: none; }
   
+#placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
+  
   /* Details Section */
   .channel-details { padding: 15px; background: var(--bg); border-bottom: 1px solid #222; }
   .channel-details h1 { margin: 0; font-size: 1.2em; color: var(--accent); }
@@ -108,6 +110,8 @@ text-align:center;
 
 <div id="main-view">
     <div class="player-container">
+        
+        <div id="placeholder" aria-live="polite">📺</div>
         <div id="loading">🌀 Loading Stream...</div>
         <div id="live-stamp" style="display:none;">LIVE</div>
         <video id="video-player" autoplay playsinline controls></video>
@@ -246,6 +250,14 @@ loadChannels();
    "query-input": "required name=search_term"
  }
 }
+</script>
+<!-- GoatCounter Analytics -->
+<script async data-goatcounter="https://mstv.goatcounter.com/count"
+src="https://gc.zgo.at/count.js"></script>
+<section style="display:none;">
+Indian TV live streaming, Punjabi channels online, religious TV live,
+gurbani live streaming, cricket matches online, Hindi entertainment channels.
+</section>
 </script>
 </body>
 </html>
