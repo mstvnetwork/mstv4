@@ -28,156 +28,145 @@
         .site-footer { width:100%; max-width:900px; margin-top:40px; padding:20px; text-align:center; border-top:1px solid #222; color:#777; }
     </style>
 </head>
-
 <body>
     <div class="title">MSTV NETWORK</div>
     <h1>Watch Live TV Channels</h1>
 
-    <!-- Category Filter (SEO & UX) -->
-    <nav class="category-nav">
-        <button class="cat-btn active" onclick="filterChannels('All', this)">All</button>
-        <button class="cat-btn" onclick="filterChannels('Punjabi', this)">Punjabi</button>
-        <button class="cat-btn" onclick="filterChannels('Hindi', this)">Hindi</button>
-        <button class="cat-btn" onclick="filterChannels('Religious', this)">Religious</button>
-        <button class="cat-btn" onclick="filterChannels('Cricket', this)">Cricket</button>
+    <!-- Category Filter -->
+    <nav class="category-nav" style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
+        <button class="cat-btn active" onclick="filterChannels('All', this)" style="padding:10px; cursor:pointer;">All</button>
+        <button class="cat-btn" onclick="filterChannels('Punjabi', this)" style="padding:10px; cursor:pointer;">Punjabi</button>
+        <button class="cat-btn" onclick="filterChannels('Hindi', this)" style="padding:10px; cursor:pointer;">Hindi</button>
+        <button class="cat-btn" onclick="filterChannels('Religious', this)" style="padding:10px; cursor:pointer;">Religious</button>
     </nav>
 
     <div class="channel-select">
         <select id="channel-select" aria-label="Select TV Channel">
-            <option value="">📱 Loading...</option>
+            <option value="">📱 Loading Channels...</option>
         </select>
     </div>
 
-    <div id="loading">🌀 Buffering...</div>
+    <div id="loading" style="display:none; color:#90EE90;">🌀 Buffering...</div>
 
-    <div class="player-container">
-        <div id="placeholder" style="font-size:5em;">📺</div>
-        <video id="video-player" autoplay playsinline controls></video>
-        <iframe id="iframe-player" loading="lazy"></iframe>
+    <div class="player-container" style="position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:#000; display:flex; align-items:center; justify-content:center;">
+        <div id="placeholder" style="font-size:5rem;">📺</div>
+        <video id="video-player" autoplay playsinline controls style="width:100%; height:100%; display:none;"></video>
+        <iframe id="iframe-player" style="width:100%; height:100%; border:none; display:none;"></iframe>
     </div>
 
-    <footer class="site-footer">
-        <p>© 2026 MSTV Network. Use the category buttons above to find your favourite live streams instantly.</p>
-    </footer>
-
-       <script>
-    const select = document.getElementById('channel-select');
-    const grid = document.getElementById('channel-grid');
-    const video = document.getElementById('video-player');
-    const iframe = document.getElementById('iframe-player');
-    const placeholder = document.getElementById('placeholder');
-    const loader = document.getElementById('loading');
-    const liveStamp = document.getElementById('live-stamp');
-    const JSON_URL = './channels.json';
-
-    let allChannels = [];
-    let hls = null;
-    let shakaPlayer = null;
-
-    // --- 1. INITIALISATION ---
-    async function init() {
-        // Install Shaka polyfills for cross-browser support
-        if (window.shaka) {
-            shaka.polyfill.installAll();
-            if (shaka.Player.isBrowserSupported()) {
-                shakaPlayer = new shaka.Player(video);
-                shakaPlayer.addEventListener('error', (e) => console.error('Shaka Error:', e));
-            }
-        }
-
-        try {
-            const res = await fetch(JSON_URL);
-            allChannels = await res.json();
-            populateUI(allChannels);
-        } catch(e) {
-            select.innerHTML = '<option>⚠️ Error Loading Channels</option>';
-        }
-    }
-
-    function populateUI(list) {
-        select.innerHTML = '<option value="">📱 Select Channel (' + list.length + ')</option>';
-        grid.innerHTML = '';
-        list.forEach((ch) => {
-            const opt = document.createElement("option");
-            opt.value = JSON.stringify(ch); 
-            opt.textContent = ch.name;
-            select.appendChild(opt);
-
-            const li = document.createElement("li");
-            li.textContent = ch.name;
-            li.onclick = () => playChannel(JSON.stringify(ch));
-            grid.appendChild(li);
-        });
-    }
-
-    // --- 2. FILTERING ---
-    function filterChannels(category, btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const filtered = (category === 'All') ? allChannels : allChannels.filter(ch => ch.category === category);
-        populateUI(filtered);
-    }
-
-    // --- 3. PLAYBACK ENGINE ---
-    async function playChannel(dataStr) {
-        if(!dataStr) return;
-        const ch = JSON.parse(dataStr);
+    <script>
+        const select = document.getElementById('channel-select');
+        const video = document.getElementById('video-player');
+        const iframe = document.getElementById('iframe-player');
+        const placeholder = document.getElementById('placeholder');
+        const loader = document.getElementById('loading');
         
-        document.title = `Watching ${ch.name} | MSTV Network`;
-        await stopAll();
-        
-        loader.style.display = 'block';
-        placeholder.style.display = 'none';
-        liveStamp.style.display = ch.isLive ? 'block' : 'none';
+        let allChannels = [];
+        let shakaPlayer = null;
+        let hls = null;
 
-        if(ch.type === 'iframe') {
-            iframe.style.display = 'block';
-            iframe.src = ch.url;
-            iframe.onload = () => loader.style.display = 'none';
-        } else {
-            video.style.display = 'block';
-            
-            // Handle Shaka (DASH/HLS)
-            if(ch.type === 'shaka' && shakaPlayer) {
-                try {
-                    await shakaPlayer.load(ch.url);
-                    video.play();
-                } catch(e) {
-                    console.error('Shaka Load Fail:', e);
-                    loader.style.display = 'none';
+        // 1. Initialise and Load Data
+        async function init() {
+            // Setup Shaka Polyfills
+            if (window.shaka) {
+                shaka.polyfill.installAll();
+                if (shaka.Player.isBrowserSupported()) {
+                    shakaPlayer = new shaka.Player(video);
                 }
-            } 
-            // Handle Standard HLS (hls.js)
-            else if(ch.type === 'hls' && window.Hls && Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(ch.url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } 
-            // Fallback for native HLS (Safari)
-            else {
-                video.src = ch.url;
-                video.play();
+            }
+
+            try {
+                // Try to fetch the JSON
+                const res = await fetch('./channels.json');
+                if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
+                
+                allChannels = await res.json();
+                console.log("Channels loaded successfully:", allChannels);
+                
+                populateDropdown(allChannels);
+            } catch(e) {
+                console.error("Critical Load Error:", e.message);
+                select.innerHTML = `<option value="">⚠️ Error: ${e.message}</option>`;
             }
         }
-    }
 
-    async function stopAll() {
-        loader.style.display = 'none';
-        if(hls) { hls.destroy(); hls = null; }
-        if(shakaPlayer) { await shakaPlayer.unload(); } // Clear current shaka stream
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-        video.style.display = 'none';
-        iframe.style.display = 'none';
-        iframe.src = 'about:blank';
-    }
+        // 2. Populate UI
+        function populateDropdown(list) {
+            select.innerHTML = `<option value="">📱 Select Channel (${list.length})</option>`;
+            list.forEach((ch) => {
+                const opt = document.createElement("option");
+                opt.value = JSON.stringify(ch); 
+                opt.textContent = ch.name;
+                select.appendChild(opt);
+            });
+        }
 
-    video.onplaying = () => loader.style.display = 'none';
-    select.onchange = () => playChannel(select.value);
-    
-    init();
-</script>
+        // 3. Category Filter
+        function filterChannels(category, btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const filtered = (category === 'All') 
+                ? allChannels 
+                : allChannels.filter(ch => ch.category === category);
+            
+            populateDropdown(filtered);
+        }
+
+        // 4. Playback Logic
+        async function playChannel(dataStr) {
+            if(!dataStr) return;
+            const ch = JSON.parse(dataStr);
+            
+            // SEO Title Update
+            document.title = `Watching ${ch.name} | MSTV Network`;
+            
+            // Clean current player
+            await stopAll();
+            
+            loader.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            if(ch.type === 'iframe') {
+                iframe.style.display = 'block';
+                iframe.src = ch.url;
+                iframe.onload = () => loader.style.display = 'none';
+            } else {
+                video.style.display = 'block';
+                
+                if (ch.type === 'shaka' && shakaPlayer) {
+                    try {
+                        await shakaPlayer.load(ch.url);
+                        video.play();
+                    } catch(e) { console.error("Shaka error", e); }
+                } else if (window.Hls && Hls.isSupported()) {
+                    hls = new Hls();
+                    hls.loadSource(ch.url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                } else {
+                    video.src = ch.url;
+                    video.play();
+                }
+            }
+        }
+
+        async function stopAll() {
+            loader.style.display = 'none';
+            if(hls) { hls.destroy(); hls = null; }
+            if(shakaPlayer) await shakaPlayer.unload();
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            video.style.display = 'none';
+            iframe.style.display = 'none';
+            iframe.src = 'about:blank';
+        }
+
+        video.onplaying = () => loader.style.display = 'none';
+        select.onchange = () => playChannel(select.value);
+
+        init();
+    </script>
 </body>
 </html>
