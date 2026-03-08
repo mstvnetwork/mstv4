@@ -158,11 +158,11 @@ async function playChannel(index) {
     loader.style.display = 'block';
     displayName.textContent = ch.name;
 
-    // Detect Stream Type
+    // Detect Stream Type (Support both explicit type and URL detection)
     const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
-    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
+    const isDash = ch.url.includes('.mpd') || ch.type === 'dash' || ch.type === 'shaka';
 
-    // 1. IFRAME HANDLER (With Redirection Blocking)
+    // 1. IFRAME HANDLER (Anti-Redirect Active)
     if (ch.type === 'iframe') {
         iframe.style.display = 'block';
         iframe.contentWindow.location.replace(ch.url); 
@@ -173,15 +173,10 @@ async function playChannel(index) {
     // 2. VIDEO HANDLER
     video.style.display = 'block';
     
-    // HLS.js strictly for HLS (Speed Optimized)
+    // Engine A: HLS.js for .m3u8 (Fastest for HLS)
     if (isHls) {
         if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ 
-                capLevelToPlayerSize: true, 
-                startLevel: 0, // FAST START: Lowest bitrate first
-                enableWorker: true,
-                lowLatencyMode: true
-            });
+            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0, enableWorker: true });
             hls.loadSource(ch.url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
@@ -190,21 +185,40 @@ async function playChannel(index) {
             video.play().catch(()=>{});
         }
     } 
-    // Shaka strictly for DASH (MPD)
+    // Engine B: Shaka strictly for DASH/MPD
     else if (isDash) {
-        if (window.shaka && shaka.Player.isBrowserSupported()) {
-            shaka.polyfill.installAll();
-            shakaPlayer = new shaka.Player(video);
-            shakaPlayer.configure({
-                streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true, jumpLargeGaps: true }
-            });
-            try { 
-                await shakaPlayer.load(ch.url); 
-                video.play().catch(()=>{}); 
-            } catch(e) { console.error('Shaka Error', e); }
+        // Crucial: Polyfill MUST be installed before creating the player
+        if (window.shaka) {
+            shaka.polyfill.installAll(); 
+            if (shaka.Player.isBrowserSupported()) {
+                shakaPlayer = new shaka.Player(video);
+                
+                // Add error listener for debugging
+                shakaPlayer.addEventListener('error', (e) => console.error('Shaka Error:', e.detail));
+
+                shakaPlayer.configure({
+                    streaming: { 
+                        rebufferingGoal: 1, 
+                        bufferingGoal: 4, 
+                        lowLatencyMode: true, 
+                        jumpLargeGaps: true 
+                    }
+                });
+
+                try { 
+                    await shakaPlayer.load(ch.url); 
+                    video.play().catch(()=>{}); 
+                } catch(e) { 
+                    console.error('Shaka Load Fail', e);
+                    loader.textContent = "Stream Error (Check CORS)";
+                }
+            } else {
+                loader.textContent = "Browser not supported for DASH";
+            }
         }
     }
 }
+
 
 // Global Video Event: Hide Loader on Play
 video.onplaying = () => loader.style.display = 'none';
