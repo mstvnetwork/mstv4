@@ -80,7 +80,7 @@
     <div id="channel-list"></div>
 </div>
 
-<script>
+    <script>
 const video = document.getElementById('video-player');
 const iframe = document.getElementById('iframe-player');
 const loader = document.getElementById('loading');
@@ -93,34 +93,26 @@ async function stopAll() {
     loader.style.display = 'none';
     if(hls){ hls.destroy(); hls = null; }
     if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
-    
     video.pause();
-    video.removeAttribute('src');
+    video.src = "";
     video.load();
-    
-    iframe.removeAttribute('src');
     iframe.src = 'about:blank';
-    
     video.style.display = 'none';
     iframe.style.display = 'none';
 }
 
 async function playChannel(index) {
     const ch = channels[index];
-    if (!ch) return;
-
     await stopAll();
     
-    // UI Updates
+    // Hide placeholder & show loader
     placeholder.style.display = 'none';
     loader.style.display = 'block';
     displayName.textContent = ch.name;
 
-    // 1. Identify Format strictly
-    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
     const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
+    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
 
-    // 2. IFRAME HANDLER (Anti-Redirect)
     if (ch.type === 'iframe') {
         iframe.style.display = 'block';
         iframe.src = ch.url;
@@ -128,51 +120,27 @@ async function playChannel(index) {
         return;
     }
 
-    // 3. VIDEO HANDLER
     video.style.display = 'block';
-
-    // ENGINE A: DASH EXCLUSIVE (Shaka)
-    if (isDash) {
+    if (isHls) {
+        // HLS.js logic (Fast Start)
+        if (window.Hls && Hls.isSupported()) {
+            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0, enableWorker: true });
+            hls.loadSource(ch.url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else { video.src = ch.url; video.play(); }
+    } else if (isDash) {
+        // SHAKA strictly for .mpd
         if (window.shaka && shaka.Player.isBrowserSupported()) {
             shaka.polyfill.installAll();
             shakaPlayer = new shaka.Player(video);
-            
-            // Performance Tuning for DASH only
-            shakaPlayer.configure({
-                streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true }
-            });
-
-            try {
-                await shakaPlayer.load(ch.url);
-                video.play().catch(() => {});
-            } catch (e) {
-                console.error('Shaka DASH Load Fail', e);
-                loader.textContent = "DASH Error";
-            }
-        }
-        return; // Exit here so Shaka doesn't touch HLS
-    }
-
-    // ENGINE B: HLS EXCLUSIVE (Hls.js)
-    if (isHls || ch.type === 'hls') {
-        if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ 
-                capLevelToPlayerSize: true, 
-                startLevel: 0, 
-                enableWorker: true 
-            });
-            hls.loadSource(ch.url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Fallback for Safari/iOS native HLS
-            video.src = ch.url;
-            video.play().catch(() => {});
+            shakaPlayer.configure({ streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true } });
+            try { await shakaPlayer.load(ch.url); video.play(); } catch(e) { console.error(e); }
         }
     }
 }
 
-
+// Hide loader when video actually starts playing
 video.onplaying = () => loader.style.display = 'none';
 
 function renderSidebar(data) {
@@ -183,7 +151,6 @@ function renderSidebar(data) {
         card.className = "channel-card";
         card.innerHTML = `<img src="${ch.logo || ''}" loading="lazy"><div class="name">${ch.name}</div>`;
         card.onclick = () => {
-            window.scrollTo({top: 0, behavior: 'smooth'});
             document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             playChannel(i);
