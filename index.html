@@ -90,6 +90,32 @@ border-radius:12px;
 overflow:hidden;
 margin-top:15px;
 }
+.player-sticky{
+position:sticky;
+top:55px;
+z-index:50;
+width:100%;
+display:flex;
+justify-content:center;
+background:#0b0f14;
+padding-top:10px;
+padding-bottom:10px;
+}
+
+/* create scroll area */
+
+.channels{
+width:95%;
+max-width:1100px;
+margin-top:30px;
+padding-bottom:80px;
+}
+
+/* smoother scrolling */
+
+html{
+scroll-behavior:smooth;
+}
 
 video,iframe{
 position:absolute;
@@ -181,7 +207,7 @@ opacity:.8;
 <body>
 
 <header class="topbar">
-<div class="logo">MSTV</div>
+<div class="logo"></div></div>🔎</div>
 <input id="search" placeholder="Search channel">
 </header>
 
@@ -189,6 +215,8 @@ opacity:.8;
 <h1>Watch Indian TV Channels Live</h1>
 
 <div id="loading">Loading stream...</div>
+
+<div class="player-sticky">
 
 <div class="player-container">
 
@@ -204,6 +232,7 @@ allow="autoplay; encrypted-media; picture-in-picture"></iframe>
 
 </div>
 
+</div>
 <section class="channels">
 
 <h2>Available Channels</h2>
