@@ -91,29 +91,53 @@ let channels = [], hls = null, shakaPlayer = null;
 
 async function stopAll() {
     loader.style.display = 'none';
-    if(hls){ hls.destroy(); hls = null; }
-    if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
-    
+
+    // 1. Aggressively kill Shaka
+    if (shakaPlayer) {
+        try {
+            await shakaPlayer.detach(); // Disconnect from video element
+            await shakaPlayer.destroy(); // Wipe from memory
+        } catch (e) { console.error("Shaka cleanup error", e); }
+        shakaPlayer = null;
+    }
+
+    // 2. Aggressively kill HLS.js
+    if (hls) {
+        hls.detachMedia(); // Disconnect from video element
+        hls.destroy(); // Wipe from memory
+        hls = null;
+    }
+
+    // 3. Factory Reset the Video Element
     video.pause();
-    video.removeAttribute('src');
-    video.load();
+    video.src = "";
+    video.load(); // Force browser to release the stream buffer
+    video.removeAttribute("src"); // Remove any remaining trace
     
-    iframe.removeAttribute('src');
+    // 4. Reset Iframe
     iframe.src = 'about:blank';
-    
+    iframe.removeAttribute("src");
+
+    // Hide everything for a clean slate
     video.style.display = 'none';
     iframe.style.display = 'none';
 }
 
 async function playChannel(index) {
     const ch = channels[index];
+    if (!ch) return;
+
+    // WAIT for complete cleanup before starting new engine
     await stopAll();
     
     placeholder.style.display = 'none';
     loader.style.display = 'block';
     displayName.textContent = ch.name;
 
-    // IFRAME Logic
+    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
+    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
+
+    // IFRAME Engine (Strictly Sandboxed)
     if (ch.type === 'iframe') {
         iframe.style.display = 'block';
         iframe.src = ch.url;
@@ -121,40 +145,46 @@ async function playChannel(index) {
         return;
     }
 
-    // VIDEO Logic
     video.style.display = 'block';
-    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
 
-    if (isHls) {
-        if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0 });
-            hls.loadSource(ch.url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else {
-            video.src = ch.url;
-            video.play();
-        }
-    } else {
-        // RESTORED SHAKA Logic (DASH / .mpd)
+    // ENGINE A: DASH EXCLUSIVE (Shaka)
+    if (isDash) {
         if (window.shaka && shaka.Player.isBrowserSupported()) {
             shaka.polyfill.installAll();
             shakaPlayer = new shaka.Player(video);
             
-            // Add the listener that was in your original working code
-            shakaPlayer.addEventListener('error', (e) => console.error('Error code', e.detail.code, 'object', e.detail));
+            // Speed settings for low-network
+            shakaPlayer.configure({
+                streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true }
+            });
 
             try {
                 await shakaPlayer.load(ch.url);
-                video.play();
-            } catch (e) {
-                console.error('Shaka load failed', e);
-            }
+                video.play().catch(() => {});
+            } catch (e) { console.error('DASH Fail', e); }
+        }
+        return; // EXIT: Ensure HLS engine is never even looked at
+    }
+
+    // ENGINE B: HLS EXCLUSIVE (Hls.js)
+    if (isHls || ch.type === 'hls') {
+        if (window.Hls && Hls.isSupported()) {
+            hls = new Hls({ 
+                capLevelToPlayerSize: true, 
+                startLevel: 0, // Instant play on low speed
+                enableWorker: true,
+                appendErrorMaxRetry: 3 
+            });
+            hls.loadSource(ch.url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native Safari fallback
+            video.src = ch.url;
+            video.play().catch(() => {});
         }
     }
 }
-
-video.onplaying = () => loader.style.display = 'none';
 
 function renderSidebar(data) {
     channels = data;
