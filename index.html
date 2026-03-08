@@ -114,7 +114,7 @@ text-align:center;
         
         <div id="loading">⚡ Loading...</div>
         <video id="video-player" autoplay playsinline controls></video>
-        <iframe id="iframe-player" allow="autoplay; encrypted-media"></iframe>
+         <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture"></iframe>
     </div>
     <div class="channel-details">
         <h1 id="display-name" style="font-size: 1.1rem; margin:0; color:var(--accent);"></h1>
@@ -158,13 +158,14 @@ async function playChannel(index) {
 
     const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
     const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
+  // Iframe stream
+  if(channel.type === 'iframe'){
+    iframe.style.display = 'block';
+    iframe.src = channel.url;
+    iframe.onload = () => { loader.style.display = 'none'; };
+    return;
+  }
 
-    if (ch.type === 'iframe') {
-        iframe.style.display = 'block';
-        iframe.src = ch.url;
-        iframe.onload = () => loader.style.display = 'none';
-        return;
-    }
 
     video.style.display = 'block';
     if (isHls) {
