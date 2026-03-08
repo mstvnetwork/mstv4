@@ -127,47 +127,70 @@ async function stopAll() {
 
 async function playChannel(index) {
     const ch = channels[index];
+    if (!ch) return;
+
     await stopAll();
     loader.style.display = 'block';
     displayName.textContent = ch.name;
+    
+    // 1. Identify Format
+    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
+    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
 
-    if(ch.type === 'iframe') {
+    // 2. Handle IFRAME (Fastest Load)
+    if (ch.type === 'iframe') {
         iframe.style.display = 'block';
         iframe.src = ch.url;
-        iframe.onload = () => loader.style.display = 'none';
+        iframe.onload = () => { loader.style.display = 'none'; };
         return;
     }
 
+    // 3. Handle HLS (High Priority for Speed)
     video.style.display = 'block';
-    const isHls = ch.type === 'hls' || ch.url.includes('.m3u8');
-
-    if(isHls) {
-        if(window.Hls && Hls.isSupported()) {
-            hls = new Hls({ 
-                capLevelToPlayerSize: true, // SPEED: Don't load 4K on a small screen
-                startLevel: 0,              // SPEED: Start with lowest bitrate for instant play
-                enableWorker: true 
+    if (isHls) {
+        if (window.Hls && Hls.isSupported()) {
+            hls = new Hls({
+                capLevelToPlayerSize: true, 
+                startLevel: 0, // Start instantly with lowest bitrate
+                enableWorker: true,
+                lowLatencyMode: true
             });
             hls.loadSource(ch.url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else { video.src = ch.url; video.play(); }
-    } else {
-        if(window.shaka && shaka.Player.isBrowserSupported()) {
-            shaka.polyfill.installAll();
-            shakaPlayer = new shaka.Player(video);
-            // SPEED: Aggressive buffering for low-speed networks
-            shakaPlayer.configure({
-                streaming: {
-                    rebufferingGoal: 1,      // Start play with only 1s of data
-                    bufferingGoal: 5,        // Keep only 5s ahead to save bandwidth
-                    lowLatencyMode: true
-                }
-            });
-            try { await shakaPlayer.load(ch.url); video.play(); } catch(e) { console.error(e); }
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native Safari/iOS support
+            video.src = ch.url;
+            video.play();
+        }
+        return;
+    }
+
+    // 4. Handle DASH via SHAKA (Only for .mpd)
+    if (isDash && window.shaka && shaka.Player.isBrowserSupported()) {
+        shaka.polyfill.installAll();
+        shakaPlayer = new shaka.Player(video);
+        
+        // Performance Tuning for Shaka
+        shakaPlayer.configure({
+            streaming: {
+                bufferingGoal: 4,      // Only buffer 4 seconds to save data
+                rebufferingGoal: 1,    // Play after only 1 second of data
+                lowLatencyMode: true,
+                jumpLargeGaps: true    // Prevent freezing on bad networks
+            }
+        });
+
+        try {
+            await shakaPlayer.load(ch.url);
+            video.play();
+        } catch (e) {
+            console.error('Shaka Load Error', e);
+            loader.textContent = "Error Loading Stream";
         }
     }
 }
+
 
 // UI Rendering
 function renderSidebar(data) {
