@@ -79,17 +79,6 @@
     <div class="sub-header">Watch Indian, Punjabi & Religious TV Channels Live</div>
     <div id="channel-list"></div>
 </div>
-
-        shakaPlayer = new shaka.Player(video);
-        shakaPlayer.configure({ streaming: { rebufferingGoal: 1, bufferingGoal: 4 } });
-        try {
-            await shakaPlayer.load(ch.url);
-            video.play();
-        } catch (e) { console.error('DASH load failed', e); }
-    }
-}
-
-
 <script>
 const video = document.getElementById('video-player');
 const iframe = document.getElementById('iframe-player');
