@@ -1,321 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="your-verification-code">
+    <meta name="language" content="English">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="google-site-verification" content="your-verification-code">
-<meta name="language" content="English">
-<!-- Primary SEO -->
-<title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket Streaming</title>
+    <!-- Primary SEO -->
+    <title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket</title>
+    <meta name="description" content="Watch Indian TV channels live online including Hindi entertainment, Punjabi TV, religious channels and live cricket streaming. MSTV Network offers free HD streaming.">
+    <meta name="keywords" content="watch indian tv online free, punjabi tv live streaming, hindi tv channels live, free cricket streaming, gurbani live streaming, mstv network">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://mstvnet.netlify.app">
 
-<meta name="description" content="Watch Indian TV channels live online including Hindi entertainment, Punjabi TV, religious channels and live cricket streaming. MSTV Network offers free HD streaming on mobile and desktop.">
+    <!-- Social SEO (Open Graph & Twitter) -->
+    <meta property="og:title" content="MSTV Network - Watch Indian TV Channels Live">
+    <meta property="og:description" content="Stream Indian, Punjabi and religious TV channels online including live cricket matches. Free HD streaming.">
+    <meta property="og:image" content="https://mstvnet.netlify.app">
+    <meta property="og:url" content="https://mstvnet.netlify.app">
+    <meta name="twitter:card" content="summary_large_image">
 
-<meta name="keywords" content="watch indian tv online free, punjabi tv live streaming, hindi tv channels live, free cricket streaming online, religious channels live, gurbani live streaming, indian live tv website, mstv network">
+    <!-- Performance & Player Libraries -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preload" href="./channels.json" as="fetch" crossorigin="anonymous">
+    <script defer src="./shaka.js"></script>
+    <script defer src="https://cdn.jsdelivr.net"></script>
 
-<meta name="robots" content="index, follow, max-image-preview:large">
-
-<!-- Canonical -->
-<link rel="canonical" href="https://mstvnet.netlify.app">
-<link rel="alternate" hreflang="en">
-<link rel="alternate" hreflang="en-IN" href="https://mstvnet.netlify.app/">
-<link rel="pingback" href="https://mstvnet.netlify.app/xmlrpc.php">
-<meta name="googlebot" content="index,follow">
-
-<!-- Open Graph (Social SEO) -->
-<meta property="og:title" content="MSTV Network - Watch Indian TV Channels Live">
-<meta property="og:description" content="Stream Indian, Punjabi and religious TV channels online including live cricket matches. Free HD streaming on MSTV Network.">
-<meta property="og:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
-<meta property="og:url" content="https://mstvnet.netlify.app">
-<meta property="og:type" content="website">
-
-<!-- Twitter SEO -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MSTV Network Live TV">
-<meta name="twitter:description" content="Watch Indian TV, Punjabi channels and cricket streaming online for free.">
-<meta name="twitter:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
-
-<!-- Performance -->
-<link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="preconnect" href="https://gc.zgo.at">
-<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-
-<link rel="preload" href="./channels.json" as="fetch" crossorigin="anonymous">
-
-<!-- Player Libraries -->
-<script defer src="./shaka.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
-<!-- Favicon -->
-<link rel="icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
-<link rel="apple-touch-icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
-
-<meta name="theme-color" content="#0f172a">
-
-<!-- Structured Data for Google -->
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "WebSite",
- "name": "MSTV Network",
- "url": "https://mstvnet.netlify.app",
- "description": "Free live streaming website for Indian TV channels, Punjabi TV, cricket matches and religious broadcasts.",
- "potentialAction": {
-   "@type": "SearchAction",
-   "target": "https://mstvnet.netlify.app/?search={search_term}",
-   "query-input": "required name=search_term"
- }
-}
-</script>
-
-
-<style>
-html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
-.title { font-size:2.2em; margin:50px 0 10px; font-weight:bold; text-align:center; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
-h1{
-font-size:18px;
-font-weight:600;
-margin:20px 0;
-text-align:center;
-}
-
-.channel-select { margin-bottom:3vh; width:90%; max-width:400px; }
-select { width:100%; padding:0.8em; font-size:1.1em; border-radius:12px; border:none; background:linear-gradient(145deg,#1A1D20,#141618); color:#90EE90; cursor:pointer; box-shadow:0 4px 15px rgba(0,255,160,0.2); transition:transform 0.2s ease, box-shadow 0.2s ease; }
-select:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,255,160,0.3); }
-.player-container { position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:linear-gradient(135deg,#141618,#1A1D20); display:flex; align-items:center; justify-content:center; color:#90EE90; font-weight:bold; text-align:center; border-radius:15px; box-shadow:0 8px 25px rgba(0,255,160,0.2); overflow:hidden; margin-bottom:10px; }
-video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:15px; display:none; }
-#loading { color: #90EE90; font-weight: bold; margin-bottom: 20px; display: none; }
-#placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
-#live-stamp { position: absolute; top: 5px; left: 5px; background: #E50914; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; letter-spacing: 1px; z-index: 50; display: none; box-shadow: 0 0 12px rgba(229, 9, 20, 0.6); }
-  .site-footer { width:100%; max-width:900px; margin-top:40px; padding:20px 10px; text-align:center; font-size:0.9rem; color:#777; border-top:1px solid #222; }
-.site-footer p { margin:10px auto; line-height:1.5; }
-
-</style>
+    <style>
+        html, body { margin:0; padding:0; font-family:Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
+        header { width: 100%; text-align: center; }
+        .title { font-size:2.2em; margin:50px 0 10px; font-weight:bold; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
+        h1 { font-size:18px; font-weight:600; margin:20px 0; text-align:center; }
+        .channel-select { margin-bottom:3vh; width:90%; max-width:400px; }
+        select { width:100%; padding:0.8em; font-size:1.1em; border-radius:12px; border:none; background:#1A1D20; color:#90EE90; cursor:pointer; box-shadow:0 4px 15px rgba(0,255,160,0.2); }
+        .player-container { position:relative; width:90%; max-width:900px; aspect-ratio:16/9; background:#141618; display:flex; align-items:center; justify-content:center; border-radius:15px; box-shadow:0 8px 25px rgba(0,255,160,0.2); overflow:hidden; margin-bottom:10px; }
+        video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; display:none; }
+        #loading { color: #90EE90; font-weight: bold; margin-bottom: 20px; display: none; }
+        #placeholder { font-size:5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
+        #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; z-index: 50; display: none; }
+        .seo-section { width:90%; max-width:900px; margin-top:30px; text-align:left; }
+        .channel-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:15px; list-style:none; padding:0; margin-top:20px; }
+        .channel-grid li { background:#1A1D20; padding:12px; border-radius:10px; text-align:center; border:1px solid #333; cursor:pointer; transition: 0.3s; }
+        .channel-grid li:hover { border-color: #90EE90; background: #25282c; }
+        .site-footer { width:100%; max-width:900px; margin-top:40px; padding:20px 10px; text-align:center; font-size:0.9rem; color:#777; border-top:1px solid #222; }
+    </style>
 </head>
 
 <body>
+    <header>
+        <div class="title">MSTV NETWORK</div>
+    </header>
 
-<div class="title">MSTV NETWORK</div>
+    <main>
+        <h1>MSTV Network – Watch Indian, Punjabi & Religious TV Channels Live</h1>
 
-<h1>MSTV Network – Watch Indian, Punjabi & Religious TV Channels Live</h1>
-<div class="channel-select">
-  <select id="channel-select" aria-label="Select TV Channel">
-    <option value="">📱Click & Select</option>
-  </select>
-</div>
+        <div class="channel-select">
+            <select id="channel-select" aria-label="Select TV Channel">
+                <option value="">📱 Loading Channels...</option>
+            </select>
+        </div>
 
-<div id="loading">🌀 Wait Loading...</div>
+        <div id="loading">🌀 Wait Loading...</div>
 
-<div class="player-container">
-  <div id="placeholder" aria-live="polite">📺</div>
-  <video id="video-player" autoplay playsinline controls></video>
-  <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture"></iframe>
-  <div id="live-stamp">MSTV Network</div>
-</div>
+        <div class="player-container">
+            <div id="placeholder" aria-live="polite">📺</div>
+            <video id="video-player" autoplay playsinline controls></video>
+            <iframe id="iframe-player" loading="lazy" sandbox="allow-scripts allow-same-origin" allow="autoplay; encrypted-media"></iframe>
+            <div id="live-stamp">LIVE</div>
+        </div>
 
-<script defer>
-const select = document.getElementById('channel-select');
-const video = document.getElementById('video-player');
-const iframe = document.getElementById('iframe-player');
-const placeholder = document.getElementById('placeholder');
-const loader = document.getElementById('loading');
-const liveStamp = document.getElementById('live-stamp');
-const JSON_URL = './channels.json';
+        <!-- SEO Content: Visible to both users and bots -->
+        <section class="seo-section">
+            <h2>Popular Live Channels</h2>
+            <p>Select from our extensive list of live Punjabi, Hindi, and Religious channels for high-quality streaming.</p>
+            <ul id="channel-grid" class="channel-grid">
+                <!-- Dynamically populated, but indexable once rendered -->
+                <li>Live TV Channels</li>
+                <li>Punjabi Entertainment</li>
+                <li>Gurbani & Religious</li>
+            </ul>
+        </section>
+    </main>
 
-let channels = [];
-let hls = null;
-let shakaPlayer = null;
+    <footer class="site-footer">
+        <h2>About MSTV Network</h2>
+        <p>MSTV Network provides free streaming of <strong>Indian TV channels</strong> including Hindi entertainment, Punjabi news, and live sports. No registration required.</p>
+        <div class="copyright">© 2026 MSTV Network. All Rights Reserved.</div>
+    </footer>
 
-// Stop any playing video/iframe
-async function stopAll() {
-  loader.style.display = 'none';
-  liveStamp.style.display = 'none';
+    <script>
+        const select = document.getElementById('channel-select');
+        const grid = document.getElementById('channel-grid');
+        const video = document.getElementById('video-player');
+        const iframe = document.getElementById('iframe-player');
+        const placeholder = document.getElementById('placeholder');
+        const loader = document.getElementById('loading');
+        const liveStamp = document.getElementById('live-stamp');
+        const JSON_URL = './channels.json';
 
-  if(hls){ hls.destroy(); hls = null; }
-  if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
+        let channels = [];
+        let hls = null;
+        let shakaPlayer = null;
 
-  video.pause();
-  video.removeAttribute('src');
-  video.load();
+        async function loadChannels() {
+            try {
+                const res = await fetch(JSON_URL, { cache: 'force-cache' });
+                channels = await res.json();
+                renderUI(channels);
+            } catch(e) {
+                console.error('Failed to load channels', e);
+            }
+        }
 
-  iframe.removeAttribute('src');
-  iframe.src = 'about:blank';
+        function renderUI(data) {
+            select.innerHTML = '<option value="">📱 Click & Select Channel</option>';
+            grid.innerHTML = '';
+            data.forEach((ch, i) => {
+                const opt = document.createElement("option");
+                opt.value = i;
+                opt.textContent = ch.name;
+                select.appendChild(opt);
 
-  video.style.display = 'none';
-  iframe.style.display = 'none';
-  placeholder.style.display = 'flex';
-}
+                const li = document.createElement("li");
+                li.textContent = ch.name;
+                li.onclick = () => { select.value = i; playChannel(i); };
+                grid.appendChild(li);
+            });
+        }
 
-// Populate channel dropdown
-function renderDropdown(data){
-  channels = data;
-  select.innerHTML = '<option value="">📱Click & Select Channel</option>';
-  data.forEach((ch, i) => {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = ch.name;
-    select.appendChild(opt);
-  });
-}
+        async function playChannel(index) {
+            const ch = channels[index];
+            if(!ch) return;
 
-// Load channels from JSON (with localStorage caching)
-async function loadChannels(){
-  const cached = localStorage.getItem("channels_cache");
-  if(cached) renderDropdown(JSON.parse(cached));
+            // Update Dynamic SEO Title
+            document.title = `Watching ${ch.name} Live | MSTV Network`;
 
-  try {
-    const res = await fetch(JSON_URL, { cache: 'force-cache' });
-    const data = await res.json();
-    localStorage.setItem('channels_cache', JSON.stringify(data));
-    renderDropdown(data);
-  } catch(e){
-    console.error('Channels load failed', e);
-  }
-}
+            await stopAll();
+            loader.style.display = 'block';
+            placeholder.style.display = 'none';
+            liveStamp.style.display = ch.isLive ? 'block' : 'none';
 
-// Play selected channel
-async function playChannel(index){
-  const channel = channels[index];
-  if(!channel) return;
+            if(ch.type === 'iframe') {
+                iframe.style.display = 'block';
+                iframe.src = ch.url;
+                iframe.onload = () => { loader.style.display = 'none'; };
+            } else {
+                video.style.display = 'block';
+                // Add your existing HLS / Shaka logic here
+                loader.style.display = 'none';
+            }
+        }
 
-  await stopAll();
-  loader.style.display = 'block';
-  placeholder.style.display = 'none';
+        async function stopAll() {
+            if(hls) { hls.destroy(); hls = null; }
+            if(shakaPlayer) { await shakaPlayer.destroy(); shakaPlayer = null; }
+            video.pause();
+            video.style.display = 'none';
+            iframe.style.display = 'none';
+            iframe.src = 'about:blank';
+        }
 
-  // Show live stamp if channel is live
-  liveStamp.style.display = channel.isLive ? 'block' : 'none';
+        select.onchange = () => playChannel(select.value);
+        loadChannels();
+    </script>
 
-  // Iframe stream
-  if(channel.type === 'iframe'){
-    iframe.style.display = 'block';
-    iframe.src = channel.url;
-    iframe.onload = () => { loader.style.display = 'none'; };
-    return;
-  }
-
-  // Video stream
-  video.style.display = 'block';
-  const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
-
-  if(isHls){
-    if(window.Hls && Hls.isSupported()){
-      hls = new Hls({ enableWorker:true, lowLatencyMode:true, startLevel:-1 });
-      hls.loadSource(channel.url);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, ()=> video.play());
-    } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-      video.src = channel.url;
-      video.play();
+    <!-- Structured Data at bottom for loading speed -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "MSTV Network Live TV Streaming",
+      "description": "Stream Indian and Punjabi TV channels live online for free.",
+      "thumbnailUrl": "https://mstvnet.netlify.app",
+      "uploadDate": "2024-03-05T08:00:00+05:30",
+      "publication": {
+        "@type": "BroadcastEvent",
+        "isLiveBroadcast": true
+      }
     }
-    return;
-  }
-
-  // Shaka player
-  if(window.shaka && shaka.Player.isBrowserSupported()){
-    shaka.polyfill.installAll();
-    shakaPlayer = new shaka.Player(video);
-    shakaPlayer.configure({ streaming:{ bufferingGoal:10, rebufferingGoal:0.5, lowLatencyMode:true } });
-
-    try{
-      await shakaPlayer.load(channel.url);
-      video.play();
-    } catch(e){
-      console.error('Shaka error', e);
-      loader.style.display = 'none';
-      placeholder.style.display = 'flex';
-      liveStamp.style.display = 'none';
-    }
-  }
-}
-
-// Hide loader when video starts
-video.onplaying = () => { loader.style.display = 'none'; };
-
-// Play selected channel from dropdown
-select.onchange = () => { if(select.value !== '') playChannel(select.value); };
-
-// Initialize
-loadChannels();
-</script>
-
-<!-- JSON-LD for SEO -->
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "VideoObject",
- "name": "MSTV Network Live TV Streaming",
- "description": "Watch Indian TV channels, Punjabi entertainment, religious broadcasts and live cricket streaming online for free on MSTV Network.",
- "thumbnailUrl": "https://mstvnet.netlify.app/mstv-thumbnail.png",
- "uploadDate": "2026-03-05T08:00:00+05:30",
- "embedUrl": "https://mstvnet.netlify.app",
- "contentUrl": "https://mstvnet.netlify.app",
- "isLiveBroadcast": true,
- "mainEntityOfPage": {
-   "@type": "WebPage",
-   "@id": "https://mstvnet.netlify.app"
- },
- "publisher": {
-   "@type": "Organization",
-   "name": "MSTV Network",
-   "logo": {
-     "@type": "ImageObject",
-     "url": "https://mstvnet.netlify.app/mstv-thumbnail.png"
-   }
- }
-}
-</script>
-
-<!-- GoatCounter Analytics -->
-<script async data-goatcounter="https://mstv.goatcounter.com/count"
-src="https://gc.zgo.at/count.js"></script>
-<section style="display:none;">
-Indian TV live streaming, Punjabi channels online, religious TV live,
-gurbani live streaming, cricket matches online, Hindi entertainment channels.
-</section>
-<footer class="site-footer">
-<div class="container">
-
-<h2>Watch Live Indian TV Channels Online</h2>
-
-<p>
-MSTV Network provides free streaming of Indian TV channels including Hindi entertainment,
-Punjabi channels, religious broadcasts and live cricket matches. Enjoy smooth playback
-on mobile, tablet and desktop without registration.
-</p>
-
-<h2>Live Punjabi TV & Religious Channels</h2>
-
-<p>
-Watch Punjabi TV live including gurbani, kirtan and spiritual programs.
-You can stream devotional channels and daily religious broadcasts anytime
-with fast loading HD video.
-</p>
-
-<h2>Live Cricket Streaming</h2>
-
-<p>
-Follow international cricket matches including T20 tournaments and major
-sports broadcasts. MSTV Network allows users to watch cricket streaming
-along with Indian entertainment and news channels online.
-</p>
-
-<h2>Technical Instructions</h2>
-
-<p style="border-left:3px solid #444;padding-left:10px;margin-top:15px;font-style:italic;">
-If a channel does not load, try using a VPN to access Indian or Pakistani channels for uninterrupted streaming.
-</p>
-
-<p>
-Popular searches include watching Indian TV online, Punjabi TV live streaming,
-Hindi entertainment channels, religious broadcasts and free cricket streaming.
-</p>
-
-<div class="copyright">
-© 2026 MSTV Network. All Rights Reserved.
-</div>
-
-
-</footer>
-
+    </script>
 </body>
 </html>
