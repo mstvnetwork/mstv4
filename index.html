@@ -227,9 +227,15 @@ opacity:.8;
 /* create scroll area */
 
 .channels {
-  margin-top: 420px;  /* header + player total height */
+  margin-top: calc(48px + 16px + (1000px * 9 / 16 / 1)); 
+  /* 48px header + 16px spacing + approx player height (16:9) */
+  width: 95%;
+  max-width: 1200px;
+  padding: 20px 16px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
 }
-/* smoother scrolling */
 
 html{
 scroll-behavior:smooth;
