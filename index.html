@@ -1,130 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- Primary SEO -->
-    <title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket</title>
-    <meta name="description" content="Watch Indian TV channels live online including Hindi entertainment, Punjabi TV, religious channels and live cricket streaming. MSTV Network offers free HD streaming.">
-    <meta name="keywords" content="watch indian tv online free, punjabi tv live streaming, hindi tv channels live, free cricket streaming online, mstv network">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://mstvnet.netlify.app">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSTV Network | Watch Indian TV, Punjabi Channels & Live Cricket</title>
 
-    <!-- Open Graph (Social SEO) -->
-    <meta property="og:title" content="MSTV Network - Watch Indian TV Channels Live">
-    <meta property="og:description" content="Stream Indian, Punjabi and religious TV channels online. Free HD streaming on MSTV Network.">
-    <meta property="og:image" content="https://mstvnet.netlify.app">
-    <meta property="og:url" content="https://mstvnet.netlify.app">
-    <meta property="og:type" content="website">
+<!-- SEO Meta Tags -->
+<meta name="description" content="Watch Indian TV channels live online. Free HD streaming on MSTV Network.">
+<meta name="keywords" content="watch indian tv, punjabi tv live, hindi tv channels, cricket streaming, mstv network">
 
-    <!-- Performance Pre-connect -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link rel="preload" href="./channels.json" as="fetch" crossorigin="anonymous">
+<!-- Player Libraries -->
+<script defer src="./shaka.js"></script>
+<script defer src="https://cdn.jsdelivr.net"></script>
 
-    <!-- Player Libraries -->
-    <script defer src="./shaka.js"></script>
-    <script defer src="https://cdn.jsdelivr.net"></script>
+<style>
+  :root { --accent: #00FFA3; --bg: #0F1115; --card: #1A1D22; }
+  body { 
+    margin: 0; background: var(--bg); color: #fff; font-family: system-ui, sans-serif;
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
 
-    <style>
-        :root { --accent: #00FFA3; --bg: #0F1115; --card: #1A1D22; --text: #E0E0E0; }
-        
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            margin: 0; background: var(--bg); color: var(--text); 
-            font-family: system-ui, -apple-system, sans-serif;
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-        }
+  /* STICKY PLAYER AREA */
+  #main-view { position: sticky; top: 0; z-index: 100; background: #000; width: 100%; }
+  .player-container { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; }
+  video, iframe { width: 100%; height: 100%; border: none; display: none; z-index: 2; position: absolute; top:0; left:0; }
+  
+  #player-placeholder {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1;
+  }
 
-        /* STICKY PLAYER AREA */
-        #main-view { 
-            position: sticky; top: 0; z-index: 100; background: #000; 
-            width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        .player-container { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; overflow: hidden; }
-        video, iframe { width: 100%; height: 100%; border: none; display: none; z-index: 2; position: absolute; top:0; left:0; }
-        
-        /* Placeholder & Loader */
-        #player-placeholder {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1; text-align: center; padding: 20px;
-        }
-        #loading { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 10; display: none; color: var(--accent); font-weight: bold; letter-spacing: 1px;
-        }
+  #loading { 
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+    z-index: 10; display: none; color: var(--accent); font-weight: bold; 
+  }
 
-        /* Current Channel Info Bar */
-        .channel-details { padding: 12px 15px; background: #16191D; border-bottom: 1px solid #222; }
-        #display-name { margin: 0; font-size: 1rem; color: var(--accent); font-weight: 600; min-height: 1.2em; }
+  .channel-details { padding: 10px 15px; background: #16191D; border-bottom: 1px solid #222; }
+  #display-name { margin: 0; font-size: 1.1rem; color: var(--accent); min-height: 1.2em; }
 
-        /* SCROLLABLE CONTENT AREA */
-        #sidebar { 
-            flex: 1; overflow-y: auto; padding: 0 15px 30px 15px; 
-            overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-        }
-        
-        .title { 
-            font-size: 1.8em; padding: 25px 0 5px 0; font-weight: 800; text-align: center; 
-            background: linear-gradient(90deg, #90EE90, #00FFA3); -webkit-background-clip: text; color: transparent; 
-        }
-        .sub-header { font-size: 13px; color: #777; text-align: center; margin-bottom: 25px; padding: 0 10px; }
-        .sidebar-label { font-size: 0.75rem; color: #444; text-transform: uppercase; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
+  /* SCROLLABLE AREA */
+  #sidebar { flex: 1; overflow-y: auto; padding: 0 15px 30px 15px; -webkit-overflow-scrolling: touch; }
+  
+  .title { 
+    font-size: 1.9em; padding: 25px 0 5px 0; font-weight: bold; text-align: center; 
+    background: linear-gradient(90deg, #90EE90, #00FFA3); -webkit-background-clip: text; color: transparent; 
+  }
+  .sub-header { font-size: 14px; color: #777; text-align: center; margin-bottom: 20px; }
 
-        /* Channel Cards */
-        .channel-card { 
-            display: flex; align-items: center; padding: 10px; margin-bottom: 10px; 
-            background: var(--card); border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
-        }
-        .channel-card:active { transform: scale(0.98); }
-        .channel-card.active { border-color: var(--accent); background: #22272E; box-shadow: 0 0 15px rgba(0, 255, 163, 0.1); }
-        .channel-card img { width: 46px; height: 46px; border-radius: 8px; margin-right: 15px; object-fit: cover; background: #000; }
-        .channel-card .name { font-weight: 500; font-size: 0.95rem; }
-
-        /* Footer SEO Styles */
-        footer { margin-top: 30px; padding: 20px 0; border-top: 1px solid #222; color: #555; font-size: 0.8rem; text-align: center; line-height: 1.6; }
-    </style>
+  .channel-card { 
+    display: flex; align-items: center; padding: 12px; margin-bottom: 10px; 
+    background: var(--card); border-radius: 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .channel-card.active { border-color: var(--accent); background: #22272E; }
+  .channel-card img { width: 48px; height: 48px; border-radius: 8px; margin-right: 15px; object-fit: cover; }
+</style>
 </head>
+
 <body>
 
 <div id="main-view">
     <div class="player-container">
-        <!-- Placeholder Emoji TV -->
         <div id="player-placeholder">
-            <div style="font-size: 4.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(0,255,163,0.3));">📺</div>
-            <span style="font-size: 0.9rem; opacity: 0.6; font-weight: 500;">Select a channel to start streaming</span>
+            <div style="font-size: 5rem; margin-bottom: 10px;">📺</div>
+            <span style="opacity: 0.6;">Select a channel to start streaming</span>
         </div>
-
-        <div id="loading">⚡ LOADING...</div>
-        
-        <!-- Players -->
-        <video id="video-player" autoplay playsinline controls poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
-        <!-- Sandboxed Iframe (Blocks Redirections) -->
+        <div id="loading">⚡ Loading...</div>
+        <video id="video-player" autoplay playsinline controls></video>
+        <!-- Corrected Sandbox for Ad-Blocking -->
         <iframe id="iframe-player" 
                 sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" 
-                allow="autoplay; encrypted-media; picture-in-picture"
-                referrerpolicy="no-referrer"></iframe>
+                allow="autoplay; encrypted-media; picture-in-picture"></iframe>
     </div>
-    <div class="channel-details">
-        <div id="display-name">MSTV NETWORK</div>
-    </div>
+    <div class="channel-details"><h1 id="display-name"></h1></div>
 </div>
 
 <div id="sidebar">
     <div class="title">MSTV NETWORK</div>
     <div class="sub-header">Watch Indian, Punjabi & Religious TV Channels Live</div>
-    
-    <div class="sidebar-label">📲 Live Channels</div>
-    <div id="channel-list">
-        <!-- Channels injected here -->
-    </div>
-
-    <footer>
-        <p>© 2026 MSTV Network. All Rights Reserved.</p>
-        <p>Providing high-quality streaming for Indian and Punjabi global viewers.</p>
-    </footer>
+    <div id="channel-list"></div>
 </div>
 
 <script>
@@ -136,106 +89,82 @@ const displayName = document.getElementById('display-name');
 
 let channels = [], hls = null, shakaPlayer = null;
 
-// Stop all engines to prevent conflict
 async function stopAll() {
     loader.style.display = 'none';
     if(hls){ hls.destroy(); hls = null; }
     if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
+    
     video.pause();
-    video.src = "";
+    video.removeAttribute('src');
     video.load();
+    
+    iframe.removeAttribute('src');
     iframe.src = 'about:blank';
+    
     video.style.display = 'none';
     iframe.style.display = 'none';
 }
 
 async function playChannel(index) {
     const ch = channels[index];
-    if(!ch) return;
-
     await stopAll();
+    
     placeholder.style.display = 'none';
     loader.style.display = 'block';
     displayName.textContent = ch.name;
 
-    // Detect Stream Type (Support both explicit type and URL detection)
-    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
-    const isDash = ch.url.includes('.mpd') || ch.type === 'dash' || ch.type === 'shaka';
-
-    // 1. IFRAME HANDLER (Anti-Redirect Active)
+    // IFRAME Logic
     if (ch.type === 'iframe') {
         iframe.style.display = 'block';
-        iframe.contentWindow.location.replace(ch.url); 
+        iframe.src = ch.url;
         iframe.onload = () => loader.style.display = 'none';
         return;
     }
 
-    // 2. VIDEO HANDLER
+    // VIDEO Logic
     video.style.display = 'block';
-    
-    // Engine A: HLS.js for .m3u8 (Fastest for HLS)
+    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
+
     if (isHls) {
         if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0, enableWorker: true });
+            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0 });
             hls.loadSource(ch.url);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else {
             video.src = ch.url;
-            video.play().catch(()=>{});
+            video.play();
         }
-    } 
-    // Engine B: Shaka strictly for DASH/MPD
-    else if (isDash) {
-        // Crucial: Polyfill MUST be installed before creating the player
-        if (window.shaka) {
-            shaka.polyfill.installAll(); 
-            if (shaka.Player.isBrowserSupported()) {
-                shakaPlayer = new shaka.Player(video);
-                
-                // Add error listener for debugging
-                shakaPlayer.addEventListener('error', (e) => console.error('Shaka Error:', e.detail));
+    } else {
+        // RESTORED SHAKA Logic (DASH / .mpd)
+        if (window.shaka && shaka.Player.isBrowserSupported()) {
+            shaka.polyfill.installAll();
+            shakaPlayer = new shaka.Player(video);
+            
+            // Add the listener that was in your original working code
+            shakaPlayer.addEventListener('error', (e) => console.error('Error code', e.detail.code, 'object', e.detail));
 
-                shakaPlayer.configure({
-                    streaming: { 
-                        rebufferingGoal: 1, 
-                        bufferingGoal: 4, 
-                        lowLatencyMode: true, 
-                        jumpLargeGaps: true 
-                    }
-                });
-
-                try { 
-                    await shakaPlayer.load(ch.url); 
-                    video.play().catch(()=>{}); 
-                } catch(e) { 
-                    console.error('Shaka Load Fail', e);
-                    loader.textContent = "Stream Error (Check CORS)";
-                }
-            } else {
-                loader.textContent = "Browser not supported for DASH";
+            try {
+                await shakaPlayer.load(ch.url);
+                video.play();
+            } catch (e) {
+                console.error('Shaka load failed', e);
             }
         }
     }
 }
 
-
-// Global Video Event: Hide Loader on Play
 video.onplaying = () => loader.style.display = 'none';
 
-// Build the UI
 function renderSidebar(data) {
     channels = data;
     const list = document.getElementById('channel-list');
-    list.innerHTML = '';
     data.forEach((ch, i) => {
         const card = document.createElement("div");
         card.className = "channel-card";
-        // Lazy load logos to save bandwidth
-        const logoSrc = ch.logo || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        card.innerHTML = `<img src="${logoSrc}" loading="lazy"><div class="name">${ch.name}</div>`;
+        card.innerHTML = `<img src="${ch.logo || ''}" loading="lazy"><div class="name">${ch.name}</div>`;
         card.onclick = () => {
-            window.scrollTo({top: 0, behavior: 'smooth'}); // Jump to player on mobile click
+            window.scrollTo({top: 0, behavior: 'smooth'});
             document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             playChannel(i);
@@ -244,31 +173,7 @@ function renderSidebar(data) {
     });
 }
 
-// Start App
-fetch('./channels.json')
-    .then(r => r.json())
-    .then(renderSidebar)
-    .catch(e => {
-        console.error("JSON Load Fail", e);
-        document.getElementById('channel-list').innerHTML = "<p style='color:red; text-align:center;'>Error loading channels. Check channels.json</p>";
-    });
+fetch('./channels.json').then(r => r.json()).then(renderSidebar);
 </script>
-
-<!-- GoatCounter Analytics -->
-<script async data-goatcounter="https://mstv.goatcounter.com" src="https://gc.zgo.at"></script>
-
-<!-- JSON-LD for Google SEO -->
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "VideoObject",
- "name": "MSTV Network Live TV Streaming",
- "description": "Watch Indian TV channels, Punjabi and religious broadcasts online for free.",
- "thumbnailUrl": "https://mstvnet.netlify.app",
- "isLiveBroadcast": true,
- "publisher": { "@type": "Organization", "name": "MSTV Network" }
-}
-</script>
-
 </body>
 </html>
