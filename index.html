@@ -107,13 +107,20 @@ async function stopAll() {
 
 async function playChannel(index) {
     const ch = channels[index];
+    if (!ch) return;
+
     await stopAll();
     
+    // UI Updates
     placeholder.style.display = 'none';
     loader.style.display = 'block';
     displayName.textContent = ch.name;
 
-    // IFRAME Logic
+    // 1. Identify Format strictly
+    const isDash = ch.url.includes('.mpd') || ch.type === 'dash';
+    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
+
+    // 2. IFRAME HANDLER (Anti-Redirect)
     if (ch.type === 'iframe') {
         iframe.style.display = 'block';
         iframe.src = ch.url;
@@ -121,38 +128,50 @@ async function playChannel(index) {
         return;
     }
 
-    // VIDEO Logic
+    // 3. VIDEO HANDLER
     video.style.display = 'block';
-    const isHls = ch.url.includes('.m3u8') || ch.type === 'hls';
 
-    if (isHls) {
-        if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({ capLevelToPlayerSize: true, startLevel: 0 });
-            hls.loadSource(ch.url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else {
-            video.src = ch.url;
-            video.play();
-        }
-    } else {
-        // RESTORED SHAKA Logic (DASH / .mpd)
+    // ENGINE A: DASH EXCLUSIVE (Shaka)
+    if (isDash) {
         if (window.shaka && shaka.Player.isBrowserSupported()) {
             shaka.polyfill.installAll();
             shakaPlayer = new shaka.Player(video);
             
-            // Add the listener that was in your original working code
-            shakaPlayer.addEventListener('error', (e) => console.error('Error code', e.detail.code, 'object', e.detail));
+            // Performance Tuning for DASH only
+            shakaPlayer.configure({
+                streaming: { rebufferingGoal: 1, bufferingGoal: 4, lowLatencyMode: true }
+            });
 
             try {
                 await shakaPlayer.load(ch.url);
-                video.play();
+                video.play().catch(() => {});
             } catch (e) {
-                console.error('Shaka load failed', e);
+                console.error('Shaka DASH Load Fail', e);
+                loader.textContent = "DASH Error";
             }
+        }
+        return; // Exit here so Shaka doesn't touch HLS
+    }
+
+    // ENGINE B: HLS EXCLUSIVE (Hls.js)
+    if (isHls || ch.type === 'hls') {
+        if (window.Hls && Hls.isSupported()) {
+            hls = new Hls({ 
+                capLevelToPlayerSize: true, 
+                startLevel: 0, 
+                enableWorker: true 
+            });
+            hls.loadSource(ch.url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Fallback for Safari/iOS native HLS
+            video.src = ch.url;
+            video.play().catch(() => {});
         }
     }
 }
+
 
 video.onplaying = () => loader.style.display = 'none';
 
