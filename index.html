@@ -80,21 +80,39 @@
             align-items: center;
             border-bottom: 1px solid #222;
         }
-
-        .player-container {
-            width: 95%;
-            max-width: 600px;
-            aspect-ratio: 16/9;
-            background: #000;
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+/* Position the loader inside the player */
+.player-container {
+    position: relative; /* Essential for absolute children */
+    width: 92%;
+    max-width: 850px;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 auto;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
 
         video, iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
         #placeholder { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--accent); }
-        #loading { color: var(--accent); font-weight: bold; margin-top: 10px; display: none; }
+        #loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100; /* Above video and placeholder */
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: none;
+    pointer-events: none; /* Allows clicking through if needed */
+    white-space: nowrap;
+        }
         #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: white; padding: 5px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; z-index: 50; display: none; }
 
 /* 1. Ultra-compact grid columns */
@@ -106,21 +124,21 @@
     margin-bottom: 30px;
 }
 
+/* Ultra-tight card spacing */
 .channel-card {
     background: var(--bg-card);
     border-radius: 8px;
-    padding: 4px; /* Reduced from 8px to pull text closer to edges */
+    padding: 4px; 
     text-align: center;
     cursor: pointer;
     border: 1px solid #1E232B;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-logo {
     aspect-ratio: 1/1;
-    background: #0B0D11;
+    margin-bottom: 2px; /* Pulls text closer to logo */
     border-radius: 6px;
-    margin-bottom: 2px; /* Tightened from 6px to bring text right under logo */
+    background: #0B0D11;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -128,16 +146,39 @@
 }
 
 .channel-name {
-    font-size: 0.62rem; /* Slightly smaller for the tighter layout */
+    font-size: 0.62rem;
     font-weight: 600;
+    line-height: 1.1;
     color: var(--text-dim);
     display: block;
-    line-height: 1.1; /* Tighter line height */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-bottom: 2px; /* Small buffer at the bottom */
 }
+Use code with caution.
+
+2. The HTML (Move the #loading div):
+Move the loading div inside the .player-container div so it anchors correctly.
+html
+<div class="sticky-player-wrapper">
+    <div class="player-container">
+        <!-- Loader is now inside the player box -->
+        <div id="loading">🌀 Buffering...</div>
+        
+        <div id="live-stamp">LIVE</div>
+        <div id="placeholder">📺</div>
+        <video id="video-player" autoplay playsinline controls></video>
+        <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media"></iframe>
+    </div>
+</div>
+
+Use code with caution.
+
+Why this is better:
+Contextual Feedback: The user looks at the screen where the video should be, and sees the loading status right there.
+Visual Pop: The semi-transparent black background with the neon border makes the "Buffering" text highly legible against any video frame.
+Clean Layout: Removing the loading text from below the player stops the page content from "jumping" up and down when a video starts or stops.
+How does the "Buffering" look inside the player now? If you like this, we can also add a spinning animation to that emoji!
 
 
 /* 4. Desktop Hover - subtle zoom */
