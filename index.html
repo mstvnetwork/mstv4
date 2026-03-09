@@ -23,12 +23,18 @@
             scroll-behavior: smooth;
         }
 
-        body { 
-            margin: 0; padding: 0; 
-            font-family: Arial, sans-serif; 
-            background: var(--bg-dark); 
-            color: #E0E0E0; 
-        }
+        /* Sets the background for the entire page */
+body {
+    background-color: #111111 !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* Ensures your header remains its current color */
+header {
+    background-color: var(--bg-header); /* or your specific header hex code */
+}
+
 
         /* 1. STICKY HEADER */
         header {
