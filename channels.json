@@ -1,11 +1,10 @@
 [
 {
   "name": "Zee Cinema Hd",
-  "url": "https://mstvnet.netlify.app/shaka/index.html/#8",
+  "url": "https://mstvnet.netlify.app",
   "type": "iframe",
-  "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/Zee_Cinema_2025.svg.png"
+  "logo": "https://upload.wikimedia.org/wikipedia/commons/9/92/Zee_Cinema_2025.svg"
 },
-
 
  {
     "name": "Movies 1",
