@@ -79,33 +79,22 @@ html, body {
     width: 95%;
     max-width: 900px;
     aspect-ratio: 16/9;
-    background: #000;
+    background: #fff; /* White background for visibility */
     border-radius: 12px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-video {
+video, iframe {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #000;
-    display: none;
     z-index: 5;
-}
-iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
     display: none;
-    z-index: 5;
 }
 #placeholder {
     position: absolute;
@@ -115,7 +104,7 @@ iframe {
     justify-content: center;
     font-size: 60px;
     color: #90EE90;
-    background: #000;
+    background: #fff; /* White background */
     z-index: 1;
 }
 #loading {
@@ -369,6 +358,7 @@ async function playChannel(index) {
 video.onplaying = () => {
     loader.style.display = "none";
     placeholder.style.display = "none";
+    video.style.display = "block";
 };
 
 select.onchange = () => {
