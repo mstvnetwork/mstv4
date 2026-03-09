@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,38 +14,27 @@
             --bg-dark: #0F1115;
             --accent: #90EE90;
             --header-h: 70px;
-            --player-y: 70px; /* Header Height */
+            --player-y: 70px;
+            --text-dim: #555; /* Visible on muddy white */
         }
 
         html { 
-            /* Fixes anchor links/scroll position from being hidden */
-            scroll-padding-top: 350px; 
+            scroll-padding-top: 380px; 
             scroll-behavior: smooth;
         }
 
-        /* Sets the background for the entire page to a muddy white */
-body {
-    background-color: #E8E4C9 !important;
-    margin: 0;
-    padding: 0;
-}
-
-
-
-
-
-header {
-    background-color:blue; 
-}
-
+        body {
+            background-color: #E8E4C9 !important;
+            margin: 0; padding: 0;
+            font-family: Arial, sans-serif;
+        }
 
         /* 1. STICKY HEADER */
         header {
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(15, 17, 21, 0.98);
-            backdrop-filter: blur(10px);
+            background: #111419;
             height: var(--header-h);
             display: flex;
             align-items: center;
@@ -81,171 +70,119 @@ header {
             position: sticky;
             top: var(--player-y);
             z-index: 900;
-            background: #E8E4C9 !important;;
+            background: #E8E4C9;
             padding: 15px 0;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            border-bottom: 1px solid #222;
+            border-bottom: 1px solid #ccc;
         }
-/* Position the loader inside the player */
-.player-container {
-    position: relative; /* Essential for absolute children */
-    width: 92%;
-    max-width: 550px;
-    aspect-ratio: 16/9;
-    background: black;
-    border-radius: 12px;
-    overflow: hidden;
-    margin: 0 auto;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-}
+
+        .player-container {
+            position: relative;
+            width: 92%;
+            max-width: 600px;
+            aspect-ratio: 16/9;
+            background: black;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
 
         video, iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
         #placeholder { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--accent); }
+        
         #loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 100; /* Above video and placeholder */
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px 20px;
-    border-radius: 30px;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-weight: bold;
-    font-size: 0.9rem;
-    display: none;
-    pointer-events: none; /* Allows clicking through if needed */
-    white-space: nowrap;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-weight: bold;
+            display: none;
         }
+
         #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: white; padding: 5px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; z-index: 50; display: none; }
 
-/* 1. Ultra-compact grid columns */
-
-.channel-grid {
-    display: grid;
-    /* Reduced from 110px to 80px */
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
-    gap: 8px; 
-    margin-bottom: 30px;
-}
-/* Ultra-tight card spacing */
-.channel-card {
-    background: var(--bg-card);
-    border-radius: 8px;
-    padding: 4px; 
-    text-align: center;
-    cursor: pointer;
-    border: 1px solid #1E232B;
-}
-        .card-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* Keeps the logo's shape without stretching */
-    display: block;
-}
-
-
-.card-logo {
-    aspect-ratio: 1/1;
-    margin-bottom: 2px; /* Pulls text closer to logo */
-    border-radius: 6px;
-    background: #0B0D11;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.channel-name {
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1.1;
-    color: var(--text-dim);
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-Use code with caution.
-
-2. The HTML (Move the #loading div):
-Move the loading div inside the .player-container div so it anchors correctly.
-html
-<div class="sticky-player-wrapper">
-    <div class="player-container">
-        <!-- Loader is now inside the player box -->
-        <div id="loading">🌀 Buffering...</div>
-        
-        <div id="live-stamp">LIVE</div>
-        <div id="placeholder">📺</div>
-        <video id="video-player" autoplay playsinline controls></video>
-        <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media"></iframe>
-    </div>
-</div>
-
-Use code with caution.
-
-Why this is better:
-Contextual Feedback: The user looks at the screen where the video should be, and sees the loading status right there.
-Visual Pop: The semi-transparent black background with the neon border makes the "Buffering" text highly legible against any video frame.
-Clean Layout: Removing the loading text from below the player stops the page content from "jumping" up and down when a video starts or stops.
-How does the "Buffering" look inside the player now? If you like this, we can also add a spinning animation to that emoji!
-
-
-/* 4. Desktop Hover - subtle zoom */
-.channel-card:hover {
-    transform: scale(1.05);
-    border-color: var(--accent);
-    background: #1A1D20;
-}
-
-/* 5. Mobile (Very small screens) */
-@media (max-width: 600px) {
-    .channel-grid { 
-        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); 
-        gap: 6px;
-    }
-}
-
-        /* Footer */
-        .site-footer { padding: 40px 5%; text-align: center; font-size: 0.9rem; color: black; border-top: 1px solid #222; }
-
-        @media (max-width: 600px) {
-            .search-container { display: none; }
-            .channel-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+        /* 3. CHANNEL GRID */
+        main { padding: 20px 5%; }
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+            gap: 10px; 
         }
+
+        .channel-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 5px; 
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            transition: transform 0.2s ease;
+        }
+
+        .channel-card:hover { transform: scale(1.05); border-color: var(--accent); }
+
+        .card-logo {
+            aspect-ratio: 1/1;
+            margin-bottom: 3px;
+            border-radius: 6px;
+            background: #0B0D11;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .card-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .channel-name {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #333;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .site-footer { padding: 40px 5%; text-align: center; font-size: 0.9rem; color: #444; border-top: 1px solid #ccc; }
     </style>
 </head>
 <body>
 
-<header id="site-header">
+<header>
     <div class="logo-section">
         <div class="brand-name">MSTV NETWORK</div>
         <div class="slogan">LIVE INDIAN & PUNJABI TV</div>
     </div>
     <div class="search-container">
-        <input type="text" id="channel-search" placeholder="Search for channels...">
+        <input type="text" id="channel-search" placeholder="Search channels...">
     </div>
 </header>
 
-<div class="sticky-player-wrapper" id="player-wrapper">
+<div class="sticky-player-wrapper">
     <div class="player-container">
+        <div id="loading">🌀 Buffering...</div>
         <div id="live-stamp">LIVE</div>
         <div id="placeholder">📺</div>
         <video id="video-player" autoplay playsinline controls></video>
         <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media"></iframe>
     </div>
-    <div id="loading">🌀 Buffering... Please Wait</div>
 </div>
 
 <main>
     <select id="channel-select" style="display:none;"></select>
-    
     <div class="channel-grid" id="channel-list-container"></div>
 </main>
 
@@ -268,7 +205,6 @@ let channels = [];
 let hls = null;
 let shakaPlayer = null;
 
-// Playback Logic (Intact)
 async function stopAll() {
   if(loader) loader.style.display = 'none';
   liveStamp.style.display = 'none';
@@ -282,23 +218,31 @@ async function stopAll() {
 
 function renderUI(data){
   channels = data;
-  select.innerHTML = '<option value="">📱Click & Select Channel</option>';
+  select.innerHTML = '<option value="">📱 Select Channel</option>';
   gridContainer.innerHTML = ''; 
+
   data.forEach((ch, i) => {
+    // Hidden select sync
     const opt = document.createElement("option");
     opt.value = i; opt.textContent = ch.name; select.appendChild(opt);
+
+    // Card UI
     const card = document.createElement('div');
     card.className = 'channel-card';
     card.setAttribute('data-name', ch.name.toLowerCase());
     card.innerHTML = `
-      <div class="card-logo">${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" loading="lazy">` : `<span style="font-size:2rem;">📺</span>`}</div>
+      <div class="card-logo">
+        ${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.parentElement.innerHTML='📺'">` : `<span>📺</span>`}
+      </div>
       <div class="channel-name">${ch.name}</div>
     `;
+    
     card.onclick = () => { playChannel(i); window.scrollTo({top: 0, behavior: 'smooth'}); };
     gridContainer.appendChild(card);
   });
 }
 
+// Search Logic
 if(searchInput) {
     searchInput.oninput = (e) => {
         const term = e.target.value.toLowerCase();
@@ -312,11 +256,11 @@ async function loadChannels(){
   const cached = localStorage.getItem("channels_cache");
   if(cached) renderUI(JSON.parse(cached));
   try {
-    const res = await fetch(JSON_URL, { cache: 'force-cache' });
+    const res = await fetch(JSON_URL, { cache: 'no-cache' });
     const data = await res.json();
     localStorage.setItem('channels_cache', JSON.stringify(data));
     renderUI(data);
-  } catch(e){ console.error('Channels load failed', e); }
+  } catch(e){ console.error('Load fail', e); }
 }
 
 async function playChannel(index){
@@ -326,11 +270,13 @@ async function playChannel(index){
   if(loader) loader.style.display = 'block';
   placeholder.style.display = 'none';
   liveStamp.style.display = channel.isLive ? 'block' : 'none';
+
   if(channel.type === 'iframe'){
     iframe.style.display = 'block'; iframe.src = channel.url;
     iframe.onload = () => { if(loader) loader.style.display = 'none'; };
     return;
   }
+
   video.style.display = 'block';
   const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
   if(isHls){
@@ -341,9 +287,7 @@ async function playChannel(index){
     } else if(video.canPlayType('application/vnd.apple.mpegurl')){
       video.src = channel.url; video.play();
     }
-    return;
-  }
-  if(window.shaka && shaka.Player.isBrowserSupported()){
+  } else if(window.shaka && shaka.Player.isBrowserSupported()){
     shaka.polyfill.installAll();
     shakaPlayer = new shaka.Player(video);
     try{ await shakaPlayer.load(channel.url); video.play(); } catch(e){ console.error(e); }
@@ -356,3 +300,4 @@ loadChannels();
 
 </body>
 </html>
+
