@@ -22,13 +22,32 @@ header { position: sticky; top: 0; width: 100%; background: #141618; display: fl
 .channels-container::-webkit-scrollbar { height: 8px; }
 .channels-container::-webkit-scrollbar-track { background: #141618; }
 .channels-container::-webkit-scrollbar-thumb { background: #90EE90; border-radius: 4px; }
-.channel-card { flex: 0 0 auto; width: 150px; height: 100px; background: linear-gradient(135deg,#141618,#1A1D20); border-radius: 12px; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; color: #90EE90; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+
+/* Channel Card Styles */
+.channel-card { 
+  flex: 0 0 auto; 
+  width: 120px; 
+  height: 120px; 
+  background: #1A1D20; 
+  border-radius: 12px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  text-align: center; 
+  cursor: pointer; 
+  transition: transform 0.2s, box-shadow 0.2s; 
+  padding: 10px;
+}
 .channel-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,255,160,0.4); }
+.channel-logo { width: 80px; height: 80px; object-fit: contain; margin-bottom: 5px; }
+.channel-name { font-size: 0.85em; color: #90EE90; font-weight: bold; text-align: center; }
 
 /* Sticky Player Container */
 .player-container { position: sticky; bottom: 0; width: 90%; max-width: 900px; aspect-ratio: 16/9; background: linear-gradient(135deg,#141618,#1A1D20); display: flex; align-items: center; justify-content: center; color: #90EE90; font-weight: bold; text-align: center; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,255,160,0.2); overflow: hidden; margin: 20px 0; }
 video, iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 15px; display: none; }
 #placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
+#live-stamp { position: absolute; top: 5px; left: 5px; background: #E50914; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; letter-spacing: 1px; z-index: 50; display: none; box-shadow: 0 0 12px rgba(229, 9, 20, 0.6); }
 
 /* Footer */
 footer { width: 100%; max-width: 900px; margin-top: 40px; padding: 20px 10px; text-align: center; font-size: 0.9rem; color: #777; border-top:1px solid #222; }
@@ -49,14 +68,7 @@ footer p { margin: 10px 0; line-height: 1.5; }
 </header>
 
 <!-- Channels Horizontal Scroll -->
-<div class="channels-container" id="channels-container">
-  <!-- Example cards (JS can populate dynamically) -->
-  <div class="channel-card">Hindi TV</div>
-  <div class="channel-card">Punjabi TV</div>
-  <div class="channel-card">Religious</div>
-  <div class="channel-card">Cricket</div>
-  <div class="channel-card">News</div>
-</div>
+<div class="channels-container" id="channels-container"></div>
 
 <!-- Sticky 16:9 Player -->
 <div class="player-container">
@@ -66,10 +78,119 @@ footer p { margin: 10px 0; line-height: 1.5; }
   <div id="live-stamp">MSTV Network</div>
 </div>
 
-<!-- Original JS for playback remains unchanged -->
 <script defer src="./shaka.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script defer src="./your-original.js"></script>
+<script>
+const container = document.getElementById('channels-container');
+const select = document.getElementById('channel-select');
+const video = document.getElementById('video-player');
+const iframe = document.getElementById('iframe-player');
+const placeholder = document.getElementById('placeholder');
+const loader = document.getElementById('loading');
+const liveStamp = document.getElementById('live-stamp');
+const JSON_URL = './channels.json';
+let channels = [];
+let hls = null;
+let shakaPlayer = null;
+
+// Stop any playing video/iframe
+async function stopAll() {
+  loader?.style.display = 'none';
+  liveStamp.style.display = 'none';
+  if(hls){ hls.destroy(); hls = null; }
+  if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  iframe.removeAttribute('src');
+  iframe.src = 'about:blank';
+  video.style.display = 'none';
+  iframe.style.display = 'none';
+  placeholder.style.display = 'flex';
+}
+
+// Render horizontal channel cards
+function renderChannelCards() {
+  container.innerHTML = '';
+  channels.forEach((ch, i) => {
+    const card = document.createElement('div');
+    card.classList.add('channel-card');
+    
+    const logo = document.createElement('img');
+    logo.src = ch.logo || 'https://via.placeholder.com/80x80?text=Logo';
+    logo.alt = ch.name + ' Logo';
+    logo.classList.add('channel-logo');
+    
+    const name = document.createElement('div');
+    name.textContent = ch.name;
+    name.classList.add('channel-name');
+    
+    card.appendChild(logo);
+    card.appendChild(name);
+    
+    card.addEventListener('click', () => playChannel(i));
+    container.appendChild(card);
+  });
+}
+
+// Load channels from JSON
+async function loadChannels(){
+  try {
+    const res = await fetch(JSON_URL);
+    channels = await res.json();
+    renderChannelCards();
+  } catch(e){
+    console.error('Channels load failed', e);
+  }
+}
+
+// Play selected channel
+async function playChannel(index){
+  const channel = channels[index];
+  if(!channel) return;
+  await stopAll();
+  placeholder.style.display = 'none';
+  liveStamp.style.display = channel.isLive ? 'block' : 'none';
+  
+  if(channel.type === 'iframe'){
+    iframe.style.display = 'block';
+    iframe.src = channel.url;
+    return;
+  }
+  
+  video.style.display = 'block';
+  const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
+  
+  if(isHls){
+    if(window.Hls && Hls.isSupported()){
+      hls = new Hls({ enableWorker:true, lowLatencyMode:true, startLevel:-1 });
+      hls.loadSource(channel.url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, ()=> video.play());
+    } else if(video.canPlayType('application/vnd.apple.mpegurl')){
+      video.src = channel.url;
+      video.play();
+    }
+    return;
+  }
+  
+  if(window.shaka && shaka.Player.isBrowserSupported()){
+    shaka.polyfill.installAll();
+    shakaPlayer = new shaka.Player(video);
+    shakaPlayer.configure({ streaming:{ bufferingGoal:10, rebufferingGoal:0.5, lowLatencyMode:true } });
+    try{
+      await shakaPlayer.load(channel.url);
+      video.play();
+    } catch(e){ console.error('Shaka error', e); placeholder.style.display = 'flex'; liveStamp.style.display = 'none'; }
+  }
+}
+
+// Hide loader when video starts
+video.onplaying = () => { loader?.style.display = 'none'; };
+
+// Initialize
+loadChannels();
+</script>
 
 <footer>
 <h2>Watch Live Indian TV Channels Online</h2>
