@@ -1,10 +1,11 @@
 [
-    
-  {
-    "name": "Zee Cinema Hd",
-    "url": "https://mstvnet.netlify.app/shaka/index.html/#8",
-    "type": "iframe"
-  },
+    {
+  "name": "Zee Cinema Hd",
+  "url": "https://mstvnet.netlify.app",
+  "type": "iframe",
+  "logo": "https://upload.wikimedia.org/wikipedia/commons/9/92/Zee_Cinema_2025.svg"
+}
+
  {
     "name": "Movies 1",
     "url": "https://live20.bozztv.com/giatvplayout7/giatv-209612/tracks-v1a1/mono.ts.m3u8",
