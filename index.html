@@ -84,7 +84,7 @@
 .player-container {
     position: relative; /* Essential for absolute children */
     width: 92%;
-    max-width: 850px;
+    max-width: 550px;
     aspect-ratio: 16/9;
     background: #000;
     border-radius: 12px;
@@ -116,13 +116,13 @@
         #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: white; padding: 5px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; z-index: 50; display: none; }
 
 /* 1. Ultra-compact grid columns */
-        .grid-header {
+.grid-header {
     font-size: 0.2rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: var(--accent);
-    margin-bottom: 20px;
-        }
+    margin-bottom: 0px;
+}
 .channel-grid {
     display: grid;
     /* Reduced from 110px to 80px */
@@ -130,7 +130,6 @@
     gap: 8px; 
     margin-bottom: 30px;
 }
-
 /* Ultra-tight card spacing */
 .channel-card {
     background: var(--bg-card);
