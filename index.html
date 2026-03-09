@@ -109,79 +109,153 @@
             color: var(--accent);
             text-shadow: 0 0 20px rgba(144,238,144,0.4);
         }
+:root {
+    --bg-main: #0B0D11;         /* Deepest background */
+    --bg-card: #161A20;         /* Slightly lighter card background */
+    --bg-header: #111419;       /* Header background */
+    --accent: #00FFA3;          /* Vibrant Neon Mint */
+    --text-main: #FFFFFF;
+    --text-dim: #94A3B8;
+    --border-color: #2D3748;    /* Defined borders for separation */
+    --header-h: 70px;
+}
 
-        #loading { color: var(--accent); font-weight: bold; margin-top: 10px; display: none; }
+body { 
+    margin: 0; padding: 0; 
+    font-family: 'Inter', -apple-system, sans-serif; 
+    background-color: var(--bg-main); 
+    color: var(--text-main); 
+}
 
-        #live-stamp {
-            position: absolute; top: 10px; left: 10px;
-            background: #E50914; color: white;
-            padding: 5px 12px; border-radius: 5px;
-            font-size: 0.75rem; font-weight: bold;
-            z-index: 50; display: none;
-            box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
-        }
+/* 1. GLASS-MORPHISM STICKY HEADER */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(17, 20, 25, 0.9);
+    backdrop-filter: blur(12px);
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
 
-        /* 3. RESPONSIVE GRID CONTENT */
-        main { padding: 20px 5%; }
-        .grid-header {
-            font-size: 0.8rem;
-            margin-bottom: 10px;
-            color: var(--accent);
-            border-left: 4px solid var(--accent);
-            padding-left: 10px;
-        }
+.brand-name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #00FFA3 0%, #00D1FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 
-/* 1. Ultra-compact grid columns */
+.search-container input {
+    background: #1E232B;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: white;
+    padding: 10px 18px;
+    transition: all 0.3s ease;
+}
+
+.search-container input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 255, 163, 0.2);
+    outline: none;
+}
+
+/* 2. STICKY PLAYER WITH "GLOW" */
+.sticky-player-wrapper {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 950;
+    background: var(--bg-main);
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.player-container {
+    width: 92%;
+    max-width: 850px;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 auto;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 15px rgba(0, 255, 163, 0.1);
+}
+
+/* 3. ULTRA-COMPACT "POPPING" GRID */
+main { padding: 30px 5%; }
+
+.grid-header {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
 .channel-grid {
     display: grid;
-    /* Reduced from 110px to 80px */
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
-    gap: 8px; 
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+    gap: 12px;
 }
 
-/* 2. Micro-sized cards */
 .channel-card {
-    background: #16181D;
-    border-radius: 6px;
-    padding: 5px; /* Minimal padding */
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 8px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s ease;
-    border: 1px solid #222;
+    border: 1px solid #1E232B;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
-/* 3. Smallest possible logo and text */
-.card-logo { 
-    aspect-ratio: 1/1; 
-    background: #222; 
-    border-radius: 4px; 
-    margin-bottom: 4px; 
+/* Hover Effect: Card lifts and glows */
+.channel-card:hover {
+    transform: translateY(-6px) scale(1.03);
+    border-color: var(--accent);
+    background: #1E252E;
+    box-shadow: 0 10px 20px rgba(0, 255, 163, 0.15);
 }
 
-.channel-name { 
-    font-size: 0.65rem; /* Tiny but readable font */
-    font-weight: 500; 
-    color: #bbb;
+.card-logo {
+    aspect-ratio: 1/1;
+    background: #0B0D11;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.channel-name {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
 }
 
-/* 4. Desktop Hover - subtle zoom */
-.channel-card:hover {
-    transform: scale(1.05);
-    border-color: var(--accent);
-    background: #1A1D20;
+.channel-card:hover .channel-name {
+    color: var(--text-main);
 }
 
-/* 5. Mobile (Very small screens) */
+/* 4. RESPONSIVE MOBILE TWEAKS */
 @media (max-width: 600px) {
     .channel-grid { 
-        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); 
-        gap: 6px;
+        grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); 
+        gap: 8px;
     }
+    .search-container { display: none; }
 }
 
 
