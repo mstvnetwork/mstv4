@@ -1,22 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>MSTV Network | Watch Indian TV Channels Live</title>
-
-<meta name="description" content="Watch Indian TV channels live online including Punjabi TV, Hindi entertainment, religious channels and live cricket streaming.">
-
-<meta name="robots" content="index,follow">
-
-<link rel="canonical" href="https://mstvnet.netlify.app">
-
-<meta property="og:title" content="MSTV Network Live TV">
-<meta property="og:description" content="Watch Indian TV channels and cricket streaming online.">
-<meta property="og:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
-<meta property="og:type" content="website">
+<title>MSTV Network</title>
 
 <link rel="icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
 
@@ -25,214 +15,81 @@
 
 <style>
 
-/* BODY STABILITY */
-html, body {
-  overflow-x: hidden;       /* Prevent sideways scroll */
-  max-width: 100vw;
-  scroll-behavior: smooth;
-  touch-action: pan-x pan-y;
-  overscroll-behavior: none; /* Prevent accidental zoom/pan gestures */
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background: #0b0f14;
-  color: #e6edf3;
+html,body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#0F1115;
+color:#fff;
 }
+
 /* HEADER */
 
-.topbar {
-  position: fixed;      /* fixed instead of sticky */
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: #0b0f14;
-  border-bottom: 1px solid #1f2937;
-  display: flex;
-  justify-content: center;
-  height: 48px;          /* exact header height */
+.sticky-header{
+position:sticky;
+top:0;
+z-index:1000;
+background:#0F1115;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:10px 15px;
+box-shadow:0 3px 10px rgba(0,0,0,.6);
+flex-wrap:wrap;
 }
-
-.topbar-inner {
-  width: 95%;
-  max-width: 1200px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-  box-sizing: border-box;
-}
-
-
-
-/* brand area */
 
 .brand{
 display:flex;
 align-items:center;
-gap:8px;
+gap:10px;
 }
 
-.logo-img{
-width:34px;      /* slightly smaller */
-height:34px;
+.logo{
+width:38px;
+height:38px;
+border-radius:8px;
 }
 
-.brand-text{
-display:flex;
-flex-direction:column;
-line-height:1;
+.site-name{
+font-weight:700;
+font-size:18px;
+color:#90EE90;
 }
 
-.brand-name{
-font-weight:600;
-font-size:14px;
-color:#00ffa3;
-}
-
-.brand-slogan{
-font-size:10px;
-opacity:.7;
-}
-
-/* search */
-
-#search{
-width:20px;
-padding:0px 0px;
-border-radius:6px;
-border:1px solid #1f2937;
-background:#121820;
-color:white;
-font-size:13px;
-}
-/* brand */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-img {
-  width: 36px;
-  height: 36px;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.brand-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #00ffa3;
-}
-
-.brand-slogan {
-  font-size: 10px;
-  opacity: 0.7;
-}
-
-#search {
-  width: 180px;
-  padding: 20px 12px;
-  border-radius: 8px;
-  border: 1px solid #1f2937;
-  background: #121820;
-  color: white;
-  font-size: 5px;
-}
-
-
-/* text block */
-
-.brand-text{
-display:flex;
-flex-direction:column;
-line-height:1.1;
-}
-
-.brand-name{
-font-weight:600;
-font-size:16px;
-color:#00ffa3;
-}
-
-.brand-slogan{
+.tagline{
 font-size:11px;
-opacity:.7;
+color:#aaa;
 }
-
-/* search */
 
 #search{
 padding:8px 12px;
-border-radius:8px;
-border:1px solid #1f2937;
-background:#121820;
-color:white;
+border-radius:20px;
+border:none;
+background:#1A1D20;
+color:#fff;
 width:160px;
 }
-#search{
-padding:20px 12px;
-border-radius:8px;
-border:1px solid #1f2937;
-background:#121820;
-color:white;
+
+/* PLAYER */
+
+.player-sticky{
+position:sticky;
+top:65px;
+z-index:900;
+background:#0F1115;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding-top:10px;
 }
 
-/* title */
-
-.title{
-font-size:2rem;
-margin-top:25px;
-color:#00ffa3;
-}
-
-h1{
-font-size:15px;
-font-weight:400;
-opacity:.8;
-}
-
-/* player */
-
-/* STICKY PLAYER */
-.player-sticky {
-  position: fixed;      /* fixed instead of sticky */
-  top: 48px;            /* directly below header */
-  left: 50%;
-  transform: translateX(-50%); /* center horizontally */
-  z-index: 90;
-  width: 95%;
-  max-width: 1000px;
-  display: flex;
-  justify-content: center;
-  padding: 6px 0;
-  background: #0b0f14;
-  border-bottom: 1px solid #1f2937;
-}
-.player-container {
-  position: relative;
-  width: 95%;
-  max-width: 1000px;
-  aspect-ratio: 16/9;
-  background: #000;
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 0 auto;
-}
-/* create scroll area */
-
-.channels {
-  margin-top: 420px;  /* header + player total height */
-}
-/* smoother scrolling */
-
-html{
-scroll-behavior:smooth;
+.player-container{
+position:relative;
+width:95%;
+max-width:900px;
+aspect-ratio:16/9;
+background:#000;
+border-radius:12px;
+overflow:hidden;
 }
 
 video,iframe{
@@ -241,6 +98,7 @@ top:0;
 left:0;
 width:100%;
 height:100%;
+border:none;
 display:none;
 }
 
@@ -251,383 +109,319 @@ display:flex;
 align-items:center;
 justify-content:center;
 font-size:60px;
-color:#00ffa3;
+color:#90EE90;
 }
 
 #loading{
-margin-top:10px;
 display:none;
+margin:10px;
 }
 
 #live-stamp{
 position:absolute;
-top:6px;
-left:6px;
-background:red;
-color:white;
+top:8px;
+left:8px;
+background:#E50914;
+color:#fff;
 font-size:11px;
 padding:4px 8px;
-border-radius:4px;
+border-radius:5px;
 display:none;
 }
 
-/* channels */
+/* CHANNELS */
 
-.channels {
-  width: 95%;
-  max-width: 1200px;
-  padding: 20px 16px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-#channel-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-}
-
-/* CHANNEL CARD */
-.channel-card {
-  background: #121820;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-  cursor: pointer;
-  border: 1px solid #1f2937;
-  transition: 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.channel-card img {
-  width: 100%;
-  height: 80px;
-  object-fit: contain;
-}
-
-.channel-card span {
-  font-size: 13px;
-  margin-top: 4px;
-  text-align: center;
-}
-
-/* footer */
-
-.site-footer{
+.channels-section{
 max-width:900px;
-margin-top:50px;
-font-size:14px;
-opacity:.8;
-}
-html, body{
-overflow-x:hidden;      /* no sideways scroll */
-scroll-behavior:smooth;
-touch-action: pan-x pan-y;
-max-width:100vw;         /* prevent horizontal overflow */
+margin:auto;
+margin-top:15px;
 }
 
-body{
-overscroll-behavior: none;  /* prevent accidental zoom/pan gestures */
+.channels-title{
+margin-left:10px;
+font-size:16px;
+color:#ccc;
 }
+
+.channel-row{
+display:flex;
+overflow-x:auto;
+gap:10px;
+padding:10px;
+scroll-behavior:smooth;
+}
+
+.channel-row::-webkit-scrollbar{
+height:6px;
+}
+
+.channel-row::-webkit-scrollbar-thumb{
+background:#333;
+border-radius:5px;
+}
+
+.channel-card{
+min-width:120px;
+height:90px;
+background:#1A1D20;
+border-radius:10px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:6px;
+cursor:pointer;
+flex-shrink:0;
+transition:.2s;
+}
+
+.channel-card:hover{
+transform:scale(1.05);
+box-shadow:0 5px 15px rgba(0,255,160,.3);
+}
+
+.channel-card img{
+width:50px;
+height:50px;
+object-fit:contain;
+}
+
+/* hidden dropdown (logic only) */
+
+#channel-select{
+display:none;
+}
+
 </style>
 </head>
 
 <body>
 
+<header class="sticky-header">
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <img src="https://mstvnet.netlify.app/mstv-thumbnail.png" class="logo-img">
-      <div class="brand-text">
-        <div class="brand-name">MSTV Network</div>
-        <div class="brand-slogan">Watch Indian TV Channels Live</div>
-      </div>
-    </div>
-    <input id="search" placeholder="Search channel">
-  </div>
-</header>
-  
-
-<div id="loading">Loading stream...</div>
-
-<div class="player-sticky">
-  <div class="player-container">
-    <div id="placeholder">📺</div>
-    <video id="video-player" autoplay playsinline controls></video>
-    <iframe id="iframe-player" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture"></iframe>
-    <div id="live-stamp">LIVE</div>
-  </div>
+<div class="brand">
+<img src="https://mstvnet.netlify.app/mstv-thumbnail.png" class="logo">
+<div>
+<div class="site-name">MSTV NETWORK</div>
+<div class="tagline">Indian TV • Punjabi • Cricket</div>
+</div>
 </div>
 
+<input id="search" placeholder="Search channel">
 
-<section class="channels">
+</header>
 
-<h2>Available Channels</h2>
+<section class="player-sticky">
 
-<div id="channel-grid"></div>
+<div id="loading">Loading...</div>
+
+<div class="player-container">
+
+<div id="placeholder">📺</div>
+
+<video id="video-player" autoplay playsinline controls></video>
+
+<iframe id="iframe-player"
+sandbox="allow-scripts allow-same-origin allow-presentation"
+allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+
+<div id="live-stamp">LIVE</div>
+
+</div>
 
 </section>
 
+<section class="channels-section">
+
+<h2 class="channels-title">Channels</h2>
+
+<div id="channel-row" class="channel-row"></div>
+
+</section>
+
+<select id="channel-select"></select>
+
 <script>
 
-const video=document.getElementById('video-player');
-const iframe=document.getElementById('iframe-player');
-const placeholder=document.getElementById('placeholder');
-const loader=document.getElementById('loading');
-const liveStamp=document.getElementById('live-stamp');
-const JSON_URL='./channels.json';
+const select=document.getElementById("channel-select")
+const video=document.getElementById("video-player")
+const iframe=document.getElementById("iframe-player")
+const placeholder=document.getElementById("placeholder")
+const loader=document.getElementById("loading")
+const liveStamp=document.getElementById("live-stamp")
+const row=document.getElementById("channel-row")
 
-let channels=[];        // filtered list
-let allChannels=[];     // master list
+const JSON_URL="./channels.json"
 
-let rendered=0;
-const batchSize=24;
-
-let hls=null;
-let shakaPlayer=null;
-
-/* STOP PLAYBACK */
+let channels=[]
+let hls=null
+let shakaPlayer=null
 
 async function stopAll(){
 
-loader.style.display='none';
-liveStamp.style.display='none';
+loader.style.display="none"
+liveStamp.style.display="none"
 
-if(hls){
-hls.destroy();
-hls=null;
-}
+if(hls){hls.destroy();hls=null}
+if(shakaPlayer){await shakaPlayer.destroy();shakaPlayer=null}
 
-if(shakaPlayer){
-await shakaPlayer.destroy();
-shakaPlayer=null;
-}
+video.pause()
+video.removeAttribute("src")
+video.load()
 
-video.pause();
-video.removeAttribute('src');
-video.load();
+iframe.removeAttribute("src")
+iframe.src="about:blank"
 
-iframe.removeAttribute('src');
-iframe.src='about:blank';
+video.style.display="none"
+iframe.style.display="none"
 
-video.style.display='none';
-iframe.style.display='none';
-placeholder.style.display='flex';
+placeholder.style.display="flex"
 
 }
 
-/* PLAY CHANNEL */
+function renderDropdown(data){
 
-async function playChannel(index){
+channels=data
+select.innerHTML=""
 
-const channel=channels[index];
-if(!channel) return;
+row.innerHTML=""
 
-await stopAll();
+data.forEach((ch,i)=>{
 
-loader.style.display='block';
-document.querySelector(".player-container")
-.scrollIntoView({behavior:"smooth",block:"start"});
+const opt=document.createElement("option")
+opt.value=i
+opt.textContent=ch.name
+select.appendChild(opt)
 
-/* iframe streams */
-
-if(channel.type==='iframe'){
-
-iframe.style.display='block';
-iframe.src=channel.url;
-
-iframe.onload=()=>{
-loader.style.display='none';
-};
-
-return;
-}
-
-/* video streams */
-
-video.style.display='block';
-
-const isHls=channel.type==='hls'||channel.url.includes('.m3u8');
-
-if(isHls){
-
-if(window.Hls && Hls.isSupported()){
-
-hls=new Hls({
-enableWorker:true,
-lowLatencyMode:true
-});
-
-hls.loadSource(channel.url);
-hls.attachMedia(video);
-
-hls.on(Hls.Events.MANIFEST_PARSED,()=>{
-video.play();
-});
-
-}else if(video.canPlayType('application/vnd.apple.mpegurl')){
-
-video.src=channel.url;
-video.play();
-
-}
-
-return;
-}
-
-/* shaka streams */
-
-if(window.shaka && shaka.Player.isBrowserSupported()){
-
-shaka.polyfill.installAll();
-
-shakaPlayer=new shaka.Player(video);
-
-try{
-
-await shakaPlayer.load(channel.url);
-video.play();
-
-}catch(e){
-
-console.error(e);
-
-loader.style.display='none';
-placeholder.style.display='flex';
-liveStamp.style.display='none';
-
-}
-
-}
-
-}
-
-video.onplaying=()=>{
-loader.style.display='none';
-};
-
-/* AUTO LOGO */
-
-function getLogo(name){
-
-return `https://logo.clearbit.com/${name.replace(/\s/g,'').toLowerCase()}.com`;
-
-}
-
-/* RENDER CHANNELS */
-
-function renderMore(){
-
-const grid=document.getElementById("channel-grid");
-
-const next=channels.slice(rendered,rendered+batchSize);
-
-next.forEach((ch,i)=>{
-
-const index=rendered+i;
-
-const card=document.createElement("div");
-card.className="channel-card";
-
-const logo=ch.logo || getLogo(ch.name);
+const card=document.createElement("div")
+card.className="channel-card"
 
 card.innerHTML=`
-<img loading="lazy" src="${logo}">
-<span>${ch.name}</span>
-`;
+<img src="${ch.logo||''}" loading="lazy">
+<div style="font-size:12px;text-align:center">${ch.name}</div>
+`
 
-card.onclick=()=>playChannel(index);
-
-grid.appendChild(card);
-
-});
-
-rendered+=batchSize;
-
+card.onclick=()=>{
+select.value=i
+playChannel(i)
 }
 
-/* RESET GRID */
+row.appendChild(card)
 
-function resetGrid(){
-
-document.getElementById("channel-grid").innerHTML="";
-rendered=0;
-renderMore();
+})
 
 }
-
-/* LAZY LOAD ON SCROLL */
-
-window.addEventListener("scroll",()=>{
-
-if(window.innerHeight + window.scrollY >= document.body.offsetHeight-300){
-
-if(rendered < channels.length){
-renderMore();
-}
-
-}
-
-});
-
-/* LOAD CHANNEL LIST */
 
 async function loadChannels(){
 
 try{
 
-const res=await fetch(JSON_URL,{cache:"force-cache"});
-const data=await res.json();
+const res=await fetch(JSON_URL,{cache:"force-cache"})
+const data=await res.json()
 
-allChannels=data;
-channels=[...allChannels];
-
-resetGrid();
+renderDropdown(data)
 
 }catch(e){
 
-console.error("Channels load failed",e);
+console.error("Channel load error",e)
 
 }
 
 }
 
-/* FAST SEARCH */
+async function playChannel(index){
 
-const search=document.getElementById("search");
+const channel=channels[index]
+if(!channel) return
 
-search.addEventListener("input",function(){
+await stopAll()
 
-const q=this.value.trim().toLowerCase();
+loader.style.display="block"
+placeholder.style.display="none"
 
-/* reset if empty */
+liveStamp.style.display=channel.isLive?"block":"none"
 
-if(q===""){
+if(channel.type==="iframe"){
 
-channels=[...allChannels];
-resetGrid();
-return;
+iframe.style.display="block"
+iframe.src=channel.url
+iframe.onload=()=>loader.style.display="none"
+
+return
 
 }
 
-/* filter master list */
+video.style.display="block"
 
-channels=allChannels.filter(ch =>
-ch.name.toLowerCase().includes(q)
-);
+const isHls=channel.type==="hls"||channel.url.includes(".m3u8")
 
-resetGrid();
+if(isHls){
 
-});
+if(window.Hls && Hls.isSupported()){
 
-/* INITIALIZE */
+hls=new Hls({enableWorker:true})
 
-loadChannels();
+hls.loadSource(channel.url)
+hls.attachMedia(video)
+
+hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play())
+
+}
+
+else if(video.canPlayType("application/vnd.apple.mpegurl")){
+
+video.src=channel.url
+video.play()
+
+}
+
+return
+
+}
+
+if(window.shaka && shaka.Player.isBrowserSupported()){
+
+shaka.polyfill.installAll()
+
+shakaPlayer=new shaka.Player(video)
+
+try{
+
+await shakaPlayer.load(channel.url)
+video.play()
+
+}catch(e){
+
+console.error(e)
+
+}
+
+}
+
+}
+
+video.onplaying=()=>loader.style.display="none"
+
+loadChannels()
+
+const search=document.getElementById("search")
+
+search.addEventListener("input",()=>{
+
+const term=search.value.toLowerCase()
+
+document.querySelectorAll(".channel-card").forEach(card=>{
+
+card.style.display=
+card.innerText.toLowerCase().includes(term)
+?"flex"
+:"none"
+
+})
+
+})
 
 </script>
+
 </body>
 </html>
