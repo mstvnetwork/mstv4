@@ -19,7 +19,8 @@ html,body{
 margin:0;
 font-family:Arial,sans-serif;
 background:#0F1115;
-color:#fff;
+color:#E0E0E0;
+line-height:1.5;
 }
 
 /* HEADER */
@@ -57,7 +58,7 @@ color:#90EE90;
 
 .tagline{
 font-size:11px;
-color:#aaa;
+color:#bbb;
 }
 
 #search{
@@ -90,9 +91,24 @@ aspect-ratio:16/9;
 background:#000;
 border-radius:12px;
 overflow:hidden;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
-video,iframe{
+video{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+object-fit:contain;
+background:#000;
+display:none;
+z-index:5;
+}
+
+iframe{
 position:absolute;
 top:0;
 left:0;
@@ -100,9 +116,11 @@ width:100%;
 height:100%;
 border:none;
 display:none;
+z-index:5;
 }
 
 #placeholder{
+position:absolute;
 width:100%;
 height:100%;
 display:flex;
@@ -110,6 +128,7 @@ align-items:center;
 justify-content:center;
 font-size:60px;
 color:#90EE90;
+z-index:2;
 }
 
 #loading{
@@ -127,42 +146,43 @@ font-size:11px;
 padding:4px 8px;
 border-radius:5px;
 display:none;
+z-index:10;
 }
 
-/* CHANNELS */
+/* CHANNEL GRID */
 
 .channels-section{
 max-width:900px;
 margin:auto;
-margin-top:15px;
+margin-top:20px;
+padding:10px;
 }
 
 .channels-title{
-margin-left:10px;
 font-size:16px;
-color:#ccc;
+margin-bottom:10px;
+color:#E8E8E8;
 }
 
-.channel-row{
-display:flex;
-overflow-x:auto;
-gap:10px;
-padding:10px;
-scroll-behavior:smooth;
+.channel-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+gap:12px;
+max-height:420px;
+overflow-y:auto;
 }
 
-.channel-row::-webkit-scrollbar{
-height:6px;
+.channel-grid::-webkit-scrollbar{
+width:6px;
 }
 
-.channel-row::-webkit-scrollbar-thumb{
-background:#333;
+.channel-grid::-webkit-scrollbar-thumb{
+background:#444;
 border-radius:5px;
 }
 
 .channel-card{
-min-width:120px;
-height:90px;
+height:95px;
 background:#1A1D20;
 border-radius:10px;
 display:flex;
@@ -171,22 +191,38 @@ align-items:center;
 justify-content:center;
 gap:6px;
 cursor:pointer;
-flex-shrink:0;
 transition:.2s;
+color:#E0E0E0;
+text-align:center;
+padding:5px;
 }
 
 .channel-card:hover{
 transform:scale(1.05);
-box-shadow:0 5px 15px rgba(0,255,160,.3);
+box-shadow:0 4px 12px rgba(0,255,160,.35);
 }
 
 .channel-card img{
-width:50px;
-height:50px;
+width:48px;
+height:48px;
 object-fit:contain;
 }
 
-/* hidden dropdown (logic only) */
+/* MOBILE GRID */
+
+@media (max-width:600px){
+
+.channel-grid{
+grid-template-columns:repeat(3,1fr);
+}
+
+.channel-card{
+height:85px;
+}
+
+}
+
+/* hidden dropdown */
 
 #channel-select{
 display:none;
@@ -235,7 +271,7 @@ allow="autoplay; encrypted-media; picture-in-picture"></iframe>
 
 <h2 class="channels-title">Channels</h2>
 
-<div id="channel-row" class="channel-row"></div>
+<div id="channel-row" class="channel-grid"></div>
 
 </section>
 
@@ -283,7 +319,6 @@ function renderDropdown(data){
 
 channels=data
 select.innerHTML=""
-
 row.innerHTML=""
 
 data.forEach((ch,i)=>{
@@ -298,7 +333,7 @@ card.className="channel-card"
 
 card.innerHTML=`
 <img src="${ch.logo||''}" loading="lazy">
-<div style="font-size:12px;text-align:center">${ch.name}</div>
+<div style="font-size:12px">${ch.name}</div>
 `
 
 card.onclick=()=>{
