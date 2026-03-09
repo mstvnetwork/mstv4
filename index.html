@@ -3,56 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MSTV Network | Live Indian TV & Cricket</title>
+<title>MSTV Network | Test Layout & Playback</title>
 
 <style>
-/* Reset & base */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, sans-serif; background: #0F1115; color: #E0E0E0; display: flex; flex-direction: column; align-items: center; }
+/* Base */
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: Arial,sans-serif; background:#0F1115; color:#E0E0E0; display:flex; flex-direction:column; align-items:center; }
 
-/* Sticky Header */
-header { position: sticky; top: 0; width: 100%; background: #141618; display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,255,160,0.3); }
-.header-left { display: flex; align-items: center; gap: 15px; }
-.logo { font-size: 1.8em; font-weight: bold; background: linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip: text; color: transparent; }
-.slogan { font-size: 0.9em; color: #90EE90; }
-.search-bar input { padding: 8px 12px; border-radius: 12px; border: none; width: 200px; background: #1A1D20; color: #90EE90; box-shadow: 0 4px 10px rgba(0,255,160,0.2); }
+/* Header */
+header { position: sticky; top:0; width:100%; background:#141618; display:flex; justify-content:space-between; align-items:center; padding:10px 20px; z-index:1000; box-shadow:0 2px 8px rgba(0,255,160,0.3);}
+.header-left { display:flex; align-items:center; gap:15px; }
+.logo { font-size:1.8em; font-weight:bold; background:linear-gradient(90deg,#90EE90,#00FFA3); -webkit-background-clip:text; color:transparent; }
+.slogan { font-size:0.9em; color:#90EE90; }
+.search-bar input { padding:8px 12px; border-radius:12px; border:none; width:200px; background:#1A1D20; color:#90EE90; box-shadow:0 4px 10px rgba(0,255,160,0.2); }
 
 /* Channel Cards Horizontal Scroll */
-.channels-container { display: flex; overflow-x: auto; gap: 15px; padding: 15px 20px; width: 100%; max-width: 1200px; scrollbar-width: thin; scrollbar-color: #90EE90 #141618; }
-.channels-container::-webkit-scrollbar { height: 8px; }
-.channels-container::-webkit-scrollbar-track { background: #141618; }
-.channels-container::-webkit-scrollbar-thumb { background: #90EE90; border-radius: 4px; }
+.channels-container { display:flex; overflow-x:auto; gap:15px; padding:15px 20px; width:100%; max-width:1200px; scrollbar-width:thin; scrollbar-color:#90EE90 #141618;}
+.channels-container::-webkit-scrollbar { height:8px; }
+.channels-container::-webkit-scrollbar-track { background:#141618; }
+.channels-container::-webkit-scrollbar-thumb { background:#90EE90; border-radius:4px; }
 
-/* Channel Card Styles */
-.channel-card { 
-  flex: 0 0 auto; 
-  width: 120px; 
-  height: 120px; 
-  background: #1A1D20; 
-  border-radius: 12px; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
-  text-align: center; 
-  cursor: pointer; 
-  transition: transform 0.2s, box-shadow 0.2s; 
-  padding: 10px;
-}
-.channel-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,255,160,0.4); }
-.channel-logo { width: 80px; height: 80px; object-fit: contain; margin-bottom: 5px; }
-.channel-name { font-size: 0.85em; color: #90EE90; font-weight: bold; text-align: center; }
+/* Card Styles */
+.channel-card { flex:0 0 auto; width:120px; height:120px; background:#1A1D20; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; padding:10px;}
+.channel-card:hover { transform:translateY(-5px); box-shadow:0 8px 20px rgba(0,255,160,0.4);}
+.channel-logo { width:80px; height:80px; object-fit:contain; margin-bottom:5px; background:#0F1115; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2em; color:#90EE90; font-weight:bold; }
 
-/* Sticky Player Container */
-.player-container { position: sticky; bottom: 0; width: 90%; max-width: 900px; aspect-ratio: 16/9; background: linear-gradient(135deg,#141618,#1A1D20); display: flex; align-items: center; justify-content: center; color: #90EE90; font-weight: bold; text-align: center; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,255,160,0.2); overflow: hidden; margin: 20px 0; }
-video, iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 15px; display: none; }
+/* Sticky Player */
+.player-container { position:sticky; bottom:0; width:90%; max-width:900px; aspect-ratio:16/9; background:linear-gradient(135deg,#141618,#1A1D20); display:flex; align-items:center; justify-content:center; color:#90EE90; font-weight:bold; text-align:center; border-radius:15px; box-shadow:0 8px 25px rgba(0,255,160,0.2); overflow:hidden; margin:20px 0; }
+video, iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:15px; display:none; }
 #placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:5em; color:#90EE90; text-shadow:0 0 15px rgba(144,238,144,0.6); }
-#live-stamp { position: absolute; top: 5px; left: 5px; background: #E50914; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; letter-spacing: 1px; z-index: 50; display: none; box-shadow: 0 0 12px rgba(229, 9, 20, 0.6); }
-
-/* Footer */
-footer { width: 100%; max-width: 900px; margin-top: 40px; padding: 20px 10px; text-align: center; font-size: 0.9rem; color: #777; border-top:1px solid #222; }
-footer h2 { margin: 15px 0 5px; }
-footer p { margin: 10px 0; line-height: 1.5; }
+#live-stamp { position:absolute; top:5px; left:5px; background:#E50914; color:#fff; font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:6px; letter-spacing:1px; z-index:50; display:none; box-shadow:0 0 12px rgba(229,9,20,0.6);}
 </style>
 </head>
 <body>
@@ -67,10 +47,8 @@ footer p { margin: 10px 0; line-height: 1.5; }
   </div>
 </header>
 
-<!-- Channels Horizontal Scroll -->
 <div class="channels-container" id="channels-container"></div>
 
-<!-- Sticky 16:9 Player -->
 <div class="player-container">
   <div id="placeholder" aria-live="polite">📺</div>
   <video id="video-player" autoplay playsinline controls></video>
@@ -78,124 +56,67 @@ footer p { margin: 10px 0; line-height: 1.5; }
   <div id="live-stamp">MSTV Network</div>
 </div>
 
-<script defer src="./shaka.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
 <script>
+// Elements
 const container = document.getElementById('channels-container');
-const select = document.getElementById('channel-select');
 const video = document.getElementById('video-player');
 const iframe = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
-const loader = document.getElementById('loading');
 const liveStamp = document.getElementById('live-stamp');
 const JSON_URL = './channels.json';
 let channels = [];
 let hls = null;
-let shakaPlayer = null;
 
-// Stop any playing video/iframe
-async function stopAll() {
-  loader?.style.display = 'none';
-  liveStamp.style.display = 'none';
-  if(hls){ hls.destroy(); hls = null; }
-  if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
-  video.pause();
-  video.removeAttribute('src');
-  video.load();
-  iframe.removeAttribute('src');
-  iframe.src = 'about:blank';
-  video.style.display = 'none';
-  iframe.style.display = 'none';
-  placeholder.style.display = 'flex';
+// Stop all playback
+function stopAll(){
+  liveStamp.style.display='none';
+  if(hls){ hls.destroy(); hls=null; }
+  video.pause(); video.removeAttribute('src'); video.load(); video.style.display='none';
+  iframe.removeAttribute('src'); iframe.src='about:blank'; iframe.style.display='none';
+  placeholder.style.display='flex';
 }
 
-// Render horizontal channel cards
-function renderChannelCards() {
-  container.innerHTML = '';
-  channels.forEach((ch, i) => {
-    const card = document.createElement('div');
-    card.classList.add('channel-card');
-    
-    const logo = document.createElement('img');
-    logo.src = ch.logo || 'https://via.placeholder.com/80x80?text=Logo';
-    logo.alt = ch.name + ' Logo';
-    logo.classList.add('channel-logo');
-    
-    const name = document.createElement('div');
-    name.textContent = ch.name;
-    name.classList.add('channel-name');
-    
-    card.appendChild(logo);
-    card.appendChild(name);
-    
-    card.addEventListener('click', () => playChannel(i));
+// Render cards with placeholder logo
+function renderChannelCards(){
+  container.innerHTML='';
+  channels.forEach((ch,i)=>{
+    const card=document.createElement('div'); card.className='channel-card';
+    const logo=document.createElement('div'); logo.className='channel-logo'; 
+    logo.textContent = ch.name[0] || '?';
+    const name=document.createElement('div'); name.className='channel-name'; name.textContent=ch.name;
+    card.appendChild(logo); card.appendChild(name);
+    card.addEventListener('click',()=>playChannel(i));
     container.appendChild(card);
   });
 }
 
-// Load channels from JSON
+// Load channels.json
 async function loadChannels(){
-  try {
-    const res = await fetch(JSON_URL);
-    channels = await res.json();
+  try{
+    const res=await fetch(JSON_URL);
+    channels=await res.json();
     renderChannelCards();
-  } catch(e){
-    console.error('Channels load failed', e);
-  }
+  }catch(e){ console.error('Failed to load channels', e); }
 }
 
 // Play selected channel
-async function playChannel(index){
-  const channel = channels[index];
-  if(!channel) return;
-  await stopAll();
-  placeholder.style.display = 'none';
-  liveStamp.style.display = channel.isLive ? 'block' : 'none';
-  
-  if(channel.type === 'iframe'){
-    iframe.style.display = 'block';
-    iframe.src = channel.url;
-    return;
-  }
-  
-  video.style.display = 'block';
-  const isHls = channel.type === 'hls' || channel.url.includes('.m3u8');
-  
-  if(isHls){
-    if(window.Hls && Hls.isSupported()){
-      hls = new Hls({ enableWorker:true, lowLatencyMode:true, startLevel:-1 });
-      hls.loadSource(channel.url);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, ()=> video.play());
-    } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-      video.src = channel.url;
-      video.play();
-    }
-    return;
-  }
-  
-  if(window.shaka && shaka.Player.isBrowserSupported()){
-    shaka.polyfill.installAll();
-    shakaPlayer = new shaka.Player(video);
-    shakaPlayer.configure({ streaming:{ bufferingGoal:10, rebufferingGoal:0.5, lowLatencyMode:true } });
-    try{
-      await shakaPlayer.load(channel.url);
-      video.play();
-    } catch(e){ console.error('Shaka error', e); placeholder.style.display = 'flex'; liveStamp.style.display = 'none'; }
-  }
+function playChannel(index){
+  const ch=channels[index]; if(!ch) return; stopAll(); placeholder.style.display='none';
+  liveStamp.style.display=ch.isLive ? 'block':'none';
+  if(ch.type==='iframe'){ iframe.style.display='block'; iframe.src=ch.url; return; }
+  video.style.display='block';
+  const isHls=ch.type==='hls'||ch.url.includes('.m3u8');
+  if(isHls){ if(window.Hls && Hls.isSupported()){ hls=new Hls(); hls.loadSource(ch.url); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); } 
+    else if(video.canPlayType('application/vnd.apple.mpegurl')){ video.src=ch.url; video.play(); } return; }
+  video.src=ch.url; video.play();
 }
 
-// Hide loader when video starts
-video.onplaying = () => { loader?.style.display = 'none'; };
+video.onplaying=()=>{ /* loader off if used */ }
 
-// Initialize
 loadChannels();
 </script>
-
-<footer>
-<h2>Watch Live Indian TV Channels Online</h2>
-<p>MSTV Network provides free streaming of Indian TV channels including Hindi entertainment, Punjabi channels, religious broadcasts and live cricket matches. Enjoy smooth playback on mobile, tablet and desktop without registration.</p>
-</footer>
 
 </body>
 </html>
