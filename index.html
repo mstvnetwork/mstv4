@@ -216,41 +216,41 @@ async function stopAll() {
   placeholder.style.display = 'flex';
 }
 
-function renderUI(data){
+function renderUI(data) {
   channels = data;
   select.innerHTML = '<option value="">📱 Select Channel</option>';
   gridContainer.innerHTML = ''; 
 
   data.forEach((ch, i) => {
-    // Hidden select sync
     const opt = document.createElement("option");
-    opt.value = i; opt.textContent = ch.name; select.appendChild(opt);
+    opt.value = i; 
+    opt.textContent = ch.name; 
+    select.appendChild(opt);
 
-    // Card UI
     const card = document.createElement('div');
     card.className = 'channel-card';
     card.setAttribute('data-name', ch.name.toLowerCase());
+    
+    // Fallback logic: if the image fails, it replaces itself with a 📺 emoji
+    const logoHtml = ch.logo 
+      ? `<img src="${ch.logo}" alt="${ch.name}" 
+          onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'font-size:1.5rem\'>📺</span>';">` 
+      : `<span style="font-size:1.5rem">📺</span>`;
+
     card.innerHTML = `
-      <div class="card-logo">
-        ${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.parentElement.innerHTML='📺'">` : `<span>📺</span>`}
-      </div>
+      <div class="card-logo">${logoHtml}</div>
       <div class="channel-name">${ch.name}</div>
     `;
     
-    card.onclick = () => { playChannel(i); window.scrollTo({top: 0, behavior: 'smooth'}); };
+    card.onclick = () => { 
+        playChannel(i); 
+        window.scrollTo({top: 0, behavior: 'smooth'}); 
+    };
     gridContainer.appendChild(card);
   });
 }
 
-// Search Logic
-if(searchInput) {
-    searchInput.oninput = (e) => {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('.channel-card').forEach(card => {
-            card.style.display = card.getAttribute('data-name').includes(term) ? 'block' : 'none';
-        });
-    };
-}
+
 
 async function loadChannels(){
   const cached = localStorage.getItem("channels_cache");
