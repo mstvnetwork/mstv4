@@ -4,9 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
 <title>MSTV Network</title>
-
 <link rel="icon" href="https://mstvnet.netlify.app/mstv-thumbnail.png">
 
 <script defer src="./shaka.js"></script>
@@ -17,8 +15,8 @@
 html, body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: #ffffff;  /* Page background white */
-    color: #0F1115;       /* Dark text */
+    background: #ffffff;
+    color: #0F1115;
     line-height: 1.5;
 }
 
@@ -27,14 +25,14 @@ html, body {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: #ffffff;
+    height: 65px; /* header height */
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 15px;
+    padding: 0 15px;
+    background: #ffffff;
     box-shadow: 0 3px 10px rgba(0,0,0,.2);
     flex-wrap: wrap;
-    color: #0F1115;
 }
 .brand {
     display: flex;
@@ -66,24 +64,24 @@ html, body {
 /* PLAYER */
 .player-sticky {
     position: sticky;
-    top: 65px;
-    z-index: 900;
+    top: 65px; /* below header */
+    z-index: 950;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding-top: 10px;
 }
 .player-container {
-    position: relative;
     width: 95%;
     max-width: 900px;
-    aspect-ratio: 16/9;
-    background: #ffffff; /* White player background */
+    aspect-ratio: 16/9; /* maintain 16:9 */
+    background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 video, iframe {
     position: absolute;
@@ -150,7 +148,7 @@ video, iframe {
 }
 .channel-card {
     height: 95px;
-    background: #f0f0f0; /* Light card background */
+    background: #f0f0f0;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -314,14 +312,7 @@ async function playChannel(index) {
 
     if (isHls) {
         if (window.Hls && Hls.isSupported()) {
-            hls = new Hls({
-                enableWorker: true,
-                lowLatencyMode: true,
-                backBufferLength: 30,
-                maxBufferLength: 20,
-                maxMaxBufferLength: 60,
-                startLevel: -1
-            });
+            hls = new Hls({ enableWorker: true, lowLatencyMode: true });
             hls.loadSource(channel.url);
             hls.attachMedia(video);
             video.muted = true;
