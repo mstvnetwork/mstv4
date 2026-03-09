@@ -95,7 +95,7 @@ header {
     width: 92%;
     max-width: 550px;
     aspect-ratio: 16/9;
-    background: blue;
+    background: grey;
     border-radius: 12px;
     overflow: hidden;
     margin: 0 auto;
@@ -125,13 +125,7 @@ header {
         #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: white; padding: 5px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; z-index: 50; display: none; }
 
 /* 1. Ultra-compact grid columns */
-.grid-header {
-    font-size: 0.2rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: red;
-    margin-bottom: 0px;
-}
+
 .channel-grid {
     display: grid;
     /* Reduced from 110px to 80px */
@@ -244,7 +238,7 @@ How does the "Buffering" look inside the player now? If you like this, we can al
 
 <main>
     <select id="channel-select" style="display:none;"></select>
-    <h2 class="grid-header">Available Channels</h2>
+    
     <div class="channel-grid" id="channel-list-container"></div>
 </main>
 
