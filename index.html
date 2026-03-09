@@ -192,73 +192,57 @@ header {
     box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 15px rgba(0, 255, 163, 0.1);
 }
 
-/* 3. ULTRA-COMPACT "POPPING" GRID */
-main { padding: 30px 5%; }
-
-.grid-header {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--accent);
-    margin-bottom: 20px;
-}
-
+/* 1. Ultra-compact grid columns */
 .channel-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
-    gap: 12px;
+    /* Reduced from 110px to 80px */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
+    gap: 8px; 
+    margin-bottom: 30px;
 }
 
+/* 2. Micro-sized cards */
 .channel-card {
-    background: var(--bg-card);
-    border-radius: 10px;
-    padding: 8px;
+    background: #16181D;
+    border-radius: 6px;
+    padding: 5px; /* Minimal padding */
     text-align: center;
     cursor: pointer;
-    border: 1px solid #1E232B;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+    border: 1px solid #222;
 }
 
-/* Hover Effect: Card lifts and glows */
-.channel-card:hover {
-    transform: translateY(-6px) scale(1.03);
-    border-color: var(--accent);
-    background: #1E252E;
-    box-shadow: 0 10px 20px rgba(0, 255, 163, 0.15);
+/* 3. Smallest possible logo and text */
+.card-logo { 
+    aspect-ratio: 1/1; 
+    background: #222; 
+    border-radius: 4px; 
+    margin-bottom: 4px; 
 }
 
-.card-logo {
-    aspect-ratio: 1/1;
-    background: #0B0D11;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.channel-name {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: var(--text-dim);
-    display: block;
+.channel-name { 
+    font-size: 0.65rem; /* Tiny but readable font */
+    font-weight: 500; 
+    color: #bbb;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: block;
 }
 
-.channel-card:hover .channel-name {
-    color: var(--text-main);
+/* 4. Desktop Hover - subtle zoom */
+.channel-card:hover {
+    transform: scale(1.05);
+    border-color: var(--accent);
+    background: #1A1D20;
 }
 
-/* 4. RESPONSIVE MOBILE TWEAKS */
+/* 5. Mobile (Very small screens) */
 @media (max-width: 600px) {
     .channel-grid { 
-        grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); 
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); 
+        gap: 6px;
     }
-    .search-container { display: none; }
 }
 
 
