@@ -131,53 +131,57 @@
             padding-left: 10px;
         }
 
-       /* 1. Reduce the grid column width (from 160px down to 110px) */
+/* 1. Ultra-compact grid columns */
 .channel-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-    gap: 12px; /* Smaller space between cards */
-    margin-bottom: 40px;
+    /* Reduced from 110px to 80px */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
+    gap: 8px; 
+    margin-bottom: 30px;
 }
 
-/* 2. Shrink the card itself */
+/* 2. Micro-sized cards */
 .channel-card {
-    background: #1A1D20;
-    border-radius: 8px;
-    padding: 8px; /* Reduced from 12px */
+    background: #16181D;
+    border-radius: 6px;
+    padding: 5px; /* Minimal padding */
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease;
     border: 1px solid #222;
 }
 
-/* 3. Reduce the logo area and font size */
+/* 3. Smallest possible logo and text */
 .card-logo { 
     aspect-ratio: 1/1; 
     background: #222; 
-    border-radius: 6px; 
-    margin-bottom: 6px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    overflow: hidden; 
+    border-radius: 4px; 
+    margin-bottom: 4px; 
 }
 
 .channel-name { 
-    font-size: 0.75rem; /* Smaller text */
-    font-weight: 600; 
-    color: #fff;
-    white-space: nowrap; /* Keeps name on one line */
+    font-size: 0.65rem; /* Tiny but readable font */
+    font-weight: 500; 
+    color: #bbb;
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Adds ... if name is too long */
+    text-overflow: ellipsis;
+    display: block;
 }
 
-/* 4. Compact Mobile View */
+/* 4. Desktop Hover - subtle zoom */
+.channel-card:hover {
+    transform: scale(1.05);
+    border-color: var(--accent);
+    background: #1A1D20;
+}
+
+/* 5. Mobile (Very small screens) */
 @media (max-width: 600px) {
     .channel-grid { 
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); 
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); 
+        gap: 6px;
     }
-    .channel-name { font-size: 0.7rem; }
 }
 
 
