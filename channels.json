@@ -1,23 +1,25 @@
 [
-{
-  "name": "Zee Cinema Hd",
-  "url": "https://mstvnet.netlify.app",
-  "type": "iframe",
-  "logo": "https://upload.wikimedia.org/wikipedia/commons/9/92/Zee_Cinema_2025.svg"
-},
-
- {
+[
+  {
+    "name": "Zee Cinema Hd",
+    "url": "https://mstvnet.netlify.app",
+    "type": "iframe",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/9/92/Zee_Cinema_2025.svg"
+  },
+  {
     "name": "Movies 1",
     "url": "https://live20.bozztv.com/giatvplayout7/giatv-209612/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo":"https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/bmovies1.png",
- },
- {
+    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/bmovies1.png"
+  },
+  {
     "name": "Movies 2",
     "url": "https://vods2.aynaott.com/hindimovies/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/ChatGPT-Image-Feb-25-2026-10_34_22-PM-1-200x300.png",
-},
+    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/ChatGPT-Image-Feb-25-2026-10_34_22-PM-1-200x300.png"
+  }
+]
+
 
    {
     "name": "Sony Kal",
