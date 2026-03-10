@@ -3,7 +3,7 @@
     "name": "Zee Cinema Hd",
     "url": "https://mstvnet.netlify.app",
     "type": "iframe",
-    "logo":"/main/assets/images.jpeg"
+    "logo":"https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/images.jpeg"
   },
   {
     "name": "Movies 1",
