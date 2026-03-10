@@ -222,7 +222,7 @@
     "name": "Deewana Hd",
     "url": "https://live20.bozztv.com/giatvplayout7/giatv-209592/tracks-v1a1/mono.ts.m3u8",
     "type": "iframe",
-    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/deewana.png"
    },
  {
     "name": "Colors Hd",
@@ -283,8 +283,9 @@
   {
     "name": "Test Feed",
     "url":"https://si.videoapne.to/hls/,bdohwign7bboxuzvta2p4ca3tprfsdbx4jgenlbeejkigyfbchbbgyyiiuka,.urlset/master.m3u8",
-    "type": "iframe"
-  },
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/test.jpeg"
+   },
 
   {
     "name": "B4U Movies",
