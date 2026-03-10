@@ -87,106 +87,144 @@
  {
     "name": "B4u Music",
     "url": "https://cdnb4u.wiseplayout.com/B4U_Music/master.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/b4umsic.jpg"
+  },
   },
    {
     "name": "Sony Sab",
     "url": "https://mstvnet.netlify.app/indexs2.html",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/sonysab.jpeg"
+  },
   },
     {
     "name": "DD Punjabi",
     "url": "https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/da821c24a59d4e57960497aeaca8fb33/index.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/ddpunjabi.jpeg"
+  },
   },
     {
     "name": "Gtc Punjabi",
     "url": "https://vglivessai.akamaized.net/ptnr-yupptv/title-GTC_Punjabi/in/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/0abf23f0-9db1-4879-9822-a414ae3a3ffa/index.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/gtc.jpeg"
+  },
   },
   
     {
     "name": "Chardikala Time Tv",
     "url": "https://chardikalagurbanitv.gigabitcdn.net/in-chardikala/chardikala-timetv/playlist.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/chardikala.jpeg"
+  },
   },
   
    {
     "name": "Sony Ent. (In screen click)",
     "url": "https://mstvnet.netlify.app/shaka/indexsony.html",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/sony.jpeg"
+  },
   },
   {
     "name": "Ndtv World USA",
     "url": "https://web-ndtv24x7-us.akamaized.net/hls/live/2109282/ndtv24x7us/masterp_720p@3.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
   
   {
     "name": "Tv9 Bhatatvarsh",
     "url": "https://dyjmyiv3bp2ez.cloudfront.net/pub-iotv9hinjzgtpe/liveabr/pub-iotv9hinjzgtpe/live_360p/chunks.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
     
   {
     "name": "India Tv",
     "url": "https://vg-indiatvyupp.akamaized.net/ptnr-yupptv/title-Indiatvmi/v1/manifest/611d79b11b77e2f571934fd80ca1413453772ac7/9bb243fa-9ec5-4045-9d1d-0326debcace6/ce184bbb-0437-4aae-bd61-99b071c494cf/0.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
    {
     "name": "Aaj Tak",
     "url": "https://aajtakhdlive-amd.akamaized.net/hls/live/2014415/aajtakhd/aajtakhdlive/live_720p/chunks.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
     {
     "name": "Dd Sports",
     "url": "https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/b17adfe543354fdd8d189b110617cddd/index_1.m3u8",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
   
  {
     "name": "Sky Sports (For 🔈Double tap on screen)",
     "url": "https://streamcrichd.com/update/skys2.php",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
     {
     "name": "Willow Cricket Hindi",
     "url": "https://restream-live.realiptv.to/live/ALEX/sg5ng25ikf/3973.m3u8",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
   {
     "name": "Star Sports Hd 1 (For 🔈tap on screen multiple times)",
     "url": "https://streamcrichd.com/update/star.php",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
   {
     "name": "Star Sports Hindi (For 🔈Double tap on screen)",
     "url": "https://live.khantv.pk/update/?id=star_sports3",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
   
   {
     "name": "Ptv Sports",
     "url": "https://live.khantv.pk/update/?id=ptv_sports",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
   
   {
     "name": "Sky Sports",
     "url": "https://tx3.timeout1.top:8088/mobile/stream8_320p/playlist.m3u8?id=31&pk=8dbea0abbb19002b5dc62dbfe0bb34ab1c40fffd3286c18dece1bd7306a4dc3d59b29924bce5c14f02802fa14c55bbab17a786438b2fc68a766e2ca06985442d",
-    "type": "hls"
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
+  },
   },
     {
     "name": "And Tv Hd",
     "url": "https://mstvnet.netlify.app/shaka/index.html/#3",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/andtv.jpeg"
+  },
   },
   
   
   {
     "name": "Zee Anmol",
     "url": "https://mstvnet.netlify.app/shaka/index.html/#2",
-    "type": "iframe"
+    "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/anmol.png"
+  },
   },
   {
     "name": "Deewana Hd",
@@ -197,6 +235,7 @@
     "name": "Colors Hd",
     "url": "https://cdn.stmify.com/embed-free/v1/colors-hd-in-jw",
     "type": "iframe",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/colors.jpg",
     "isLive": true
   },
   {
