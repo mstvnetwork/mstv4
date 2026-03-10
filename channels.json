@@ -1,92 +1,90 @@
+
 [
   {
     "name": "Zee Cinema Hd",
     "url": "https://mstvnet.netlify.app",
     "type": "iframe",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/Zee%20cinema.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/Zee%20cinema.jpeg"
   },
   {
     "name": "Movies 1",
     "url": "https://live20.bozztv.com/giatvplayout7/giatv-209612/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/movies1.png"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/movies1.png"
   },
   {
     "name": "Movies 2",
     "url": "https://vods2.aynaott.com/hindimovies/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/movies2.png"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/movies2.png"
   },
   {
     "name": "Sony Kal",
     "url": "https://e77bef9b.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/TEctY2FfU29ueUtBTF9ITFM/playlist.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/Sony_Kal_Logo.webp"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/Sony_Kal_Logo.webp"
   },
   {
     "name": "Shemaroo Tv",
     "url": "https://cdn-3.pishow.tv/live/230/master.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/shemarootv.png"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/shemarootv.png"
   },
   {
     "name": "Zoo Music",
     "url": "https://livecdn.live247stream.com/joomusic/tv/playlist.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/joomusic.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/joomusic.jpeg"
   },
   {
     "name": "9x Jalwa ",
     "url": "https://d14c63magvk61v.cloudfront.net/strm/channels/9xjalwa/master.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/9xjalwa.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/9xjalwa.jpeg"
   },
   {
     "name": "Aastha",
     "url": "https://aasthaott.akamaized.net/110923/smil:aasthatv.smil/chunklist_b464000.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/Aastha.png"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/Aastha.png"
   },
   {
     "name": "Hum Tv",
     "url": "https://ml-pull-dvc-myco.io:2096/HUM_ENTERTAINMENT/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/humtv.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/humtv.jpeg"
   },
   {
     "name": "Geo Hd",
     "url": "https://ml-pull-dvc-myco.io:2096/GEO_ENTERTAINEMNT/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/Geo_TV_Int%27l.webp"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/Geo_TV_Int%27l.webp"
   },
   {
     "name": "Aaj Entertainment",
     "url": "https://ml-pull-dvc-myco.io:2096/AAJ_ENTERTAINMENT/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/aajpak.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/aajpak.jpeg"
   },
   {
     "name": "Ary Digital Hd",
     "url": "https://ml-pull-dvc-myco.io:2096/ARY_DIGITAL/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/arydigital.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/arydigital.jpeg"
   },
   {
     "name": "Sab Tv Pakistan",
     "url": "https://ml-pull-dvc-myco.io:2096/SAB_ENTERTAINMENT/tracks-v1a1/mono.ts.m3u8",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/sabpak.jpeg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/sabpak.jpeg"
   },
   {
     "name": "Bbc Earth",
-    "url": "https://cdn4.skygo.mn/live/disk1/BBC_earth/HLSv3-FTA/BBC_earth-avc1_2089200=12-mp4a_256000_eng=13.m3u8",
+    "url": "https://cdn4.skygo.mn",
     "type": "hls",
-    "logo": "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/assets/BBC_Earth.svg"
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/BBC_Earth.svg"
   },
-
-
-  
-  {
+ {
     "name": "B4u Music",
     "url": "https://cdnb4u.wiseplayout.com/B4U_Music/master.m3u8",
     "type": "hls"
