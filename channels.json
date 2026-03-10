@@ -168,38 +168,44 @@
   
  {
     "name": "Sky Sports (For 🔈Double tap on screen)",
-    "url": "https://streamcrichd.com/update/skys2.php",
-    "type": "iframe",
+    "url": "https://restream-live.realiptv.to/live/ALEX/sg5ng25ikf/3972.m3u8",
+    "type": "hls",
     "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/skycric.png"
  },
   
     {
     "name": "Willow Cricket Hindi",
     "url": "https://restream-live.realiptv.to/live/ALEX/sg5ng25ikf/3973.m3u8",
-    "type": "iframe",
+    "type": "hls",
     "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/willow.jpeg"
   },
   
   {
     "name": "Star Sports Hd 1 (For 🔈tap on screen multiple times)",
-    "url": "https://streamcrichd.com/update/star.php",
-    "type": "iframe",
+    "url": "https://streams2.sofast.tv/ptnr-yupptv/title-cricketgold/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/b2048bb8-1686-4432-aa50-647245383e0c/manifes",
+    "type": "hls",
     "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/ssports1.jpeg"
   },
   
   {
     "name": "Star Sports Hindi (For 🔈Double tap on screen)",
-    "url": "https://live.khantv.pk/update/?id=star_sports3",
-    "type": "iframe",
+    "url": "https://restream-live.realiptv.to/live/ALEX/sg5ng25ikf/3972.m3u8",
+    "type": "hls",
     "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/ssports2.webp"
   },
   
   
   {
     "name": "Ptv Sports",
-    "url": "https://live.khantv.pk/update/?id=ptv_sports",
+    "url": "https://customer-jfpjrgh1mi5y63cd.cloudflarestream.com/9ad7bff2b36523d2b4516d52ac019b42/manifest/stream_t57cf0a063179d5ed549ee50dbd82a2eb_r1481993021.m3u8",
     "type": "iframe",
     "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/ptvsport.jpeg"
+  },
+  {
+    "name": "B4u Kadak",
+    "url": "https://mumt02.tangotv.in/B4UKADAK/tracks-v1a1/mono.m3u8",
+    "type": "hls",
+    "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/b4ukadak.webp"
   },
   
     {
