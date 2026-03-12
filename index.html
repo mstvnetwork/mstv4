@@ -1,47 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Channel Card Test</title>
     <style>
-        body { background: #0b0b0b; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
-        
-        .channel-card {
-            width: 320px;
-            background: #181818;
-            border-radius: 15px;
+        .video-wrapper {
+            position: relative;
+            width: 640px;
+            height: 320px;
+            background: #000;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            transition: transform 0.3s ease;
-            text-decoration: none;
-            color: #fff;
-            border: 1px solid #2a2a2a;
-            display: block;
         }
 
-        .channel-card:hover { transform: translateY(-10px); border-color: #e50914; }
-        .thumb { height: 180px; background: #222; display: flex; align-items: center; justify-content: center; font-size: 50px; }
-        .info { padding: 25px; text-align: center; }
-        .info h3 { margin: 0; font-size: 22px; letter-spacing: 1px; }
-        .info p { color: #999; margin-top: 10px; font-size: 14px; }
-        .btn { display: inline-block; margin-top: 15px; padding: 10px 25px; background: #e50914; border-radius: 5px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+        /* The Shield: Blocks all clicks by default */
+        #click-shield {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 999;
+            cursor: pointer;
+            background: rgba(0,0,0,0); /* Fully transparent */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        /* Visual indicator when unlocked */
+        #status-bar {
+            position: absolute;
+            bottom: 0; left: 0;
+            height: 4px; width: 0%;
+            background: #ff0000;
+            z-index: 1000;
+            transition: width 5s linear;
+        }
+
+        iframe { border: none; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
-    <!-- Updated Link: Uses Livepush as the proxy player -->
-    <a href="https://gdplayer.to/x/?aTVSb2t2Qi96d25Gc3hyK0RlbTNMbTFNcllLcEk3bFI0amZRYVI0UnlJSU1xemM5YVp0K1huNDJYbDI2aTRURGVMcmZ6dXVaSnBnSlpiQXZrblpJaVZBcUhiSHc4RldtbmRMM3VDZEhtaE50Rlh3NmFqNlNxaWNuM2xpYXRBdzN1MVpxU1crbG02eE1wOFRRdGdVRHJWd3BYcjdCWlNERUx5OGVqVVgzdEhFPQ,," 
-       target="_blank" 
-       rel="noopener noreferrer" 
-       class="channel-card">
-        <div class="thumb">📺</div>
-        <div class="info">
-            <h3>Astro Channel</h3>
-            <p>Live Streaming Player</p>
-            <div class="btn">Watch Now</div>
-        </div>
-    </a>
+<div class="video-wrapper">
+    <!-- Click Shield & Progress Bar -->
+    <div id="click-shield" title="Click to Unlock Controls (5s)"></div>
+    <div id="status-bar"></div>
+
+    <!-- Your GDPlayer Iframe -->
+    <iframe id="player-frame" 
+            src="https://gdplayer.to/x/?aTVSb2t2Qi96d25Gc3hyK0RlbTNMbTFNcllLcEk3bFI0amZRYVI0UnlJSU1xemM5YVp0K1huNDJYbDI2aTRURGVMcmZ6dXVaSnBnSlpiQXZrblpJaVZBcUhiSHc4RldtbmRMM3VDZEhtaE50Rlh3NmFqNlNxaWNuM2xpYXRBdzN1MVpxU1crbG02eE1wOFRRdGdVRHJWd3BYcjdCWlNERUx5OGVqVVgzdEhFPQ,," 
+            allowfullscreen>
+    </iframe>
+</div>
+
+<script>
+    const shield = document.getElementById('click-shield');
+    const bar = document.getElementById('status-bar');
+    let lockActive = true;
+
+    // 1. The Safety Net: Requires user confirmation to redirect the page
+    // This is the most critical part for public users
+    window.onbeforeunload = function() {
+        if (lockActive) {
+            return "A redirect attempt was blocked. Do you want to stay on this page?";
+        }
+    };
+
+    // 2. The Shield Logic
+    shield.addEventListener('click', () => {
+        // Unlock: Disable the shield so user can click Play/Volume
+        shield.style.pointerEvents = 'none';
+        bar.style.width = '100%';
+        console.log("Controls Unlocked for 5 seconds...");
+
+        // Re-lock: Enable the shield again after 5 seconds
+        setTimeout(() => {
+            shield.style.pointerEvents = 'auto';
+            bar.style.width = '0%';
+            bar.style.transition = 'none'; // Reset bar instantly
+            console.log("Controls Re-locked. Redirects blocked.");
+            
+            // Allow the bar to transition again next time
+            setTimeout(() => { bar.style.transition = 'width 5s linear'; }, 50);
+        }, 5000);
+    });
+</script>
 
 </body>
 </html>
