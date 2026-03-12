@@ -143,26 +143,27 @@ async function playChannel(index) {
         iframe.onload = () => loader.style.display = 'none';
     } else {
         video.style.display = 'block';
-        if(ch.url.includes('.m3u8')) {
-            if(typeof Hls !== 'undefined' && Hls.isSupported()){
-                hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-                video.src = ch.url; video.play();
+        if (ch.url.includes('.m3u8')) {
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        // --- NEW: USER-AGENT & HEADER SIMULATION ---
+        hls = new Hls({
+            xhrSetup: function(xhr, url) {
+                // This makes the server think the request is from an iPhone
+                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1');
+                // Some servers check the 'Referer' to stop hotlinking
+                // Note: Browsers usually protect 'Referer', but this helps with many PHP-based streams
+                xhr.withCredentials = false; 
             }
-        } 
-        else if (typeof shaka !== 'undefined') {
-            shaka.polyfill.installAll();
-            if (shaka.Player.isBrowserSupported()) {
-                shakaPlayer = new shaka.Player(video);
-                try { await shakaPlayer.load(ch.url); video.play(); } 
-                catch(e) { console.error("Shaka Player Error", e); }
-            }
-        } else {
-            console.error("Video player libraries (HLS/Shaka) not detected.");
-        }
+        });
+        hls.loadSource(ch.url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = ch.url;
+        video.play();
     }
 }
+
 
 video.onplaying = () => loader.style.display = 'none';
 
