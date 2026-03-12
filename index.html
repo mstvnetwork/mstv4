@@ -130,36 +130,59 @@ function updateLiveSchema(data) {
 
 async function playChannel(index) {
     const ch = channels[index];
-    if(!ch) return;
+    if (!ch) return;
+
+    // 1. Mixed Content Bypass
+    if (ch.url.startsWith('http://') && window.location.protocol === 'https:') {
+        window.open(`player.html?source=${encodeURIComponent(ch.url)}&name=${encodeURIComponent(ch.name)}`, '_blank');
+        return;
+    }
+
     await stopAll();
     placeholder.style.display = 'none';
     loader.style.display = 'block';
     liveStamp.style.display = ch.isLive ? 'block' : 'none';
     window.location.hash = encodeURIComponent(ch.name);
 
-    if(ch.type === 'iframe') {
-        iframe.style.display = 'block'; 
+    if (ch.type === 'iframe') {
+        iframe.style.display = 'block';
         iframe.src = ch.url;
         iframe.onload = () => loader.style.display = 'none';
     } else {
         video.style.display = 'block';
-            if (ch.url.includes('.m3u8')) {
-        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            // --- NEW: USER-AGENT & HEADER SIMULATION ---
-            hls = new Hls({
-                xhrSetup: function(xhr, url) {
-                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1');
-                    xhr.withCredentials = false; 
+        
+        if (ch.url.includes('.m3u8')) {
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                // Enhanced HLS Setup with User-Agent Simulation
+                hls = new Hls({
+                    xhrSetup: function(xhr, url) {
+                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1');
+                        xhr.withCredentials = false;
+                    }
+                });
+                hls.loadSource(ch.url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = ch.url;
+                video.play();
+            }
+        } else if (typeof shaka !== 'undefined') {
+            // Shaka Player Fallback for DASH
+            shaka.polyfill.installAll();
+            if (shaka.Player.isBrowserSupported()) {
+                shakaPlayer = new shaka.Player(video);
+                try { 
+                    await shakaPlayer.load(ch.url); 
+                    video.play(); 
+                } catch(e) { 
+                    console.error("Shaka Error", e); 
                 }
-            });
-            hls.loadSource(ch.url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = ch.url;
-            video.play();
+            }
         }
-    } // <--- This bracket was likely missing!
+    } // Closes else (video display)
+} // Closes playChannel function
+
 
 
 video.onplaying = () => loader.style.display = 'none';
