@@ -4,7 +4,7 @@
     "url": "https://streamcrichd.com/update/ptv.php",
     "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
     "isLive": true,
-    "type": "hls"
+    "type": "iframe"
   },
   {
     "name": "RMTV Test",
