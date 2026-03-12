@@ -92,7 +92,7 @@
 </footer>
 
 <script type="application/ld+json" id="mstv-schema"></script>
-
+        
 <script>
 let channels = [];
 let hls = null;
@@ -117,7 +117,10 @@ function updateLiveSchema(data) {
         "@type": "ListItem", "position": i + 1,
         "item": { "@type": "VideoObject", "name": ch.name, "description": `Watch ${ch.name} live on MSTV Network.`, "thumbnailUrl": [ch.logo], "uploadDate": "2024-01-01T08:00:00+00:00", "embedUrl": `https://mstvnet.netlify.app#${encodeURIComponent(ch.name)}`, "publication": { "@type": "BroadcastEvent", "isLiveBroadcast": true, "startDate": new Date().toISOString() } }
     }));
-    document.getElementById('mstv-schema').innerHTML = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", "name": "MSTV Network Channels", "itemListElement": items });
+    const schemaEl = document.getElementById('mstv-schema');
+    if(schemaEl) {
+        schemaEl.innerHTML = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", "name": "MSTV Network Channels", "itemListElement": items });
+    }
 }
 
 async function playChannel(index) {
@@ -130,34 +133,31 @@ async function playChannel(index) {
     window.location.hash = encodeURIComponent(ch.name);
 
     if(ch.type === 'iframe') {
-        iframe.style.display = 'block'; iframe.src = ch.url;
+        iframe.style.display = 'block'; 
+        iframe.src = ch.url;
         iframe.onload = () => loader.style.display = 'none';
-// Inside your playChannel(index) function
-} else {
-    video.style.display = 'block';
-    
-    if(ch.url.includes('.m3u8')) {
-        // HLS Check
-        if(typeof Hls !== 'undefined' && Hls.isSupported()){
-            hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-            video.src = ch.url; video.play();
-        }
-    } 
-    // SHAKA Check (Fixes the ReferenceError)
-    else if (typeof shaka !== 'undefined') {
-        shaka.polyfill.installAll();
-        if (shaka.Player.isBrowserSupported()) {
-            shakaPlayer = new shaka.Player(video);
-            try { await shakaPlayer.load(ch.url); video.play(); } 
-            catch(e) { console.error("Shaka Player Error", e); }
-        }
     } else {
-        console.error("Video player libraries (HLS/Shaka) not detected.");
+        video.style.display = 'block';
+        if(ch.url.includes('.m3u8')) {
+            if(typeof Hls !== 'undefined' && Hls.isSupported()){
+                hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if(video.canPlayType('application/vnd.apple.mpegurl')){
+                video.src = ch.url; video.play();
+            }
+        } 
+        else if (typeof shaka !== 'undefined') {
+            shaka.polyfill.installAll();
+            if (shaka.Player.isBrowserSupported()) {
+                shakaPlayer = new shaka.Player(video);
+                try { await shakaPlayer.load(ch.url); video.play(); } 
+                catch(e) { console.error("Shaka Player Error", e); }
+            }
+        } else {
+            console.error("Video player libraries (HLS/Shaka) not detected.");
+        }
     }
 }
-
 
 video.onplaying = () => loader.style.display = 'none';
 
@@ -174,14 +174,11 @@ async function loadChannels() {
 function renderUI() {
     grid.innerHTML = "";
     channels.forEach((ch, i) => {
-        // Detection for Insecure HTTP links
         const isHttp = ch.url.startsWith('http://') && window.location.protocol === 'https:';
-        
-        const card = document.createElement('a'); // Change 'div' to 'a'
+        const card = document.createElement('a');
         card.className = 'channel-card';
         
         if(isHttp) {
-            // Native browser link behavior bypasses popup blockers
             card.href = `player.html?source=${encodeURIComponent(ch.url)}&name=${encodeURIComponent(ch.name)}`;
             card.target = "_blank";
         } else {
@@ -200,7 +197,6 @@ function renderUI() {
     });
 }
 
-
 function checkHash() {
     const hash = decodeURIComponent(window.location.hash.substring(1));
     if(hash) {
@@ -218,5 +214,6 @@ document.getElementById('channel-search').addEventListener('input', (e) => {
 
 window.onload = loadChannels;
 </script>
+
 </body>
 </html>
