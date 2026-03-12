@@ -1,0 +1,30 @@
+[
+  {
+    "name": "PTV Test",
+    "url": "https://streamcrichd.com/update/ptv.php",
+    "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
+    "isLive": true,
+    "type": "hls"
+  },
+  {
+    "name": "RMTV Test",
+    "url": "https://rmtv.akamaized.net/hls/live/2043154/rmtv-en-web/bitrate_3.m3u8",
+    "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
+    "isLive": true,
+    "type": "hls"
+  },
+  {
+    "name": "HTTP Test (Insecure)",
+    "url": "http://sample.vodobox.net",
+    "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
+    "isLive": false,
+    "type": "hls"
+  },
+  {
+    "name": "Big Buck Bunny",
+    "url": "https://test-streams.mux.dev",
+    "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
+    "isLive": false,
+    "type": "hls"
+  }
+]
