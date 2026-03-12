@@ -1,89 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian TV Channels Guide</title>
     <style>
-        .video-wrapper {
-            position: relative;
-            width: 640px;
-            height: 320px;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        /* The Shield: Blocks all clicks by default */
-        #click-shield {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 999;
-            cursor: pointer;
-            background: rgba(0,0,0,0); /* Fully transparent */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-
-        /* Visual indicator when unlocked */
-        #status-bar {
-            position: absolute;
-            bottom: 0; left: 0;
-            height: 4px; width: 0%;
-            background: #ff0000;
-            z-index: 1000;
-            transition: width 5s linear;
-        }
-
-        iframe { border: none; width: 100%; height: 100%; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; text-align: center; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        ul { list-style: none; padding: 0; }
+        li { background: #eee; margin: 5px 0; padding: 10px; border-radius: 5px; font-weight: bold; }
+        .btn { display: inline-block; margin-top: 20px; padding: 15px 25px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background-color: #218838; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Top Indian TV Channels</h1>
+        <ul>
+            <li>Star Plus (Entertainment)</li>
+            <li>Sony Entertainment Television (SET)</li>
+            <li>Zee TV (Entertainment)</li>
+            <li>Colors TV (Entertainment)</li>
+            <li>Aaj Tak (News)</li>
+            <li>NDTV India (News)</li>
+            <li>Star Sports (Sports)</li>
+            <li>Sun TV (Regional - Tamil)</li>
+        </ul>
 
-<div class="video-wrapper">
-    <!-- Click Shield & Progress Bar -->
-    <div id="click-shield" title="Click to Unlock Controls (5s)"></div>
-    <div id="status-bar"></div>
-
-    <!-- Your GDPlayer Iframe -->
-    <iframe id="player-frame" 
-            src="https://gdplayer.to/x/?aTVSb2t2Qi96d25Gc3hyK0RlbTNMbTFNcllLcEk3bFI0amZRYVI0UnlJSU1xemM5YVp0K1huNDJYbDI2aTRURGVMcmZ6dXVaSnBnSlpiQXZrblpJaVZBcUhiSHc4RldtbmRMM3VDZEhtaE50Rlh3NmFqNlNxaWNuM2xpYXRBdzN1MVpxU1crbG02eE1wOFRRdGdVRHJWd3BYcjdCWlNERUx5OGVqVVgzdEhFPQ,," 
-            allowfullscreen>
-    </iframe>
-</div>
-
-<script>
-    const shield = document.getElementById('click-shield');
-    const bar = document.getElementById('status-bar');
-    let lockActive = true;
-
-    // 1. The Safety Net: Requires user confirmation to redirect the page
-    // This is the most critical part for public users
-    window.onbeforeunload = function() {
-        if (lockActive) {
-            return "A redirect attempt was blocked. Do you want to stay on this page?";
-        }
-    };
-
-    // 2. The Shield Logic
-    shield.addEventListener('click', () => {
-        // Unlock: Disable the shield so user can click Play/Volume
-        shield.style.pointerEvents = 'none';
-        bar.style.width = '100%';
-        console.log("Controls Unlocked for 5 seconds...");
-
-        // Re-lock: Enable the shield again after 5 seconds
-        setTimeout(() => {
-            shield.style.pointerEvents = 'auto';
-            bar.style.width = '0%';
-            bar.style.transition = 'none'; // Reset bar instantly
-            console.log("Controls Re-locked. Redirects blocked.");
-            
-            // Allow the bar to transition again next time
-            setTimeout(() => { bar.style.transition = 'width 5s linear'; }, 50);
-        }, 5000);
-    });
-</script>
-
+        <!-- Your Requested Button -->
+        <a href="https://criccoder.pages.dev/astro.m3u8" class="btn">Launch Player Stream</a>
+    </div>
 </body>
 </html>
