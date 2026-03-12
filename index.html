@@ -1,29 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Channel Card</title>
     <style>
-        body { background: #121212; display: flex; justify-content: center; padding: 50px; font-family: sans-serif; }
-        .channel-card {
-            width: 320px; background: #1e1e1e; border-radius: 15px; 
-            overflow: hidden; text-decoration: none; color: white;
-            display: block; border: 1px solid #333; transition: 0.3s;
+        body { 
+            background: #0f0f0f; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .channel-card:hover { transform: translateY(-5px); border-color: #ff0000; }
-        .thumb { height: 180px; background: #ff0000; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; }
-        .details { padding: 20px; }
+
+        /* The Channel Card */
+        .channel-card {
+            width: 320px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            border: 1px solid #333;
+            display: block;
+        }
+
+        .channel-card:hover {
+            transform: translateY(-8px);
+            border-color: #ff0000;
+            box-shadow: 0 15px 40px rgba(255,0,0,0.2);
+        }
+
+        /* Thumbnail Area */
+        .thumb {
+            height: 180px;
+            background: linear-gradient(135deg, #444, #111);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .play-icon {
+            font-size: 50px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .live-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff0000;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Info Area */
+        .info {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .info h3 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+
+        .info p {
+            margin: 0;
+            color: #888;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Link to your local player.html with the stream URL as a parameter -->
-    <a href="player.html?url=https://criccoder.pages.dev/astro.m3u8" 
+    <!-- 
+      - target="_blank" opens in new tab 
+      - rel="noopener noreferrer" prevents the new tab from redirecting THIS page 
+      - The href uses a Proxy Player to handle the HTTP segments inside your HTTPS stream
+    -->
+    <a href="https://p2p.m3u8.dev" 
        target="_blank" 
        rel="noopener noreferrer" 
        class="channel-card">
-        <div class="thumb">ASTRO LIVE</div>
-        <div class="details">
-            <h2 style="margin:0">Watch Now</h2>
-            <p style="color:#888; font-size:14px;">Opens in a secure new window</p>
+        
+        <div class="thumb">
+            <span class="live-badge">Live</span>
+            <div class="play-icon">▶</div>
+        </div>
+
+        <div class="info">
+            <h3>Astro Channel</h3>
+            <p>Click to stream in secure player</p>
         </div>
     </a>
 
