@@ -1,7 +1,7 @@
 [
   {
     "name": "PTV Test",
-    "url": "https://streamcrichd.com/update/ptv.php",
+    "url": "https://mstvnet.netlify.app/shaka/index.html/#1",
     "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
     "isLive": true,
     "type": "iframe"
