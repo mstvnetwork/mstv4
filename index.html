@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #121212; display: flex; justify-content: center; padding: 50px; font-family: sans-serif; }
+        .channel-card {
+            width: 320px; background: #1e1e1e; border-radius: 15px; 
+            overflow: hidden; text-decoration: none; color: white;
+            display: block; border: 1px solid #333; transition: 0.3s;
+        }
+        .channel-card:hover { transform: translateY(-5px); border-color: #ff0000; }
+        .thumb { height: 180px; background: #ff0000; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; }
+        .details { padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Link to your local player.html with the stream URL as a parameter -->
+    <a href="player.html?url=https://criccoder.pages.dev/astro.m3u8" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="channel-card">
+        <div class="thumb">ASTRO LIVE</div>
+        <div class="details">
+            <h2 style="margin:0">Watch Now</h2>
+            <p style="color:#888; font-size:14px;">Opens in a secure new window</p>
+        </div>
+    </a>
+
+</body>
+</html>
