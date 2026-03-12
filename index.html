@@ -3,104 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Channel Card</title>
+    <title>Channel Card Test</title>
     <style>
-        body { 
-            background: #0f0f0f; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        /* The Channel Card */
+        body { background: #0b0b0b; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
+        
         .channel-card {
             width: 320px;
-            background: #1a1a1a;
-            border-radius: 12px;
+            background: #181818;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            transition: transform 0.3s ease;
             text-decoration: none;
-            color: white;
-            border: 1px solid #333;
+            color: #fff;
+            border: 1px solid #2a2a2a;
             display: block;
         }
 
-        .channel-card:hover {
-            transform: translateY(-8px);
-            border-color: #ff0000;
-            box-shadow: 0 15px 40px rgba(255,0,0,0.2);
-        }
-
-        /* Thumbnail Area */
-        .thumb {
-            height: 180px;
-            background: linear-gradient(135deg, #444, #111);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .play-icon {
-            font-size: 50px;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .live-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ff0000;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        /* Info Area */
-        .info {
-            padding: 20px;
-            text-align: center;
-        }
-
-        .info h3 {
-            margin: 0 0 10px 0;
-            font-size: 20px;
-        }
-
-        .info p {
-            margin: 0;
-            color: #888;
-            font-size: 13px;
-        }
+        .channel-card:hover { transform: translateY(-10px); border-color: #e50914; }
+        .thumb { height: 180px; background: #222; display: flex; align-items: center; justify-content: center; font-size: 50px; }
+        .info { padding: 25px; text-align: center; }
+        .info h3 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+        .info p { color: #999; margin-top: 10px; font-size: 14px; }
+        .btn { display: inline-block; margin-top: 15px; padding: 10px 25px; background: #e50914; border-radius: 5px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <!-- 
-      - target="_blank" opens in new tab 
-      - rel="noopener noreferrer" prevents the new tab from redirecting THIS page 
-      - The href uses a Proxy Player to handle the HTTP segments inside your HTTPS stream
-    -->
-    <a href="https://p2p.m3u8.dev" 
+    <!-- Updated Link: Uses Livepush as the proxy player -->
+    <a href="https://livepush.io" 
        target="_blank" 
        rel="noopener noreferrer" 
        class="channel-card">
-        
-        <div class="thumb">
-            <span class="live-badge">Live</span>
-            <div class="play-icon">▶</div>
-        </div>
-
+        <div class="thumb">📺</div>
         <div class="info">
             <h3>Astro Channel</h3>
-            <p>Click to stream in secure player</p>
+            <p>Live Streaming Player</p>
+            <div class="btn">Watch Now</div>
         </div>
     </a>
 
