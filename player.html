@@ -16,19 +16,22 @@
     <video id="v" controls autoplay playsinline></video>
     <a href="https://mstvnet.netlify.app" class="btn">Back to Site</a>
     <script>
-        const p = new URLSearchParams(window.location.search);
-        const s = p.get('source');
-        if(p.get('name')) document.getElementById('name').innerText = p.get('name');
-        
-        if(s) {
-            const vid = document.getElementById('v');
-            if(typeof Hls !== 'undefined' && Hls.isSupported()){
-                const h = new Hls(); h.loadSource(s); h.attachMedia(vid);
-                h.on(Hls.Events.MANIFEST_PARSED, () => vid.play());
-            } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-                vid.src = s; vid.play();
-            }
-        }
-    </script>
+    const params = new URLSearchParams(window.location.search);
+    const source = params.get('source');
+    if(source) {
+        const v = document.getElementById('player');
+        if(typeof Hls !== 'undefined' && Hls.isSupported()){
+            const h = new Hls({
+                xhrSetup: function(xhr) {
+                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+                }
+            });
+            h.loadSource(source);
+            h.attachMedia(v);
+            h.on(Hls.Events.MANIFEST_PARSED, () => v.play());
+        } else { v.src = source; v.play(); }
+    }
+</script>
+
 </body>
 </html>
