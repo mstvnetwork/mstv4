@@ -72,7 +72,12 @@
         <div id="live-stamp">LIVE</div>
         <div id="placeholder">📺</div>
         <video id="video-player" autoplay playsinline controls></video>
-        <iframe id="iframe-player" allow="autoplay; encrypted-media"></iframe>
+        <iframe 
+    id="iframe-player" 
+    sandbox="allow-scripts allow-same-origin allow-forms"
+    allow="autoplay; encrypted-media">
+</iframe>
+
     </div>
 </div>
 
