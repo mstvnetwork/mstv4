@@ -2,34 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Live Player</title>
-    <!-- Load HLS.js properly without document.write -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <title>MSTV External Player</title>
     <style>
-        body { margin: 0; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        video { width: 100%; height: 100%; max-width: 1000px; background: #000; }
+        body { margin:0; background:#000; color:#fff; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; overflow:hidden; }
+        video { width: 95%; max-width: 900px; aspect-ratio: 16/9; background:#111; border: 2px solid #90EE90; border-radius: 8px; box-shadow: 0 0 20px rgba(144,238,144,0.2); }
+        .info { text-align: center; margin-bottom: 20px; }
+        .btn { margin-top:25px; color:#90EE90; text-decoration:none; border:1px solid #90EE90; padding:10px 25px; border-radius:25px; font-weight:bold; transition: 0.3s; }
+        .btn:hover { background: #90EE90; color: #000; }
     </style>
 </head>
 <body>
-    <video id="video" controls autoplay playsinline></video>
+    <div class="info">
+        <h2 id="name">Connecting to Live Stream...</h2>
+    </div>
+    <video id="player" controls autoplay playsinline></video>
+    <a href="https://mstvnet.netlify.app" class="btn">← Back to MSTV Network</a>
 
+    <script src="https://cdnjs.cloudflare.com"></script>
     <script>
-        const video = document.getElementById('video');
-        // Get the stream URL from the browser address bar (?url=...)
-        const urlParams = new URLSearchParams(window.location.search);
-        const videoSrc = urlParams.get('url');
-
-        if (videoSrc) {
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(videoSrc);
-                hls.attachMedia(video);
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // Native support for Safari/iOS
-                video.src = videoSrc;
+        const params = new URLSearchParams(window.location.search);
+        const source = params.get('source');
+        if(params.get('name')) document.getElementById('name').innerText = params.get('name');
+        
+        if(source) {
+            const v = document.getElementById('player');
+            if(Hls.isSupported()){
+                const h = new Hls(); h.loadSource(source); h.attachMedia(v);
+                h.on(Hls.Events.MANIFEST_PARSED, () => v.play());
+            } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+                v.src = source; v.play();
             }
-        } else {
-            document.body.innerHTML = "<h2 style='color:white'>No stream URL provided.</h2>";
         }
     </script>
 </body>
