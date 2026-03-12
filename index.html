@@ -3,243 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111419">
-
-    <!-- SEO Meta Tags -->
-    <title>MSTV Network | Free Live Indian, Pakistani & International TV</title>
-    <meta name="title" content="MSTV Network | Free Live Indian, Pakistani & International TV">
-    <meta name="description" content="Watch MSTV Network for free 24/7 live streaming of Indian, Pakistani, and International TV channels. High-quality digital broadcast.">
-    <meta name="google-site-verification" content="36a9620cce1db39f">
-    <link rel="canonical" href="https://mstvnet.netlify.app">
-
-    <!-- Social Meta Tags -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://mstvnet.netlify.app">
-    <meta property="og:title" content="MSTV Network | Free Live Indian & Pakistani TV">
-    <meta property="og:description" content="Stream International TV channels for free 24/7 on MSTV Network.">
-    <meta property="og:image" content="https://mstvnet.netlify.app">
-
-    <!-- GoatCounter Analytics -->
-    <script data-goatcounter="https://mstv.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-
-<!-- Replace your old player script tags with these -->
-<script src="https://cdn.jsdelivr.net"></script>
-<script src="https://cdn.jsdelivr.net"></script>
-
-
+    <title>MSTV Player</title>
+    
+    <!-- Using official Google Shaka Player CDN (No local shaka.js needed) -->
+    <script src="https://ajax.googleapis.com"></script>
+    
     <style>
-        :root { --accent: #90EE90; --header-h: 70px; }
-        body { background-color: #E8E4C9 !important; margin: 0; font-family: Arial, sans-serif; color: #334155; }
-        
-        header { position: sticky; top: 0; z-index: 1000; background: #111419; height: var(--header-h); display: flex; align-items: center; justify-content: space-between; padding: 0 5%; border-bottom: 1px solid #222; }
-        .brand-name { font-size: 1.4rem; font-weight: bold; background: linear-gradient(90deg, #90EE90, #00FFA3); -webkit-background-clip: text; color: transparent; }
-        .slogan { font-size: 0.7rem; color: yellow; }
-        .search-container input { padding: 10px 15px; border-radius: 25px; border: 1px solid #333; background: #1A1D20; color: white; outline: none; width: 100%; max-width: 300px; }
-
-        .sticky-player-wrapper { position: sticky; top: var(--header-h); z-index: 900; background: #E8E4C9; padding: 15px 0; width: 100%; display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid #ccc; }
-        .player-container { position: relative; width: 92%; max-width: 600px; aspect-ratio: 16/9; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        video, iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
-        
-        #placeholder { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--accent); }
-        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; color: var(--accent); display: none; }
-        #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; display: none; }
-
-        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 12px; padding: 20px 5%; }
-        .channel-card { background: #E8E4C9; border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d6d6d6; transition: 0.2s; display: flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; }
-        .channel-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 6px 14px rgba(0,0,0,.08); }
-        .card-logo { height: 64px; width: 100%; margin-bottom: 6px; display: flex; justify-content: center; position: relative; }
-        .card-logo img { height: 100%; max-width: 100%; object-fit: contain; }
-        .ext-badge { position: absolute; top: 0; right: 0; font-size: 12px; color: var(--accent); font-weight: bold; }
-        .channel-name { font-size: 11px; font-weight: 600; }
-
-        .site-footer { padding: 40px 5%; text-align: center; background: #111419; color: #aaa; }
-        .footer-bottom { margin-top: 20px; font-size: 0.8rem; border-top: 1px solid #333; padding-top: 15px; }
+        body, html { 
+            margin: 0; padding: 0; background: #000; 
+            overflow: hidden; width: 100%; height: 100%; 
+        }
+        .container { 
+            display: flex; width: 100vw; height: 100vh; 
+            align-items: center; justify-content: center; 
+        }
+        video { 
+            width: 100%; height: 100%; background: #000; 
+            object-fit: contain; 
+        }
     </style>
 </head>
 <body>
-
-<header>
-    <div class="logo-section">
-        <div class="brand-name">MSTV NETWORK</div>
-        <div class="slogan">LIVE INDIAN PAKISTANI & ENGLISH CHANNELS</div>
+    <div class="container">
+        <video id="video" controls autoplay crossorigin="anonymous"></video>
     </div>
-    <div class="search-container"><input type="text" id="channel-search" placeholder="Search channels..."></div>
-</header>
 
-<div class="sticky-player-wrapper">
-    <div class="player-container">
-        <div id="loading">🌀 Buffering...</div>
-        <div id="live-stamp">LIVE</div>
-        <div id="placeholder">📺</div>
-        <video id="video-player" autoplay playsinline controls></video>
-        <iframe 
-    id="iframe-player" 
-    sandbox="allow-scripts allow-same-origin allow-forms"
-    allow="autoplay; encrypted-media">
-</iframe>
-
-    </div>
-</div>
-
-<main>
-    <div class="channel-grid" id="channel-list-container"></div>
-</main>
-
-<footer class="site-footer">
-    <div class="seo-content">
-        <h2>MSTV Network: Live Media Hub</h2>
-        <p>Experience free 24/7 live Indian, Pakistani, and International TV channels. Our platform provides high-quality digital broadcasting publicly available on the internet.</p>
-        <p style="font-size: 0.8rem; color: #666; max-width: 800px; margin: 20px auto;">Disclaimer: MSTV Network does not host media content. we provide a directory of public streams. All rights belong to original owners.</p>
-    </div>
-    <div class="footer-bottom">
-        <p>© 2026 MSTV Network. All Rights Reserved.</p>
-    </div>
-</footer>
-
-<script type="application/ld+json" id="mstv-schema"></script>
-        
-<script>
-let channels = [];
-let hls = null;
-let shakaPlayer = null;
-const video = document.getElementById('video-player');
-const iframe = document.getElementById('iframe-player');
-const placeholder = document.getElementById('placeholder');
-const loader = document.getElementById('loading');
-const liveStamp = document.getElementById('live-stamp');
-const grid = document.getElementById('channel-list-container');
-
-async function stopAll() {
-    if(hls) { hls.destroy(); hls = null; }
-    if(shakaPlayer) { await shakaPlayer.destroy(); shakaPlayer = null; }
-    video.pause(); video.src = ""; video.style.display = 'none';
-    iframe.src = ""; iframe.style.display = 'none';
-    placeholder.style.display = 'flex';
-}
-
-function updateLiveSchema(data) {
-    const items = data.map((ch, i) => ({
-        "@type": "ListItem", "position": i + 1,
-        "item": { "@type": "VideoObject", "name": ch.name, "description": `Watch ${ch.name} live on MSTV Network.`, "thumbnailUrl": [ch.logo], "uploadDate": "2024-01-01T08:00:00+00:00", "embedUrl": `https://mstvnet.netlify.app#${encodeURIComponent(ch.name)}`, "publication": { "@type": "BroadcastEvent", "isLiveBroadcast": true, "startDate": new Date().toISOString() } }
-    }));
-    const schemaEl = document.getElementById('mstv-schema');
-    if(schemaEl) {
-        schemaEl.innerHTML = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", "name": "MSTV Network Channels", "itemListElement": items });
-    }
-}
-
-async function playChannel(index) {
-    const ch = channels[index];
-    if (!ch) return;
-
-    // 1. Mixed Content Bypass
-    if (ch.url.startsWith('http://') && window.location.protocol === 'https:') {
-        window.open(`player.html?source=${encodeURIComponent(ch.url)}&name=${encodeURIComponent(ch.name)}`, '_blank');
-        return;
-    }
-
-    await stopAll();
-    placeholder.style.display = 'none';
-    loader.style.display = 'block';
-    liveStamp.style.display = ch.isLive ? 'block' : 'none';
-    window.location.hash = encodeURIComponent(ch.name);
-
-    if (ch.type === 'iframe') {
-        iframe.style.display = 'block';
-        iframe.src = ch.url;
-        iframe.onload = () => loader.style.display = 'none';
-    } else {
-        video.style.display = 'block';
-        
-        if (ch.url.includes('.m3u8')) {
-            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                // Enhanced HLS Setup with User-Agent Simulation
-                hls = new Hls({
-                    xhrSetup: function(xhr, url) {
-                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1');
-                        xhr.withCredentials = false;
-                    }
-                });
-                hls.loadSource(ch.url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = ch.url;
-                video.play();
+    <script>
+        const streamList = [
+            {
+                name: "Zee TV (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeetv/default/main.mpd",
+                drm: { clearKeys: { "ed068cf84f0640ccbc7c0e395c0a272e": "bb722190f2bb446391020411a7d0828b" } }
+            },
+            {
+                name: "Zee Anmol (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeeanmol/default/main.mpd",
+                drm: { clearKeys: { "4023613457774cbeb71a62c339970e63": "1c3e9fce5f014542be9cd1f749181204" } }
+            },
+            {
+                name: "And Tv",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Andtv/default/main.mpd",
+                drm: { clearKeys: { "26df86eeebb04d7fbc45c948f76e81fd": "5f3a23f1a73c4c96ababce5fffe7b06b" } }
+            },
+            {
+                name: "Real IPTV",
+                type: "hls",
+                url: "https://cdn.stmify.com/out/v1/SONY_ENTERTAINMENT_TELEVISION_HD/index.m3u8"
+            },
+            {
+                name: "BozzTV",
+                type: "hls",
+                url: "https://live20.bozztv.com/giatvplayout7/giatv-209592/index.m3u8"
+            },
+            {
+                name: "Star Gold Proxy",
+                type: "hls",
+                url: "https://anywhere.pwisetthon.com/http://tvn2.chowdhury-shaheb.com/stargold/tracks-v1a1/mono.m3u8"
+            },
+            {
+                name: "And Pictures (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Andpictures/default/main.mpd",
+                drm: { clearKeys: { "8dea532cabfe471ba20f623107949": "7a214a974e4f4d1d9bb65364d5f0cb92" } }
+            },
+            {
+                name: "Zee Cinema Hd",
+                type: "hls",
+                url: "https://amg17931-zee-amg17931c5-kogan-au-9521.playouts.now.amagi.tv/ts-eu-w1-n2/playlist/amg17931-asiatvusaltdfast-zeecinema-koganau/cb7c3e1a7b776f88cfca3f6cd2f940a0d10530d05d33d33d6ba056c226c3150d8ceda7c9eb1aea697ec062812b53310d0c78ce07de6c19bb8724ed193f6c662acedaed228d891309b9c874333ac23a5e0dab6940825e0a6696bc495fcb6ee3394d38c03d437a7ecdb100f62342b2d559d020309bde852366200f409e5e54fba040a3e1e14d38873ef8ed4958f67e13b6c01bd6d11fbc9ed75d8c57817ef1129dc7f0d8ce118683c47ea856e465440024289dcd2d969f0ae58f9c3c68982829742b3f95cb63785046e466761e91dedeac71ed12c28024f3125dd92fbb3f4bb41709d06e88e24ba1a3b2de382173c4961d0923d129dcb0ff6eec9dc682406b7a8ba71ff7343237e878cb3639399cf4ca5bb7da1198b33abf56087737ed9e5f9291be82a0e5c31adc6de6cefa8d25190e420a069452ab9e2d8a798638838753004c5d48a8ad50c6add04a7f371cd1ce0d82535392f3bfaef3427bc669105fa847dc580e6385744f74f722f49f733dda7f44d57b6db50875ad4dfeb120f0e7e8e4003aa7d78817ac38a1e65ca09b68ce4c325d10bcfb282d271d2daa8e6c6e612b93a585607508da6f99d7513882f3ae0a1a38fbf5f81a90dc/120/1280x720_2657600/index.m3u8"
+            },
+            {
+                name: "Zee Bollyworld (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeebollywood/default/manifest.mpd",
+                drm: { clearKeys: { "e61523260c614746b25b9a5523fe9a39": "72ddbf37f76f49acbb8e140e7279e7a1" } }
             }
-        } else if (typeof shaka !== 'undefined') {
-            // Shaka Player Fallback for DASH
+        ];
+
+        async function initPlayer() {
+            const hash = window.location.hash.substring(1);
+            let index = parseInt(hash, 10) - 1;
+            if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
+
+            const stream = streamList[index];
+            const video = document.getElementById('video');
+            
             shaka.polyfill.installAll();
-            if (shaka.Player.isBrowserSupported()) {
-                shakaPlayer = new shaka.Player(video);
-                try { 
-                    await shakaPlayer.load(ch.url); 
-                    video.play(); 
-                } catch(e) { 
-                    console.error("Shaka Error", e); 
+            if (!shaka.Player.isBrowserSupported()) {
+                console.error("Browser not supported.");
+                return;
+            }
+
+            const player = new shaka.Player(video);
+            
+            // Adding HLS support explicitly for the .m3u8 links in your list
+            player.configure({
+                streaming: {
+                    lowLatencyMode: true,
+                },
+                manifest: {
+                    retryParameters: { maxAttempts: 5 }
                 }
+            });
+
+            player.addEventListener('error', (e) => console.error("Shaka Error:", e.detail));
+
+            try {
+                if (stream.type === "dash" && stream.drm) {
+                    player.configure({ drm: stream.drm });
+                }
+                await player.load(stream.url);
+                console.log("Playing:", stream.name);
+            } catch (error) {
+                console.error("Loading failed:", error);
             }
         }
-    } // Closes else (video display)
-} // Closes playChannel function
 
-
-
-video.onplaying = () => loader.style.display = 'none';
-
-async function loadChannels() {
-    try {
-        const res = await fetch('./channels.json', {cache: "no-cache"});
-        channels = await res.json();
-        renderUI();
-        updateLiveSchema(channels);
-        checkHash();
-    } catch(e) { console.error("Load failed", e); }
-}
-
-function renderUI() {
-    grid.innerHTML = "";
-    channels.forEach((ch, i) => {
-        const isHttp = ch.url.startsWith('http://') && window.location.protocol === 'https:';
-        const card = document.createElement('a');
-        card.className = 'channel-card';
-        
-        if(isHttp) {
-            card.href = `player.html?source=${encodeURIComponent(ch.url)}&name=${encodeURIComponent(ch.name)}`;
-            card.target = "_blank";
-        } else {
-            card.href = "javascript:void(0)";
-            card.onclick = () => { playChannel(i); window.scrollTo({top: 0, behavior: 'smooth'}); };
-        }
-
-        card.innerHTML = `
-            <div class="card-logo">
-                <img src="${ch.logo}" onerror="this.src='https://mstvnet.netlify.app'">
-                ${isHttp ? '<span class="ext-badge">↗</span>' : ''}
-            </div>
-            <div class="channel-name">${ch.name}</div>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-function checkHash() {
-    const hash = decodeURIComponent(window.location.hash.substring(1));
-    if(hash) {
-        const idx = channels.findIndex(c => c.name === hash);
-        if(idx !== -1) playChannel(idx);
-    }
-}
-
-document.getElementById('channel-search').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    document.querySelectorAll('.channel-card').forEach(card => {
-        card.style.display = card.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
-    });
-});
-
-window.onload = loadChannels;
-    
-</script>
+        window.addEventListener('hashchange', () => window.location.reload());
+        document.addEventListener('DOMContentLoaded', initPlayer);
+    </script>
 </body>
 </html>
