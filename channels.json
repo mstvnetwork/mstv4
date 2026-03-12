@@ -15,7 +15,7 @@
   },
   {
     "name": "HTTP Test (Insecure)",
-    "url": "http://sample.vodobox.net",
+    "url": "https://30a-tv.com/darcizzle.m3u8",
     "logo": "https://mstvnet.netlify.app/mstv-thumbnail.png",
     "isLive": false,
     "type": "hls"
