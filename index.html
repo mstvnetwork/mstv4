@@ -22,9 +22,10 @@
     <!-- GoatCounter Analytics -->
     <script data-goatcounter="https://mstv.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
-    <!-- Player Libraries -->
-    <script src="https://cdnjs.cloudflare.com"></script>
-    <script defer src="./shaka.js"></script>
+<!-- Replace your old player script tags with these -->
+<script src="https://cdn.jsdelivr.net"></script>
+<script src="https://cdn.jsdelivr.net"></script>
+
 
     <style>
         :root { --accent: #90EE90; --header-h: 70px; }
@@ -131,19 +132,32 @@ async function playChannel(index) {
     if(ch.type === 'iframe') {
         iframe.style.display = 'block'; iframe.src = ch.url;
         iframe.onload = () => loader.style.display = 'none';
-    } else {
-        video.style.display = 'block';
-        if(ch.url.includes('.m3u8')) {
-            if(Hls.isSupported()){
-                hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if(video.canPlayType('application/vnd.apple.mpegurl')){ video.src = ch.url; video.play(); }
-        } else {
-            shaka.polyfill.installAll(); shakaPlayer = new shaka.Player(video);
-            await shakaPlayer.load(ch.url); video.play();
+// Inside your playChannel(index) function
+} else {
+    video.style.display = 'block';
+    
+    if(ch.url.includes('.m3u8')) {
+        // HLS Check
+        if(typeof Hls !== 'undefined' && Hls.isSupported()){
+            hls = new Hls(); hls.loadSource(ch.url); hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if(video.canPlayType('application/vnd.apple.mpegurl')){
+            video.src = ch.url; video.play();
         }
+    } 
+    // SHAKA Check (Fixes the ReferenceError)
+    else if (typeof shaka !== 'undefined') {
+        shaka.polyfill.installAll();
+        if (shaka.Player.isBrowserSupported()) {
+            shakaPlayer = new shaka.Player(video);
+            try { await shakaPlayer.load(ch.url); video.play(); } 
+            catch(e) { console.error("Shaka Player Error", e); }
+        }
+    } else {
+        console.error("Video player libraries (HLS/Shaka) not detected.");
     }
 }
+
 
 video.onplaying = () => loader.style.display = 'none';
 
@@ -160,11 +174,14 @@ async function loadChannels() {
 function renderUI() {
     grid.innerHTML = "";
     channels.forEach((ch, i) => {
+        // Detection for Insecure HTTP links
         const isHttp = ch.url.startsWith('http://') && window.location.protocol === 'https:';
-        const card = document.createElement('a');
+        
+        const card = document.createElement('a'); // Change 'div' to 'a'
         card.className = 'channel-card';
         
         if(isHttp) {
+            // Native browser link behavior bypasses popup blockers
             card.href = `player.html?source=${encodeURIComponent(ch.url)}&name=${encodeURIComponent(ch.name)}`;
             card.target = "_blank";
         } else {
@@ -172,10 +189,17 @@ function renderUI() {
             card.onclick = () => { playChannel(i); window.scrollTo({top: 0, behavior: 'smooth'}); };
         }
 
-        card.innerHTML = `<div class="card-logo"><img src="${ch.logo}" onerror="this.src='https://mstvnet.netlify.app'">${isHttp ? '<span class="ext-badge">↗</span>' : ''}</div><div class="channel-name">${ch.name}</div>`;
+        card.innerHTML = `
+            <div class="card-logo">
+                <img src="${ch.logo}" onerror="this.src='https://mstvnet.netlify.app'">
+                ${isHttp ? '<span class="ext-badge">↗</span>' : ''}
+            </div>
+            <div class="channel-name">${ch.name}</div>
+        `;
         grid.appendChild(card);
     });
 }
+
 
 function checkHash() {
     const hash = decodeURIComponent(window.location.hash.substring(1));
