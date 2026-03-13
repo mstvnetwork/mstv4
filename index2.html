@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>24/7 Pseudo-Live Stream</title>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .player-container { position: relative; width: 90%; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        video { width: 100%; display: block; border-radius: 8px; }
+        
+        /* Disable seeking: Hide the progress bar and time displays */
+        video::-webkit-media-controls-timeline,
+        video::-webkit-media-controls-current-time-display,
+        video::-webkit-media-controls-time-remaining-display { display: none !important; }
+
+        .live-badge {
+            position: absolute; top: 15px; left: 15px;
+            background: #ff0000; padding: 4px 10px;
+            border-radius: 4px; font-weight: bold; font-size: 12px;
+            letter-spacing: 1px; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <div class="live-badge">LIVE</div>
+    <video id="player" controls autoplay muted playsinline></video>
+</div>
+
+<script>
+    // 1. Playlist with exact durations (in seconds)
+    const playlist = [
+        { title: "Big Buck Bunny", duration: 596, url: "https://commondatastorage.googleapis.com" },
+        { title: "Elephants Dream", duration: 653, url: "https://commondatastorage.googleapis.com" },
+        { title: "Tears of Steel", duration: 734, url: "https://commondatastorage.googleapis.com" }
+    ];
+
+    // 2. Set the "Launch" time of your channel (must be in the past)
+    const channelStartTime = new Date("2024-01-01T00:00:00Z").getTime();
+    const player = document.getElementById('player');
+
+    function syncPlayer() {
+        const totalPlaylistDuration = playlist.reduce((acc, vid) => acc + vid.duration, 0);
+        const now = Date.now();
+        const elapsedSinceStart = (now - channelStartTime) / 1000;
+        
+        // Find where we are in the infinite loop
+        const timeInLoop = elapsedSinceStart % totalPlaylistDuration;
+
+        let runningSum = 0;
+        for (let i = 0; i < playlist.length; i++) {
+            const video = playlist[i];
+            if (runningSum + video.duration > timeInLoop) {
+                const seekTo = timeInLoop - runningSum;
+                
+                // Only change source if it's different to prevent flickering
+                if (player.dataset.index !== i.toString()) {
+                    player.src = video.url;
+                    player.dataset.index = i;
+                    player.currentTime = seekTo;
+                    player.play().catch(e => console.log("Autoplay blocked, user interaction needed."));
+                } else if (Math.abs(player.currentTime - seekTo) > 2) {
+                    // Force re-sync if the user gets more than 2 seconds out of sync
+                    player.currentTime = seekTo;
+                }
+                break;
+            }
+            runningSum += video.duration;
+        }
+    }
+
+    // Handle video ending: move to next immediately
+    player.onended = () => syncPlayer();
+
+    // Initial sync
+    syncPlayer();
+
+    // Re-sync every 30 seconds just in case of drift
+    setInterval(syncPlayer, 30000);
+</script>
+
+</body>
+</html>
