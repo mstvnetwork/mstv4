@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>MSTV Player</title>
-<!-- Use the specific compiled+UI bundle for version 4.16.3 -->
-<script src="https://cdnjs.cloudflare.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com">
-<!-- Also include mux.js for HLS support in browsers that don't support it natively -->
-<script src="https://cdnjs.cloudflare.com"></script>
 
     <style>
         body, html { 
@@ -165,11 +160,9 @@
                     drm: { clearKeys: stream.drm }
                 });
             }
-
-                        // Load logic
+            // Load logic
             try {
                 await player.load(stream.url);
-                console.log('Stream loaded successfully!');
             } catch (e) {
                 if (badge) {
                     badge.innerText = "LOAD ERROR";
@@ -179,23 +172,26 @@
             }
         }
 
-        // --- SAFE INITIALIZATION ---
-        function safeInit() {
-            // Check if shaka is actually defined before running
-            if (typeof shaka !== 'undefined') {
+        window.addEventListener('hashchange', () => window.location.reload());
+    </script>
+
+    <!-- LOAD LIBRARIES AT THE VERY BOTTOM -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net"></script>
+
+    <script>
+        // Final check: Start only when libraries are definitely there
+        function finalStart() {
+            if (window.shaka) {
                 initApp();
             } else {
-                // If not ready, wait 100ms and try again
-                console.warn('Shaka not ready, retrying...');
-                setTimeout(safeInit, 100);
+                console.log("Waiting for Shaka...");
+                setTimeout(finalStart, 200);
             }
         }
-
-        // Handle URL hash changes (channel switching)
-        window.addEventListener('hashchange', () => window.location.reload());
-
-        // Use window.onload to ensure all CDN scripts are fully parsed
-        window.onload = safeInit;
+        window.addEventListener('load', finalStart);
     </script>
 </body>
 </html>
+
+                        
