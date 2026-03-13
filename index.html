@@ -261,12 +261,16 @@ n
         <!-- ADD-ON: Clipping Wrapper for YouTube -->
         <div id="iframe-wrapper" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden;">
             <iframe
-    id="iframe-player"
-    style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; border: none; pointer-events: none;"
-    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
-    allow="autoplay; encrypted-media; picture-in-picture"
-    src="about:blank">
-</iframe>
+    <div id="iframe-wrapper" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden;">
+    <iframe
+        id="iframe-player"
+        style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; border: none; pointer-events: none;"
+        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+        allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture"
+        src="about:blank">
+    </iframe>
+</div>
+
 
         </div>
 
@@ -414,25 +418,27 @@ async function playChannel(index){
   placeholder.style.display = 'none';
   if(liveStamp) liveStamp.style.display = channel.isLive ? 'block' : 'none';
 
-    if(channel.type === 'iframe'){
+    if (channel.type === 'iframe') {
     let finalUrl = channel.url;
 
-    if(finalUrl.includes('://youtube.com')) {
-        // This splits the URL to get ONLY the base ID part
+    if (finalUrl.includes('://youtube.com')) {
+        // 1. Get ONLY the base ID (removes ?si= and anything else)
         const baseUrl = finalUrl.split('?')[0]; 
-        // Rebuild with correct parameters
-        finalUrl = `${baseUrl}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&enablejsapi=1`;
         
-        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        // 2. Rebuild with '&' logic and REQUIRED parameters
+        // Note: mute=1 is added here for maximum browser compatibility
+        finalUrl = `${baseUrl}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&enablejsapi=1`;
     }
 
-    // Ensure the container is visible
-    document.getElementById('iframe-wrapper').style.display = 'block'; 
-    iframe.src = finalUrl;
+    // 3. SHOW the wrapper BEFORE loading the URL (prevents black screen rendering issues)
+    const wrapper = document.getElementById('iframe-wrapper');
+    if (wrapper) wrapper.style.display = 'block';
     
-    iframe.onload = () => { if(loader) loader.style.display = 'none'; };
+    iframe.src = finalUrl;
+    iframe.onload = () => { if (loader) loader.style.display = 'none'; };
     return;
 }
+
 
   video.style.display = 'block';
   const isHls = channel.type === 'hls' || (channel.url && channel.url.includes('.m3u8'));
