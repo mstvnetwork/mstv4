@@ -3,6 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>MSTV Player</title>
+    <head>
+    <meta charset="UTF-8">
+    <title>MSTV Player</title>
+    <!-- 1. CSS for UI Controls -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <!-- 2. Mux.js (Required for HLS support) -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    <!-- 3. Shaka Player UI Bundle (Most compatible version) -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    
+    <style>
+        /* Keep your existing styles here */
+    </style>
+</head>
+
 
     <style>
         body, html { 
@@ -160,9 +175,10 @@
                     drm: { clearKeys: stream.drm }
                 });
             }
-            // Load logic
+                        // Load logic
             try {
                 await player.load(stream.url);
+                console.log('Stream loaded!');
             } catch (e) {
                 if (badge) {
                     badge.innerText = "LOAD ERROR";
@@ -172,26 +188,24 @@
             }
         }
 
-        window.addEventListener('hashchange', () => window.location.reload());
-    </script>
-
-    <!-- LOAD LIBRARIES AT THE VERY BOTTOM -->
-    <script src="https://cdn.jsdelivr.net"></script>
-    <script src="https://cdn.jsdelivr.net"></script>
-
-    <script>
-        // Final check: Start only when libraries are definitely there
-        function finalStart() {
-            if (window.shaka) {
+        // --- THE FIX: WAIT FOR LIBRARY ---
+        function startAppWhenReady() {
+            if (window.shaka && shaka.Player.isBrowserSupported()) {
+                console.log("Shaka is ready!");
                 initApp();
+            } else if (!window.shaka) {
+                console.warn("Shaka object still missing, retrying...");
+                setTimeout(startAppWhenReady, 200);
             } else {
-                console.log("Waiting for Shaka...");
-                setTimeout(finalStart, 200);
+                document.getElementById('engine-badge').innerText = "BROWSER NOT SUPPORTED";
             }
         }
-        window.addEventListener('load', finalStart);
+
+        // Re-load on channel change
+        window.addEventListener('hashchange', () => window.location.reload());
+
+        // Standard window load event
+        window.onload = startAppWhenReady;
     </script>
 </body>
 </html>
-
-                        
