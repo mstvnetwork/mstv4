@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>MSTV Player</title>
-    <!-- 1. ADD SHAKA PLAYER LIBRARY -->
-    <script src="https://ajax.googleapis.com"></script>
+    <!-- Use a reliable CDN for the compiled library and UI controls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/shaka-player.compiled.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/controls.css">
     
     <style>
-        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
-        .container { display: flex; width: 100vw; height: 100vh; align-items: center; justify-content: center; }
-        video { width: 100%; height: 100%; background: #000; object-fit: contain; }
+        /* Your existing styles... */
     </style>
 </head>
+
 <body>
     <div class="container">
         <video id="video" controls autoplay crossorigin="anonymous"></video>
