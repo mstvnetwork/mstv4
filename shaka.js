@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTV Player (Local Engine)</title>
+    
+    <!-- Points to the files you just downloaded and uploaded to your repo -->
+    <link rel="stylesheet" href="shaka-ui.css">
+    <script src="shaka-player.ui.min.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; font-family: sans-serif; }
+        .container { position: relative; width: 100vw; height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        
+        #engine-badge {
+            position: absolute; top: 15px; left: 15px; z-index: 1000;
+            background: rgba(0, 0, 0, 0.85); padding: 8px 12px; border-radius: 4px;
+            font-family: monospace; font-size: 12px; border: 1px solid #444; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="engine-badge">LOADING LIBRARIES...</div>
+        <video id="video" controls autoplay crossorigin="anonymous"></video>
+    </div>
+
+<script>
+        const streamList = [
+            {
+                name: "Zee TV (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeetv/default/main.mpd",
+                drm: { "ed068cf84f0640ccbc7c0e395c0a272e": "bb722190f2bb446391020411a7d0828b" }
+            },
+            {
+                name: "Zee Anmol (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeeanmol/default/main.mpd",
+                drm: { "4023613457774cbeb71a62c339970e63": "1c3e9fce5f014542be9cd1f749181204" }
+            },
+            {
+                name: "And Tv",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Andtv/default/main.mpd",
+                drm: { "26df86eeebb04d7fbc45c948f76e81fd": "5f3a23f1a73c4c96ababce5fffe7b06b" }
+            },
+            {
+                name: "Real IPTV",
+                type: "hls",
+                url: "https://cdn.stmify.com/out/v1/SONY_ENTERTAINMENT_TELEVISION_HD/index.m3u8"
+            },
+            {
+                name: "BozzTV",
+                type: "hls",
+                url: "https://live20.bozztv.com/giatvplayout7/giatv-209592/index.m3u8"
+            },
+            {
+                name: "Star Gold Proxy",
+                type: "hls",
+                url: "https://live-hls-web-aje-fa.thehlive.com/AJE/index.m3u8"
+            },
+            {
+                name: "And Pictures (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Andpictures/default/main.mpd",
+                drm: { "8dea532cabfe471ba20f623107949": "7a214a974e4f4d1d9bb65364d5f0cb92" }
+            },
+            {
+                name: "Zee Cinema Hd",
+                type: "hls",
+                url: "https://amg17931-zee-amg17931c5-kogan-au-9521.playouts.now.amagi.tv/ts-eu-w1-n2/playlist/amg17931-asiatvusaltdfast-zeecinema-koganau/cb7c3e1a7b776f88cfca3f6cd2f940a0d10530d05d33d33d6ba056c226c3150d8ceda7c9eb1aea697ec062812b53310d0c78ce07de6c19bb8724ed193f6c662acedaed228d891309b9c874333ac23a5e0dab6940825e0a6696bc495fcb6ee3394d38c03d437a7ecdb100f62342b2d559d020309bde852366200f409e5e54fba040a3e1e14d38873ef8ed4958f67e13b6c01bd6d11fbc9ed75d8c57817ef1129dc7f0d8ce118683c47ea856e465440024289dcd2d969f0ae58f9c3c68982829742b3f95cb63785046e466761e91dedeac71ed12c28024f3125dd92fbb3f4bb41709d06e88e24ba1a3b2de382173c4961d0923d129dcb0ff6eec9dc682406b7a8ba71ff7343237e878cb3639399cf4ca5bb7da1198b33abf56087737ed9e5f9291be82a0e5c31adc6de6cefa8d25190e420a069452ab9e2d8a798638838753004c5d48a8ad50c6add04a7f371cd1ce0d82535392f3bfaef3427bc669105fa847dc580e6385744f74f722f49f733dda7f44d57b6db50875ad4dfeb120f0e7e8e4003aa7d78817ac38a1e65ca09b68ce4c325d10bcfb282d271d2daa8e6c6e612b93a585607508da6f99d7513882f3ae0a1a38fbf5f81a90dc/120/1280x720_2657600/index.m3u8"
+            },
+            {
+                name: "Zee Bollyworld (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeebollywood/default/manifest.mpd",
+                drm: { "e61523260c614746b25b9a5523fe9a39": "72ddbf37f76f49acbb8e140e7279e7a1" }
+            },
+            {
+                name: "Discovery Kids(DASH ClearKey)",
+                type: "dash",
+                url:"https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Discoverykids2/default/manifest.mpd",
+                drm: { "601f58d4b7094d2baf78c85d1d9cb6c9": "609e0cc03198455fa36fd2cc3e7f940d" }
+            },
+            {
+                name: "Wwe Network(DASH ClearKey)",
+                type: "dash",
+                url:"https://v4-pan-n79-cdn-01.live.cdn.cgates.lt/live/dash/561901/index.mpd",
+                drm: { "6d647aff767c453daa5fb54a44c783c6": "2f971e6a1cc58e7085afc761a3f13162" }
+            }
+        ];
+
+  async function initApp() {
+        const video = document.getElementById('video');
+        const badge = document.getElementById('engine-badge');
+
+        const hash = window.location.hash.substring(1);
+        let index = (parseInt(hash, 10) || 1) - 1;
+        const stream = streamList[index] || streamList[0];
+
+        // --- ENGINE 1: NATIVE HLS (STRICTLY INDEPENDENT) ---
+        if (stream.type === "hls") {
+            badge.innerText = `ENGINE: NATIVE HLS | ${stream.name}`;
+            badge.style.color = "#00ffff"; // Cyan for Native HLS
+            
+            video.pause();
+            video.removeAttribute('src'); // Completely clear any Shaka data
+            video.load();
+            
+            video.src = stream.url;
+            video.play().catch(() => {
+                badge.innerText = "HLS: READY (CLICK TO PLAY)";
+            });
+            return; // Terminate script here so Shaka never loads
+        }
+
+        // --- ENGINE 2: SHAKA DASH (ONLY FOR DASH) ---
+        if (stream.type === "dash") {
+            // Check if the local file 'shaka-player.ui.min.js' loaded successfully
+            if (typeof shaka === 'undefined') {
+                badge.innerText = "DASH ERROR: SHAKA FILE NOT FOUND";
+                badge.style.color = "red";
+                return;
+            }
+
+            badge.innerText = `ENGINE: SHAKA DASH | ${stream.name}`;
+            badge.style.color = "#00ff00"; // Green for Shaka DASH
+            
+            shaka.polyfill.installAll(); //
+            const player = new shaka.Player(video); //
+
+            // Apply DRM configuration for ClearKeys
+            if (stream.drm) {
+                player.configure({
+                    drm: { clearKeys: stream.drm }
+                });
+            }
+
+            try {
+                await player.load(stream.url); //
+            } catch (e) {
+                badge.innerText = "DASH LOAD ERROR";
+                badge.style.color = "red";
+                console.error('Shaka Error:', e);
+            }
+        }
+    }
+
+    // Refresh on channel switch
+    window.addEventListener('hashchange', () => window.location.reload());
+    
+    // Start once all local files (JS/CSS) are ready
+    window.onload = initApp;
+</script>
+</body>
+</html>
