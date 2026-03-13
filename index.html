@@ -90,72 +90,69 @@
             }
         ];
 
-       
-
-        // --- 2. THE PLAYER ENGINE ---
-        async function initPlayer() {
+   async function initApp() {
             const video = document.getElementById('video');
             const badge = document.getElementById('engine-badge');
-            const player = new shaka.Player(video);
 
-            // Configure Player
-            player.configure({
-                streaming: { rebufferingGoal: 1, bufferingGoal: 5, lowLatencyMode: true },
-                manifest: { dash: { autoCorrectDrift: true } }
-            });
-
-            // Get channel from URL #
+            // Determine which channel to play from the URL Hash
             const hash = window.location.hash.substring(1);
             let index = (parseInt(hash, 10) || 1) - 1;
             const stream = streamList[index] || streamList[0];
 
-            badge.innerText = `ENGINE: ${stream.type.toUpperCase()} | ${stream.name}`;
-
-            if (stream.type === "dash" && stream.drm) {
-                player.configure({ drm: { clearKeys: stream.drm } });
-            }
-
-            try {
-                await player.load(stream.url);
-            } catch (e) {
-                badge.innerText = "STREAM ERROR";
-                badge.style.color = "red";
-            }
-        }
-
-        // --- 3. BULLETPROOF SCRIPT LOADER ---
-        function loadScript(url) {
-            return new Promise((resolve, reject) => {
-                const s = document.createElement('script');
-                s.src = url;
-                s.onload = resolve;
-                s.onerror = () => reject(`Failed to load: ${url}`);
-                document.head.appendChild(s);
-            });
-        }
-
-        async function startApp() {
-            const badge = document.getElementById('engine-badge');
-            try {
-                // Load Mux first, then Shaka
-                await loadScript("https://cdn.jsdelivr.net");
-                await loadScript("https://cdn.jsdelivr.net");
+            // --- STRICT HLS ENGINE (Independant of Shaka) ---
+            if (stream.type === "hls") {
+                badge.innerText = `ENGINE: NATIVE HLS | ${stream.name}`;
+                badge.style.color = "#00ffff"; // Cyan for HLS
                 
-                shaka.polyfill.installAll();
-                if (shaka.Player.isBrowserSupported()) {
-                    initPlayer();
-                } else {
-                    badge.innerText = "BROWSER NOT SUPPORTED";
+                // Clean reset for native playback
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+                
+                video.src = stream.url;
+                video.play().catch(() => {
+                    badge.innerText = "HLS: READY (CLICK PLAY)";
+                });
+                return; // END logic for HLS
+            }
+
+            // --- SHAKA DASH ENGINE (Only used for DASH) ---
+            if (stream.type === "dash") {
+                // If Shaka library failed to load from CDN
+                if (typeof shaka === 'undefined') {
+                    badge.innerText = "DASH ERROR: SHAKA LIBRARY BLOCKED";
+                    badge.style.color = "red";
+                    return;
                 }
-            } catch (err) {
-                badge.innerText = "CDN BLOCKED - CHECK INTERNET";
-                badge.style.color = "red";
-                console.error(err);
+
+                badge.innerText = `ENGINE: SHAKA DASH | ${stream.name}`;
+                badge.style.color = "#00ff00"; // Green for DASH
+                
+                const player = new shaka.Player(video);
+                shaka.polyfill.installAll();
+
+                // Apply DRM ClearKeys if present
+                if (stream.drm) {
+                    player.configure({
+                        drm: { clearKeys: stream.drm }
+                    });
+                }
+
+                try {
+                    await player.load(stream.url);
+                } catch (e) {
+                    badge.innerText = "DASH LOAD ERROR";
+                    badge.style.color = "red";
+                    console.error('Shaka Load Error:', e);
+                }
             }
         }
 
+        // Listen for channel changes via the URL hash (#1, #2, etc.)
         window.addEventListener('hashchange', () => window.location.reload());
-        window.onload = startApp;
+        
+        // Wait for DOM and Libraries to settle before starting
+        window.onload = initApp;
     </script>
 </body>
 </html>
