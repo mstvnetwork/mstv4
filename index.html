@@ -286,8 +286,9 @@ n
 </main>
 
 <script>
-const select = document.getElementById('channel-select');
-const video = document.getElementById('video-player');
+const video = document.getElementById('video-player'); // Must match <video id="video-player">
+const iframe = document.getElementById('iframe-player'); // Must match <iframe id="iframe-player">
+
 const iframe = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
 const loader = document.getElementById('loading');
@@ -343,10 +344,27 @@ async function stopAll() {
   if(liveStamp) liveStamp.style.display = 'none';
   if(hls){ hls.destroy(); hls = null; }
   if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
-  video.pause(); video.removeAttribute('src'); video.load();
-  iframe.removeAttribute('src'); iframe.src = 'about:blank';
-  video.style.display = 'none'; iframe.style.display = 'none';
-  placeholder.style.display = 'flex';
+  
+  // Safe Video Reset
+  if(video) {
+    video.pause(); 
+    video.removeAttribute('src'); 
+    video.load();
+    video.style.display = 'none';
+  }
+  
+  // Safe Iframe Reset
+  if(iframe) {
+    iframe.removeAttribute('src'); 
+    iframe.src = 'about:blank';
+    iframe.style.display = 'none';
+  }
+
+  // Hide the clipping wrapper we added
+  const wrapper = document.getElementById('iframe-wrapper');
+  if(wrapper) wrapper.style.display = 'none';
+
+  if(placeholder) placeholder.style.display = 'flex';
 }
 
 function renderUI(data) {
