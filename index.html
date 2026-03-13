@@ -3,46 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <title>MSTV Player</title>
-    <!-- 1. Reliable CDN Links -->
+    <!-- Use standard CDN links for HLS and Shaka -->
     <script src="https://cdnjs.cloudflare.com"></script>
     <script src="https://cdnjs.cloudflare.com"></script>
 
     <style>
-        /* Iframe Optimized */
         body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
         .container { display: flex; width: 100vw; height: 100vh; align-items: center; justify-content: center; position: relative; }
+        video { width: 100%; height: 100%; background: #000; object-fit: contain; }
         
-        /* Forced 16:9 and Container Fit */
-        video { 
-            width: 100%; 
-            height: 100%; 
-            background: #000; 
-            object-fit: contain; 
-        }
-
-        /* Simple Spinner */
-        #loader {
+        #status-label {
             position: absolute;
-            color: white;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.7);
             font-family: sans-serif;
-            background: rgba(0,0,0,0.6);
-            padding: 15px 25px;
-            border-radius: 5px;
-            display: none;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
             z-index: 10;
         }
+
+        #spinner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="container">
         <video id="video" controls autoplay crossorigin="anonymous"></video>
-        <div id="loader">Loading...</div>
+        <div id="spinner"></div>
+        <div id="status-label">Ready</div>
     </div>
 
     <script>
         const streamList = [
-              {
+             {
         name: "Zee TV (DASH ClearKey)",
         type: "dash",
         url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeetv/default/main.mpd",
@@ -139,64 +145,59 @@
     ];
 
         const video = document.getElementById('video');
-        const loader = document.getElementById('loader');
+        const spinner = document.getElementById('spinner');
+        const statusLabel = document.getElementById('status-label');
 
-        function setStatus(text) {
-            loader.innerText = text;
-            loader.style.display = 'block';
+        function setUI(text, showSpinner = false) {
+            statusLabel.innerText = text;
+            spinner.style.display = showSpinner ? 'block' : 'none';
         }
 
-                async function initPlayer() {
+        async function initPlayer() {
             const hash = window.location.hash.substring(1);
             let index = parseInt(hash, 10) - 1;
             if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
             const stream = streamList[index];
 
-            // Show Spinner
-            setStatus("Loading " + stream.name + "...");
+            setUI(`Loading: ${stream.name}`, true);
+
+            // Clean previous sessions
+            if (window.hls) { window.hls.destroy(); window.hls = null; }
+            if (window.shakaPlayer) { await window.shakaPlayer.destroy(); window.shakaPlayer = null; }
 
             if (stream.type === "hls") {
-                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    const hls = new Hls({ lowLatencyMode: true });
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
                     hls.loadSource(stream.url);
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        loader.style.display = 'none';
-                        video.play().catch(() => setStatus("Click Play to Start"));
+                        setUI(`Playing HLS: ${stream.name}`);
+                        video.play().catch(() => setUI("Click to Start"));
                     });
+                    window.hls = hls;
                 }
             } 
             else if (stream.type === "dash") {
-                if (typeof shaka !== 'undefined') {
-                    shaka.polyfill.installAll();
-                    const player = new shaka.Player(video);
-                    
-                    // Crucial: Faster buffering for DASH
-                    player.configure({
-                        streaming: { rebufferingGoal: 1, bufferingGoal: 5 }
-                    });
+                shaka.polyfill.installAll();
+                const player = new shaka.Player(video);
+                window.shakaPlayer = player;
 
-                    if (stream.drm) {
-                        player.configure({ drm: { clearKeys: stream.drm } });
-                    }
+                // Explicitly tell Shaka these are DASH manifests
+                if (stream.drm) {
+                    player.configure({ drm: { clearKeys: stream.drm } });
+                }
 
-                    try {
-                        // Force DASH manifest type to prevent Error 4000
-                        await player.load(stream.url, null, 'application/dash+xml');
-                        loader.style.display = 'none';
-                        video.play().catch(() => setStatus("Click Play to Start"));
-                    } catch (e) {
-                        console.error("Shaka Error:", e.code);
-                        setStatus("DASH Error: " + e.code);
-                    }
-                } else {
-                    setStatus("Shaka Engine Not Loaded");
+                try {
+                    await player.load(stream.url, null, 'application/dash+xml');
+                    setUI(`Playing DASH: ${stream.name}`);
+                    video.play().catch(() => setUI("Click to Start"));
+                } catch (e) {
+                    setUI(`DASH Error ${e.code}: ${stream.name}`);
+                    console.error("Shaka Error", e);
                 }
             }
         }
 
-
-        // Run when window is ready
         window.onload = initPlayer;
         window.onhashchange = () => location.reload();
     </script>
