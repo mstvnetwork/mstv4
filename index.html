@@ -1,26 +1,40 @@
-<div class="video-container">
-    <iframe 
-        src="https://www.youtube.com/embed/Xi6BjmipH58?si=rnMSOxZbG7aQMrZV" 
-        frameborder="0" 
-        allow="autoplay; encrypted-media" 
-        allowfullscreen>
-    </iframe>
+<div class="video-outer-wrap">
+    <div class="video-inner-crop">
+        <iframe 
+            src="https://www.youtube.com/embed/Xi6BjmipH58?si=rnMSOxZbG7aQMrZV" 
+            frameborder="0" 
+            scrolling="no" 
+            allow="autoplay; encrypted-media" 
+            style="pointer-events: none;">
+        </iframe>
+    </div>
 </div>
 
 <style>
-.video-container {
+/* 1. Prevents page jumping and handles the aspect ratio */
+.video-outer-wrap {
     position: relative;
     width: 100%;
-    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    padding-bottom: 56.25%; /* 16:9 ratio */
     height: 0;
-    overflow: hidden; /* This hides the "stripped" elements */
+    overflow: hidden;
+    background: #000; /* Hides flicker during load */
 }
 
-.video-container iframe {
+/* 2. Hidden "Cropping" layer to strip all remaining edges */
+.video-inner-crop {
     position: absolute;
-    top: -60px; /* Crops the top title bar */
-    left: 0;
+    top: -10%; 
+    left: -10%;
+    width: 120%;
+    height: 120%;
+}
+
+/* 3. The Iframe itself - Set to 'no scroll' */
+.video-inner-crop iframe {
     width: 100%;
-    height: calc(100% + 120px); /* Extends height to compensate for top/bottom crop */
+    height: 100%;
+    border: none;
+    overflow: hidden; /* Extra insurance against scrollbars */
 }
 </style>
