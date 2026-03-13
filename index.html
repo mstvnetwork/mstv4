@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MSTV Advanced Player</title>
     
-    <!-- Replace your old player script tags with these -->
-<script src="https://cdn.jsdelivr.net"></script>
-<script src="https://cdn.jsdelivr.net"></script>
+    <!-- Reliable Video Engines -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/shaka-player.compiled.js"></script>
+    <script src="https://cdnjs.cloudflare.com"></script>
+
     <style>
         /* Optimized for Iframe: Removes all margins and scrollbars */
         body, html { 
@@ -151,10 +152,16 @@
         }
 
         async function initPlayer() {
+            // Verify library existence to prevent ReferenceErrors
+            if (typeof shaka === 'undefined') {
+                showLoader("Retrying library load...");
+                setTimeout(initPlayer, 500);
+                return;
+            }
+
             const video = document.getElementById('video');
             shaka.polyfill.installAll();
 
-            // Set up loading listeners
             video.onwaiting = () => showLoader("Buffering...");
             video.onplaying = hideLoader;
             video.oncanplay = hideLoader;
@@ -164,10 +171,8 @@
             if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
             const stream = streamList[index];
 
-            console.log(`Loading ${stream.name} via ${stream.type}`);
             showLoader(`Loading ${stream.type.toUpperCase()}...`);
 
-            // Clean up old engines
             if (window.hls) { window.hls.destroy(); window.hls = null; }
             if (window.shakaPlayer) { await window.shakaPlayer.destroy(); window.shakaPlayer = null; }
 
@@ -201,7 +206,6 @@
                 try {
                     await player.load(stream.url);
                 } catch (e) {
-                    console.error("Shaka error", e);
                     showLoader("Playback Error: " + e.code);
                 }
             }
