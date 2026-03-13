@@ -32,9 +32,12 @@
 
     <!-- Verification (Using code 36a9620cce1db39f) -->
     <meta name="google-site-verification" content="36a9620cce1db39f">
-    <!-- Player Libraries -->
-    <script defer src="./shaka.js"></script>
-    <script defer src="https://cdn.jsdelivr.net"></script>
+    <!-- HLS.js (Direct Link) -->
+<script src="https://cdn.jsdelivr.net"></script>
+
+<!-- Shaka Player (Direct Link - Fixes the 404) -->
+<script src="https://cdn.jsdelivr.net"></script>
+n
 </head>
 
 
@@ -258,12 +261,13 @@
         <!-- ADD-ON: Clipping Wrapper for YouTube -->
         <div id="iframe-wrapper" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden;">
             <iframe
-                id="iframe-player"
-                style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; border: none; pointer-events: none;"
-                sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
-                allow="autoplay; encrypted-media"
-                src="about:blank">
-            </iframe>
+    id="iframe-player"
+    style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; border: none; pointer-events: none;"
+    sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+    allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture"
+    src="about:blank">
+</iframe>
+
         </div>
 
     </div>
@@ -410,22 +414,17 @@ async function playChannel(index){
   placeholder.style.display = 'none';
   if(liveStamp) liveStamp.style.display = channel.isLive ? 'block' : 'none';
 
-  if(channel.type === 'iframe'){
+    if(channel.type === 'iframe'){
     let finalUrl = channel.url;
-
-    // ADD-ON: YouTube unmuted autoplay and hidden controls logic
+    
     if(finalUrl.includes('://youtube.com')) {
-        // Strip existing parameters (like ?si=) and add ours
-        const baseUrl = finalUrl.split('?')[0];
-        // Note: No mute=1 here because the card click allows audio
-        finalUrl = `${baseUrl}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3`;
-        
-        // Ensure iframe allows autoplay permission
-        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        const baseUrl = finalUrl.split('?')[0]; // Strip existing params cleanly
+        // No mute=1 here since user clicked a card
+        finalUrl = `${baseUrl}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&enablejsapi=1`;
     }
 
-   document.getElementById('iframe-wrapper').style.display = 'block';
- 
+    // Crucial: Show the WRAPPER, not just the iframe
+    document.getElementById('iframe-wrapper').style.display = 'block'; 
     iframe.src = finalUrl;
     iframe.onload = () => { if(loader) loader.style.display = 'none'; };
     return;
