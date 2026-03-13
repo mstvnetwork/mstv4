@@ -101,9 +101,8 @@
             }
         ];
 
-        <script>
-    // ... your streamList remains the same ...
-
+       <script>
+    // 1. Initialize Application
     async function initApp() {
         shaka.polyfill.installAll();
         if (shaka.Player.isBrowserSupported()) {
@@ -113,6 +112,7 @@
         }
     }
 
+    // 2. Initialize Player
     async function initPlayer() {
         const video = document.getElementById('video');
         const badge = document.getElementById('engine-badge'); 
@@ -135,39 +135,42 @@
             abr: { defaultBandwidthEstimate: 1000000 }
         });
 
-        // 1. Identify the stream from URL Hash
+        // 3. Get stream based on URL hash
         const hash = window.location.hash.substring(1);
         let index = parseInt(hash, 10) - 1;
         if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
 
         const stream = streamList[index];
 
-        // 2. Update UI Badge immediately
-        badge.innerText = `ENGINE: ${stream.type.toUpperCase()} | CHANNEL: ${stream.name}`;
-        badge.style.color = "#00ff00"; // Reset color to green
+        // 4. Update UI Badge
+        if (badge) {
+            badge.innerText = `ENGINE: ${stream.type.toUpperCase()} | CHANNEL: ${stream.name}`;
+            badge.style.color = "#00ff00"; 
+        }
 
-        // 3. Configure DRM if it's a DASH stream with keys
+        // 5. Apply DRM if needed
         if (stream.type === "dash" && stream.drm) {
             player.configure({
-                drm: {
-                    clearKeys: stream.drm
-                }
+                drm: { clearKeys: stream.drm }
             });
         }
 
-        // 4. Load the stream
+        // 6. Load Stream
         try {
             await player.load(stream.url);
-            console.log('The video has now been loaded!');
         } catch (e) {
-            badge.innerText = `LOAD ERROR: ${stream.name}`;
-            badge.style.color = "red";
-            console.error('Error code', e.code, 'object', e);
+            if (badge) {
+                badge.innerText = "LOAD ERROR";
+                badge.style.color = "red";
+            }
+            console.error('Error loading stream:', e);
         }
     }
 
+    // 7. Event Listeners
     window.addEventListener('hashchange', () => window.location.reload());
     document.addEventListener('DOMContentLoaded', initApp);
 </script>
+
 </body>
 </html>
