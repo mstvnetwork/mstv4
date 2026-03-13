@@ -1,1 +1,486 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111419">
 
+    <!-- Primary SEO Meta Tags (Optimised to 58 characters) -->
+    <title>MSTV Network | Free Live Indian, Pakistani & International TV</title>
+    <meta name="title" content="MSTV Network | Free Live Indian, Pakistani & International TV">
+    <meta name="description" content="Watch MSTV Network for free 24/7 live streaming of Indian, Pakistani, and International TV channels. High-quality digital broadcast and news at your fingertips.">
+    <meta name="keywords" content="MSTV, MSTV Network, Live TV, Free Indian TV, Pakistani Channels, International TV Streaming, Live News, Digital Broadcast">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <link rel="canonical" href="https://mstvnet.netlify.app">
+
+    <!-- Open Graph / Facebook (Using absolute URL: https://mstvnet.netlify.app/mstv-thumbnail.png) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mstvnet.netlify.app">
+    <meta property="og:title" content="MSTV Network | Free Live Indian & Pakistani TV">
+    <meta property="og:description" content="Stream your favorite International TV channels for free 24/7 on MSTV Network. Your global hub for live digital media.">
+    <meta property="og:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://mstvnet.netlify.app">
+    <meta name="twitter:title" content="MSTV Network | Free Live Indian & Pakistani TV">
+    <meta name="twitter:description" content="Watch your favorite International TV channels for free on MSTV Network. Live digital broadcasting anywhere.">
+    <meta name="twitter:image" content="https://mstvnet.netlify.app/mstv-thumbnail.png">
+
+    <!-- Verification (Using code 36a9620cce1db39f) -->
+    <meta name="google-site-verification" content="36a9620cce1db39f">
+    <!-- Player Libraries -->
+    <script defer src="./shaka.js"></script>
+    <script defer src="https://cdn.jsdelivr.net"></script>
+</head>
+
+
+    <style>
+        :root {
+            --bg-dark: #0F1115;
+            --accent: #90EE90;
+            --header-h: 70px;
+            --player-y: 70px;
+            --text-dim: #555; /* Visible on muddy white */
+        }
+
+        html { 
+            scroll-padding-top: 380px; 
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: #E8E4C9 !important;
+            margin: 0; padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 1. STICKY HEADER */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #111419;
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            border-bottom: 1px solid #222;
+        }
+
+        .logo-section { display: flex; flex-direction: column; }
+        .brand-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #90EE90, #00FFA3);
+            -webkit-background-clip: text;
+            color: transparent;
+            line-height: 1;
+        }
+        .slogan { font-size: 0.7rem; color: yellow; margin-top: 4px; }
+
+        .search-container { flex-grow: 0.4; max-width: 350px; }
+        .search-container input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 25px;
+            border: 1px solid #333;
+            background: #1A1D20;
+            color: white;
+            outline: none;
+        }
+
+        /* 2. STICKY PLAYER */
+        .sticky-player-wrapper {
+            position: sticky;
+            top: var(--player-y);
+            z-index: 900;
+            background: #E8E4C9;
+            padding: 15px 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .player-container {
+            position: relative;
+            width: 92%;
+            max-width: 600px;
+            aspect-ratio: 16/9;
+            background: black;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        video, iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
+        #placeholder { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--accent); }
+        /* Container to hide the YouTube watermark */
+#iframe-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Clips the 5% edges where the logo lives */
+}
+
+/* The actual YouTube iframe */
+#iframe-player {
+    pointer-events: none; /* Prevents users from clicking the video to open YouTube */
+    transition: opacity 0.3s ease;
+}
+
+/* Spinner Styles (if you don't have one) */
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #09d;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+        
+        #loading {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-weight: bold;
+            display: none;
+        }
+
+        #live-stamp { position: absolute; top: 10px; left: 10px; background: #E50914; color: white; padding: 5px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; z-index: 50; display: none; }
+
+        /* 3. CHANNEL GRID */
+
+.channel-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(95px,1fr));
+    gap:12px;
+}
+
+/* channel card */
+.channel-card{
+    background:#E8E4C9;
+    border-radius:10px;
+    padding:8px 6px;
+    text-align:center;
+    cursor:pointer;
+    border:1px solid #d6d6d6;
+    transition:all .18s ease;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+/* hover */
+.channel-card:hover{
+    transform:translateY(-4px);
+    border-color:#90EE90;
+    box-shadow:0 6px 14px rgba(0,0,0,.08);
+}
+
+/* active channel */
+.channel-card.active{
+    border:2px solid #90EE90;
+}
+
+/* logo container */
+.card-logo{
+    width:100%;
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:6px;
+}
+
+/* 2. Modified to zoom and fill the entire card area */
+.card-logo img {
+    width: 100%;        /* Changed from 90% to fill width */
+    height: 100%;       /* Changed from 90% to fill height */
+   /* Changed from contain to cover (this is the "zoom") */
+    object-position: center;
+    display: block;
+    /* Keeps the shadow but it will only show on the edges if there's transparency */
+    filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.1)); 
+}
+
+
+/* channel name */
+.channel-name{
+    font-size:11px;
+    font-weight:600;
+    color:#334155;
+    line-height:1.2;
+}
+.site-footer { padding: 40px 5%; text-align: center; font-size: 0.9rem; color: #444; border-top: 1px solid #ccc; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="logo-section">
+        <div class="brand-name">MSTV NETWORK</div>
+        <div class="slogan">LIVE INDIAN PAKISTANI & ENGLISH CHANNELS</div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="channel-search" placeholder="Search channels...">
+    </div>
+</header>
+
+<div class="sticky-player-wrapper">
+    <div class="player-container" style="position: relative; overflow: hidden; background: #000;">
+
+        <div id="loading">🌀 Buffering...</div>
+        <div id="live-stamp">LIVE</div>
+
+        <div id="placeholder">📺</div>
+
+        <!-- Standard Video Player (HLS/Shaka) -->
+        <video id="video-player" autoplay playsinline controls style="width: 100%; height: 100%; display: none;"></video>
+
+        <!-- ADD-ON: Clipping Wrapper for YouTube -->
+        <div id="iframe-wrapper" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden;">
+            <iframe
+                id="iframe-player"
+                style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; border: none; pointer-events: none;"
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+                allow="autoplay; encrypted-media"
+                src="about:blank">
+            </iframe>
+        </div>
+
+    </div>
+</div>
+
+<main>
+    <!-- hidden dropdown used by script -->
+    <select id="channel-select" style="display:none;"></select>
+
+    <!-- channel cards appear here -->
+    <div class="channel-grid" id="channel-list-container"></div>
+</main>
+
+<script>
+const select = document.getElementById('channel-select');
+const video = document.getElementById('video-player');
+const iframe = document.getElementById('iframe-player');
+const placeholder = document.getElementById('placeholder');
+const loader = document.getElementById('loading');
+const liveStamp = document.getElementById('live-stamp');
+const gridContainer = document.getElementById('channel-list-container');
+const searchInput = document.getElementById('channel-search');
+const JSON_URL = './channels.json';
+
+let channels = [];
+let hls = null;
+let shakaPlayer = null;
+
+/**
+ * SEO Automation Function - INTACT
+ */
+function updateLiveSchema(data) {
+    const schemaScript = document.getElementById('mstv-schema');
+    if (!schemaScript) return;
+
+    try {
+        const items = data.map((ch, i) => ({
+            "@type": "ListItem",
+            "position": i + 1,
+            "item": {
+                "@type": "VideoObject",
+                "name": ch.name,
+                "description": `Watch ${ch.name} live stream on MSTV Network. High-quality 24/7 digital broadcast.`,
+                "thumbnailUrl": [ch.logo || "https://mstvnet.netlify.app"],
+                "uploadDate": "2024-01-01T08:00:00+00:00",
+                "embedUrl": `https://mstvnet.netlify.app${encodeURIComponent(ch.name)}`,
+                "publication": {
+                    "@type": "BroadcastEvent",
+                    "isLiveBroadcast": true,
+                    "startDate": new Date().toISOString()
+                }
+            }
+        }));
+
+        const fullSchema = {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": "MSTV Network Live Channels",
+          "description": "Watch live Indian, Pakistani, and International TV channels on MSTV Network.",
+          "itemListElement": items
+        };
+
+        schemaScript.innerHTML = JSON.stringify(fullSchema);
+    } catch (e) { console.error("Schema update failed", e); }
+}
+
+async function stopAll() {
+  if(loader) loader.style.display = 'none';
+  if(liveStamp) liveStamp.style.display = 'none';
+  if(hls){ hls.destroy(); hls = null; }
+  if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
+  video.pause(); video.removeAttribute('src'); video.load();
+  iframe.removeAttribute('src'); iframe.src = 'about:blank';
+  video.style.display = 'none'; iframe.style.display = 'none';
+  placeholder.style.display = 'flex';
+}
+
+function renderUI(data) {
+  channels = data;
+  if(select) select.innerHTML = '<option value="">📱 Select Channel</option>';
+  if(gridContainer) gridContainer.innerHTML = ''; 
+
+  updateLiveSchema(data);
+
+  data.forEach((ch, i) => {
+    if(select) {
+        const opt = document.createElement("option");
+        opt.value = i; 
+        opt.textContent = ch.name; 
+        select.appendChild(opt);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'channel-card';
+    card.setAttribute('data-name', ch.name.toLowerCase());
+    
+    const logoSrc = ch.logo || "https://mstvnet.netlify.app";
+    const logoHtml = `<img src="${logoSrc}" alt="${ch.name}" 
+          onerror="this.onerror=null; this.src='https://mstvnet.netlify.app';">`;
+
+    card.innerHTML = `
+      <div class="card-logo">${logoHtml}</div>
+      <div class="channel-name">${ch.name}</div>
+    `;
+    
+    card.onclick = () => { 
+        playChannel(i); 
+        window.scrollTo({top: 0, behavior: 'smooth'}); 
+    };
+    if(gridContainer) gridContainer.appendChild(card);
+  });
+}
+
+if(searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.channel-card');
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            card.style.display = name.includes(term) ? 'block' : 'none';
+        });
+    });
+}
+
+async function loadChannels(){
+  const cached = localStorage.getItem("channels_cache");
+  if(cached) renderUI(JSON.parse(cached));
+  try {
+    const res = await fetch(JSON_URL, { cache: 'no-cache' });
+    const data = await res.json();
+    localStorage.setItem('channels_cache', JSON.stringify(data));
+    renderUI(data);
+  } catch(e){ console.error('Load fail', e); }
+}
+
+async function playChannel(index){
+  const channel = channels[index];
+  if(!channel) return;
+  
+  await stopAll();
+  updateMetaTags(channel); // SEO update triggered
+  
+  if(loader) loader.style.display = 'block';
+  placeholder.style.display = 'none';
+  if(liveStamp) liveStamp.style.display = channel.isLive ? 'block' : 'none';
+
+  if(channel.type === 'iframe'){
+    let finalUrl = channel.url;
+
+    // ADD-ON: YouTube unmuted autoplay and hidden controls logic
+    if(finalUrl.includes('://youtube.com')) {
+        // Strip existing parameters (like ?si=) and add ours
+        const baseUrl = finalUrl.split('?')[0];
+        // Note: No mute=1 here because the card click allows audio
+        finalUrl = `${baseUrl}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3`;
+        
+        // Ensure iframe allows autoplay permission
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+    }
+
+   document.getElementById('iframe-wrapper').style.display = 'block';
+ 
+    iframe.src = finalUrl;
+    iframe.onload = () => { if(loader) loader.style.display = 'none'; };
+    return;
+  }
+
+  video.style.display = 'block';
+  const isHls = channel.type === 'hls' || (channel.url && channel.url.includes('.m3u8'));
+  if(isHls){
+    if(window.Hls && Hls.isSupported()){
+      hls = new Hls({ enableWorker:true, lowLatencyMode:true });
+      hls.loadSource(channel.url); hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, ()=> video.play());
+    } else if(video.canPlayType('application/vnd.apple.mpegurl')){
+      video.src = channel.url; video.play();
+    }
+  } else if(window.shaka && shaka.Player.isBrowserSupported()){
+    shaka.polyfill.installAll();
+    shakaPlayer = new shaka.Player(video);
+    try{ await shakaPlayer.load(channel.url); video.play(); } catch(e){ console.error(e); }
+  }
+}
+
+video.onplaying = () => { if(loader) loader.style.display = 'none'; };
+
+function updateMetaTags(channel) {
+    const siteTitle = `${channel.name} Live | MSTV Network`;
+    const description = `Watch ${channel.name} live stream on MSTV Network. Free 24/7 high-quality Indian and Pakistani TV broadcast.`;
+    const image = channel.logo || "https://mstvnet.netlify.app";
+    const url = `https://mstvnet.netlify.app${encodeURIComponent(channel.name)}`;
+
+    document.title = siteTitle;
+    document.querySelector('meta[name="title"]')?.setAttribute("content", siteTitle);
+    document.querySelector('meta[name="description"]')?.setAttribute("content", description);
+    document.querySelector('meta[property="og:title"]')?.setAttribute("content", siteTitle);
+    document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+    document.querySelector('meta[property="og:image"]')?.setAttribute("content", image);
+    document.querySelector('meta[property="og:url"]')?.setAttribute("content", url);
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", siteTitle);
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute("content", description);
+    document.querySelector('meta[name="twitter:image"]')?.setAttribute("content", image);
+    document.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
+}
+
+// Deep linking logic moved to proper script execution area
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const hash = decodeURIComponent(window.location.hash.substring(1));
+        if (hash && channels.length > 0) {
+            const index = channels.findIndex(ch => ch.name === hash);
+            if (index !== -1) playChannel(index);
+        }
+    }, 500); 
+});
+
+loadChannels();
+</script>
+</body>
+</html>
