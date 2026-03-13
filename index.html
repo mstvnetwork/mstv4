@@ -95,38 +95,54 @@
         }
 
         async function initPlayer() {
-            const video = document.getElementById('video');
-            const player = new shaka.Player(video);
+    const video = document.getElementById('video');
+    const player = new shaka.Player(video);
 
-            // Get index from URL Hash
-            const hash = window.location.hash.substring(1);
-            let index = parseInt(hash, 10) - 1;
-            if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
-
-            const stream = streamList[index];
-            console.log("Playing:", stream.name);
-
-            // 3. CONFIGURE CLEARKEY DRM
-            if (stream.type === "dash" && stream.drm) {
-                player.configure({
-                    drm: {
-                        clearKeys: stream.drm
-                    }
-                });
-            }
-
-            // Error handling
-            player.addEventListener('error', (event) => {
-                console.error('Shaka Error', event.detail);
-            });
-
-            try {
-                await player.load(stream.url);
-                console.log('Stream loaded successfully!');
-            } catch (e) {
-                console.error('Load failed!', e);
-            }
+    // --- OPTIMIZATION SETTINGS START ---
+    player.configure({
+        streaming: {
+            // Lower the amount of data required before playback starts (default is often 10s+)
+            rebufferingGoal: 1,      // Start playing after 1 second is buffered
+            bufferingGoal: 5,        // Only try to keep 5 seconds ahead
+            
+            // Speed up the initial segment choice
+            lowLatencyMode: true,
+            
+            // Start playing as soon as the first segment is ready
+            jumpLargeGaps: true
+        },
+        manifest: {
+            dash: {
+                // Reduces the delay between the live edge and the player's position
+                autoCorrectDrift: true
+            },
+            // For HLS: ignore some default delays to start faster
+            defaultPresentationDelay: 1 
+        },
+        abr: {
+            // Start with a lower quality to ensure instant loading on slow connections
+            defaultBandwidthEstimate: 1000000 // 1Mbps
         }
+    });
+    // --- OPTIMIZATION SETTINGS END ---
+
+    const hash = window.location.hash.substring(1);
+    let index = parseInt(hash, 10) - 1;
+    if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
+
+    const stream = streamList[index];
+
+    if (stream.type === "dash" && stream.drm) {
+        player.configure({ drm: { clearKeys: stream.drm } });
+    }
+
+    try {
+        await player.load(stream.url);
+    } catch (e) {
+        console.error('Error loading stream:', e);
+    }
+}
+
 
         window.addEventListener('hashchange', () => window.location.reload());
         document.addEventListener('DOMContentLoaded', initApp);
