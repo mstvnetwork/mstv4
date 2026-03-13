@@ -272,6 +272,7 @@ n
 </div>
 
 
+
         </div>
 
     </div>
@@ -286,9 +287,9 @@ n
 </main>
 
 <script>
-const video = document.getElementById('video-player'); // Must match <video id="video-player">
-const iframe = document.getElementById('iframe-player'); // Must match <iframe id="iframe-player">
-
+// 1. SELECTORS - Declared once only
+const select = document.getElementById('channel-select');
+const video = document.getElementById('video-player');
 const iframe = document.getElementById('iframe-player');
 const placeholder = document.getElementById('placeholder');
 const loader = document.getElementById('loading');
@@ -339,13 +340,15 @@ function updateLiveSchema(data) {
     } catch (e) { console.error("Schema update failed", e); }
 }
 
+/**
+ * Safe Stop Function - Fixed null checks and wrapper reset
+ */
 async function stopAll() {
   if(loader) loader.style.display = 'none';
   if(liveStamp) liveStamp.style.display = 'none';
   if(hls){ hls.destroy(); hls = null; }
   if(shakaPlayer){ await shakaPlayer.destroy(); shakaPlayer = null; }
   
-  // Safe Video Reset
   if(video) {
     video.pause(); 
     video.removeAttribute('src'); 
@@ -353,14 +356,13 @@ async function stopAll() {
     video.style.display = 'none';
   }
   
-  // Safe Iframe Reset
   if(iframe) {
     iframe.removeAttribute('src'); 
     iframe.src = 'about:blank';
     iframe.style.display = 'none';
   }
 
-  // Hide the clipping wrapper we added
+  // Hide the clipping wrapper
   const wrapper = document.getElementById('iframe-wrapper');
   if(wrapper) wrapper.style.display = 'none';
 
@@ -425,57 +427,68 @@ async function loadChannels(){
   } catch(e){ console.error('Load fail', e); }
 }
 
+/**
+ * Play Channel - Surgical YouTube Add-on
+ */
 async function playChannel(index){
   const channel = channels[index];
   if(!channel) return;
   
   await stopAll();
-  updateMetaTags(channel); // SEO update triggered
+  updateMetaTags(channel); 
   
   if(loader) loader.style.display = 'block';
-  placeholder.style.display = 'none';
+  if(placeholder) placeholder.style.display = 'none';
   if(liveStamp) liveStamp.style.display = channel.isLive ? 'block' : 'none';
 
-    if (channel.type === 'iframe') {
+  if(channel.type === 'iframe'){
     let finalUrl = channel.url;
 
-    if (finalUrl.includes('://youtube.com')) {
-        // 1. Get ONLY the base ID (removes ?si= and anything else)
-        const baseUrl = finalUrl.split('?')[0]; 
+    if(finalUrl.includes('://youtube.com')) {
+        // Clean URL to handle your JSON's ?si= parameter correctly
+        const baseUrl = finalUrl.split('?')[0];
+        // Unmuted autoplay enabled (no mute=1 because user clicked card)
+        finalUrl = `${baseUrl}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&enablejsapi=1`;
         
-        // 2. Rebuild with '&' logic and REQUIRED parameters
-        // Note: mute=1 is added here for maximum browser compatibility
-        finalUrl = `${baseUrl}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&enablejsapi=1`;
+        // Ensure iframe has permissions for sensors and autoplay
+        iframe.setAttribute('allow', 'autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture');
     }
 
-    // 3. SHOW the wrapper BEFORE loading the URL (prevents black screen rendering issues)
+    // Show the clipping wrapper and the iframe
     const wrapper = document.getElementById('iframe-wrapper');
-    if (wrapper) wrapper.style.display = 'block';
-    
-    iframe.src = finalUrl;
-    iframe.onload = () => { if (loader) loader.style.display = 'none'; };
-    return;
-}
+    if(wrapper) wrapper.style.display = 'block'; 
 
-
-  video.style.display = 'block';
-  const isHls = channel.type === 'hls' || (channel.url && channel.url.includes('.m3u8'));
-  if(isHls){
-    if(window.Hls && Hls.isSupported()){
-      hls = new Hls({ enableWorker:true, lowLatencyMode:true });
-      hls.loadSource(channel.url); hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, ()=> video.play());
-    } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-      video.src = channel.url; video.play();
+    if(iframe) {
+        iframe.style.display = 'block'; 
+        iframe.src = finalUrl;
+        iframe.onload = () => { if(loader) loader.style.display = 'none'; };
     }
-  } else if(window.shaka && shaka.Player.isBrowserSupported()){
-    shaka.polyfill.installAll();
-    shakaPlayer = new shaka.Player(video);
-    try{ await shakaPlayer.load(channel.url); video.play(); } catch(e){ console.error(e); }
+    return;
+  }
+
+  // Standard Video Playback (HLS/Shaka)
+  if(video) {
+    video.style.display = 'block';
+    const isHls = channel.type === 'hls' || (channel.url && channel.url.includes('.m3u8'));
+    if(isHls){
+        if(window.Hls && Hls.isSupported()){
+        hls = new Hls({ enableWorker:true, lowLatencyMode:true });
+        hls.loadSource(channel.url); hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, ()=> video.play());
+        } else if(video.canPlayType('application/vnd.apple.mpegurl')){
+        video.src = channel.url; video.play();
+        }
+    } else if(window.shaka && shaka.Player.isBrowserSupported()){
+        shaka.polyfill.installAll();
+        shakaPlayer = new shaka.Player(video);
+        try{ await shakaPlayer.load(channel.url); video.play(); } catch(e){ console.error(e); }
+    }
   }
 }
 
-video.onplaying = () => { if(loader) loader.style.display = 'none'; };
+if(video) {
+    video.onplaying = () => { if(loader) loader.style.display = 'none'; };
+}
 
 function updateMetaTags(channel) {
     const siteTitle = `${channel.name} Live | MSTV Network`;
@@ -496,7 +509,7 @@ function updateMetaTags(channel) {
     document.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
 }
 
-// Deep linking logic moved to proper script execution area
+// Initial deep link check
 window.addEventListener('load', () => {
     setTimeout(() => {
         const hash = decodeURIComponent(window.location.hash.substring(1));
