@@ -100,30 +100,31 @@
 
     // --- OPTIMIZATION SETTINGS START ---
     player.configure({
-        streaming: {
-            // Lower the amount of data required before playback starts (default is often 10s+)
-            rebufferingGoal: 1,      // Start playing after 1 second is buffered
-            bufferingGoal: 5,        // Only try to keep 5 seconds ahead
-            
-            // Speed up the initial segment choice
-            lowLatencyMode: true,
-            
-            // Start playing as soon as the first segment is ready
-            jumpLargeGaps: true
+    streaming: {
+        // Reduced buffering for faster startup
+        rebufferingGoal: 1,      
+        bufferingGoal: 5,        
+        
+        // Modern gap jumping settings
+        stallEnabled: true,      // Automatically jump gaps if playback stalls
+        stallThreshold: 2,       // Jump after 2 seconds of stalling
+        stallSkip: 0.1,          // Small skip to trigger the jump
+        
+        lowLatencyMode: true
+    },
+    manifest: {
+        dash: {
+            autoCorrectDrift: true
         },
-        manifest: {
-            dash: {
-                // Reduces the delay between the live edge and the player's position
-                autoCorrectDrift: true
-            },
-            // For HLS: ignore some default delays to start faster
-            defaultPresentationDelay: 1 
-        },
-        abr: {
-            // Start with a lower quality to ensure instant loading on slow connections
-            defaultBandwidthEstimate: 1000000 // 1Mbps
-        }
-    });
+        // Force HLS to start closer to the live edge
+        defaultPresentationDelay: 1 
+    },
+    abr: {
+        // Pick a lower quality initially for near-instant playback
+        defaultBandwidthEstimate: 1000000 
+    }
+});
+
     // --- OPTIMIZATION SETTINGS END ---
 
     const hash = window.location.hash.substring(1);
