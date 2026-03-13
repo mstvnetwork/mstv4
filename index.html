@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTV Advanced Player</title>
+    
+    <!-- Video Engines -->
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <script src="https://cdn.jsdelivr.net"></script>
+
+    <style>
+        /* Optimized for Iframe: Removes all margins and scrollbars */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            background: #000; 
+            overflow: hidden; 
+            width: 100%; 
+            height: 100%; 
+        }
+        .container { 
+            display: flex; 
+            width: 100vw; 
+            height: 100vh; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative;
+        }
+        video { 
+            width: 100%; 
+            height: 100%; 
+            background: #000; 
+            object-fit: contain; /* Maintains aspect ratio without stretching */
+        }
+
+        /* Loading UI */
+        .loader-wrapper {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .status-text {
+            color: white;
+            font-family: sans-serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <video id="video" controls autoplay crossorigin="anonymous"></video>
+        
+        <div id="loader-wrapper" class="loader-wrapper">
+            <div class="loader"></div>
+            <div id="status-text" class="status-text">Initialising...</div>
+        </div>
+    </div>
+
+    <script>
+        const streamList = [
+            {
+                name: "Zee TV (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net",
+                drm: { "ed068cf84f0640ccbc7c0e395c0a272e": "bb722190f2bb446391020411a7d0828b" }
+            },
+            {
+                name: "Zee Anmol (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net",
+                drm: { "4023613457774cbeb71a62c339970e63": "1c3e9fce5f014542be9cd1f749181204" }
+            },
+            {
+                name: "And Tv",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net",
+                drm: { "26df86eeebb04d7fbc45c948f76e81fd": "5f3a23f1a73c4c96ababce5fffe7b06b" }
+            },
+            {
+                name: "Real IPTV",
+                type: "hls",
+                url: "https://cdn.stmify.com"
+            },
+            {
+                name: "BozzTV",
+                type: "hls",
+                url: "https://live20.bozztv.com"
+            },
+            {
+                name: "Star Gold Proxy",
+                type: "hls",
+                url: "https://live-hls-web-aje-fa.thehlive.com"
+            },
+            {
+                name: "And Pictures (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net",
+                drm: { "8dea532cabfe471ba20f623107949": "7a214a974e4f4d1d9bb65364d5f0cb92" }
+            },
+            {
+                name: "Zee Cinema Hd",
+                type: "hls",
+                url: "https://amg17931-zee-amg17931c5-kogan-au-9521.playouts.now.amagi.tv"
+            },
+            {
+                name: "Zee Bollyworld (DASH ClearKey)",
+                type: "dash",
+                url: "https://d1g8wgjurz8via.cloudfront.net",
+                drm: { "e61523260c614746b25b9a5523fe9a39": "72ddbf37f76f49acbb8e140e7279e7a1" }
+            },
+            {
+                name: "Discovery Kids(DASH ClearKey)",
+                type: "dash",
+                url:"https://d1g8wgjurz8via.cloudfront.net",
+                drm: { "601f58d4b7094d2baf78c85d1d9cb6c9": "609e0cc03198455fa36fd2cc3e7f940d" }
+            },
+            {
+                name: "Wwe Network(DASH ClearKey)",
+                type: "dash",
+                url:"https://v4-pan-n79-cdn-01.live.cdn.cgates.lt",
+                drm: { "6d647aff767c453daa5fb54a44c783c6": "2f971e6a1cc58e7085afc761a3f13162" }
+            }
+        ];
+
+        const loaderWrapper = document.getElementById('loader-wrapper');
+        const statusText = document.getElementById('status-text');
+
+        function showLoader(msg) {
+            if (msg) statusText.innerText = msg;
+            loaderWrapper.style.display = 'flex';
+        }
+
+        function hideLoader() {
+            loaderWrapper.style.display = 'none';
+        }
+
+        async function initPlayer() {
+            const video = document.getElementById('video');
+            shaka.polyfill.installAll();
+
+            // Set up loading listeners
+            video.onwaiting = () => showLoader("Buffering...");
+            video.onplaying = hideLoader;
+            video.oncanplay = hideLoader;
+
+            const hash = window.location.hash.substring(1);
+            let index = parseInt(hash, 10) - 1;
+            if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
+            const stream = streamList[index];
+
+            console.log(`Loading ${stream.name} via ${stream.type}`);
+            showLoader(`Loading ${stream.type.toUpperCase()}...`);
+
+            // Clean up old engines
+            if (window.hls) { window.hls.destroy(); window.hls = null; }
+            if (window.shakaPlayer) { await window.shakaPlayer.destroy(); window.shakaPlayer = null; }
+
+            if (stream.type === "hls") {
+                if (Hls.isSupported()) {
+                    const hls = new Hls({ lowLatencyMode: true });
+                    hls.loadSource(stream.url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                    window.hls = hls;
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = stream.url;
+                }
+            } 
+            else if (stream.type === "dash") {
+                const player = new shaka.Player(video);
+                window.shakaPlayer = player;
+
+                player.configure({
+                    streaming: { rebufferingGoal: 1, bufferingGoal: 5, stallEnabled: true }
+                });
+
+                if (stream.drm) {
+                    player.configure({ drm: { clearKeys: stream.drm } });
+                }
+
+                player.addEventListener('buffering', (e) => {
+                    e.buffering ? showLoader("DASH: Buffering...") : hideLoader();
+                });
+
+                try {
+                    await player.load(stream.url);
+                } catch (e) {
+                    console.error("Shaka error", e);
+                    showLoader("Playback Error: " + e.code);
+                }
+            }
+        }
+
+        window.addEventListener('hashchange', () => window.location.reload());
+        document.addEventListener('DOMContentLoaded', initPlayer);
+    </script>
+</body>
+</html>
