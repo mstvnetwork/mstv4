@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MSTV Advanced Player</title>
     
-    <script src="https://cdnjs.cloudflare.com"></script>
-    <script src="https://cdnjs.cloudflare.com"></script>
+    <!-- Using jsDelivr for better reliability and performance -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
         body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
@@ -125,8 +126,7 @@
         
             
     ];
-
-
+            
         const loaderWrapper = document.getElementById('loader-wrapper');
         const statusText = document.getElementById('status-text');
 
@@ -134,25 +134,29 @@
         function hideLoader() { loaderWrapper.style.display = 'none'; }
 
         async function initPlayer() {
-            // Wait for both libraries to be ready in the global scope
-            if (typeof shaka === 'undefined' || typeof Hls === 'undefined') {
+            // Immediate check for libraries
+            if (window.shaka && window.Hls) {
+                await startEngines();
+            } else {
                 showLoader("Waiting for Player Engines...");
-                setTimeout(initPlayer, 200);
-                return;
+                // Check every 100ms
+                const checkInterval = setInterval(async () => {
+                    if (window.shaka && window.Hls) {
+                        clearInterval(checkInterval);
+                        await startEngines();
+                    }
+                }, 100);
             }
+        }
 
-            // --- POLYFILLS INTEGRATION ---
+        async function startEngines() {
             try {
                 shaka.polyfill.installAll();
-                console.log("Polyfills installed successfully.");
-            } catch (e) {
-                console.warn("Some polyfills could not be installed, continuing anyway.");
-            }
+            } catch (e) { console.warn("Polyfill error:", e); }
 
             const video = document.getElementById('video');
             video.onwaiting = () => showLoader("Buffering...");
             video.onplaying = hideLoader;
-            video.oncanplay = hideLoader;
 
             const hash = window.location.hash.substring(1);
             let index = parseInt(hash, 10) - 1;
@@ -169,10 +173,8 @@
                     const hls = new Hls({ lowLatencyMode: true, enableWorker: true });
                     hls.loadSource(stream.url);
                     hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log("Autoplay blocked")));
                     window.hls = hls;
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = stream.url;
                 }
             } 
             else if (stream.type === "dash") {
@@ -182,13 +184,10 @@
                 player.configure({ streaming: { rebufferingGoal: 1, bufferingGoal: 5, stallEnabled: true } });
                 if (stream.drm) player.configure({ drm: { clearKeys: stream.drm } });
 
-                player.addEventListener('buffering', (e) => { e.buffering ? showLoader("DASH: Buffering...") : hideLoader(); });
-
                 try {
-                    // Using mimeType 'application/dash+xml' to ensure manifest recognition
                     await player.load(stream.url, null, 'application/dash+xml');
+                    video.play().catch(e => console.log("Autoplay blocked"));
                 } catch (e) {
-                    console.error("Shaka error", e);
                     showLoader("Playback Error: " + e.code);
                 }
             }
@@ -199,3 +198,4 @@
     </script>
 </body>
 </html>
+
