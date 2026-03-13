@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>MSTV Player</title>
-    <!-- Reliable CDN for Shaka Player -->
-    <script src="https://cdn.jsdelivr.net"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
-    
+<!-- Use the specific compiled+UI bundle for version 4.16.3 -->
+<script src="https://cdnjs.cloudflare.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+<!-- Also include mux.js for HLS support in browsers that don't support it natively -->
+<script src="https://cdnjs.cloudflare.com"></script>
+
     <style>
         body, html { 
             margin: 0; padding: 0; background: #000; 
@@ -164,18 +166,36 @@
                 });
             }
 
-            // Load logic
+                        // Load logic
             try {
                 await player.load(stream.url);
+                console.log('Stream loaded successfully!');
             } catch (e) {
-                badge.innerText = "LOAD ERROR";
-                badge.style.color = "red";
+                if (badge) {
+                    badge.innerText = "LOAD ERROR";
+                    badge.style.color = "red";
+                }
                 console.error('Error loading stream:', e);
             }
         }
 
+        // --- SAFE INITIALIZATION ---
+        function safeInit() {
+            // Check if shaka is actually defined before running
+            if (typeof shaka !== 'undefined') {
+                initApp();
+            } else {
+                // If not ready, wait 100ms and try again
+                console.warn('Shaka not ready, retrying...');
+                setTimeout(safeInit, 100);
+            }
+        }
+
+        // Handle URL hash changes (channel switching)
         window.addEventListener('hashchange', () => window.location.reload());
-        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Use window.onload to ensure all CDN scripts are fully parsed
+        window.onload = safeInit;
     </script>
 </body>
 </html>
