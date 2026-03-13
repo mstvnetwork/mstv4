@@ -3,64 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>MSTV Player</title>
-    <head>
-    <meta charset="UTF-8">
-    <title>MSTV Player</title>
-    <!-- 1. CSS for UI Controls -->
+    <!-- 1. Shaka UI CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net">
-    <!-- 2. Mux.js (Required for HLS support) -->
-    <script src="https://cdn.jsdelivr.net"></script>
-    <!-- 3. Shaka Player UI Bundle (Most compatible version) -->
-    <script src="https://cdn.jsdelivr.net"></script>
     
     <style>
-        /* Keep your existing styles here */
-    </style>
-</head>
-
-
-    <style>
-        body, html { 
-            margin: 0; padding: 0; background: #000; 
-            overflow: hidden; width: 100%; height: 100%; 
-        }
-        .container { 
-            position: relative; display: flex; 
-            width: 100vw; height: 100vh; 
-            align-items: center; justify-content: center; 
-        }
-        video { width: 100%; height: 100%; background: #000; object-fit: contain; }
-
-        /* Engine Badge Overlay */
+        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
+        .container { position: relative; width: 100vw; height: 100vh; background: #000; }
+        video { width: 100%; height: 100%; }
         #engine-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ff00;
-            padding: 8px 15px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 5px;
-            z-index: 1000;
-            border: 1px solid #444;
-            pointer-events: none;
-            text-transform: uppercase;
+            position: absolute; top: 20px; left: 20px; z-index: 999;
+            background: rgba(0,0,0,0.8); color: #00ff00; padding: 10px;
+            font-family: monospace; border-radius: 5px; border: 1px solid #333;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div id="engine-badge">Initializing...</div>
+        <div id="engine-badge">LOADING LIBRARIES...</div>
         <video id="video" controls autoplay crossorigin="anonymous"></video>
     </div>
 
-    <script>
-        // Your existing channel list
+<script>
         const streamList = [
-         {
+            {
                 name: "Zee TV (DASH ClearKey)",
                 type: "dash",
                 url: "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeetv/default/main.mpd",
@@ -124,88 +90,72 @@
             }
         ];
 
-            
+       
 
-        async function initApp() {
-            shaka.polyfill.installAll();
-            if (shaka.Player.isBrowserSupported()) {
-                initPlayer();
-            } else {
-                console.error('Browser not supported for Shaka!');
-                document.getElementById('engine-badge').innerText = "BROWSER NOT SUPPORTED";
-            }
-        }
-
+        // --- 2. THE PLAYER ENGINE ---
         async function initPlayer() {
             const video = document.getElementById('video');
             const badge = document.getElementById('engine-badge');
             const player = new shaka.Player(video);
 
-            // Shaka Configuration
+            // Configure Player
             player.configure({
-                streaming: {
-                    rebufferingGoal: 1,      
-                    bufferingGoal: 5,        
-                    stallEnabled: true,      
-                    stallThreshold: 2,       
-                    stallSkip: 0.1,          
-                    lowLatencyMode: true
-                },
-                manifest: {
-                    dash: { autoCorrectDrift: true },
-                    defaultPresentationDelay: 1 
-                },
-                abr: { defaultBandwidthEstimate: 1000000 }
+                streaming: { rebufferingGoal: 1, bufferingGoal: 5, lowLatencyMode: true },
+                manifest: { dash: { autoCorrectDrift: true } }
             });
 
-            // Get current stream from Hash
+            // Get channel from URL #
             const hash = window.location.hash.substring(1);
-            let index = parseInt(hash, 10) - 1;
-            if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
+            let index = (parseInt(hash, 10) || 1) - 1;
+            const stream = streamList[index] || streamList[0];
 
-            const stream = streamList[index];
+            badge.innerText = `ENGINE: ${stream.type.toUpperCase()} | ${stream.name}`;
 
-            // Update Badge
-            badge.innerText = `${stream.type} | ${stream.name}`;
-            badge.style.color = "#00ff00";
-
-            // DRM Setup
             if (stream.type === "dash" && stream.drm) {
-                player.configure({
-                    drm: { clearKeys: stream.drm }
-                });
+                player.configure({ drm: { clearKeys: stream.drm } });
             }
-                        // Load logic
+
             try {
                 await player.load(stream.url);
-                console.log('Stream loaded!');
             } catch (e) {
-                if (badge) {
-                    badge.innerText = "LOAD ERROR";
-                    badge.style.color = "red";
+                badge.innerText = "STREAM ERROR";
+                badge.style.color = "red";
+            }
+        }
+
+        // --- 3. BULLETPROOF SCRIPT LOADER ---
+        function loadScript(url) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = url;
+                s.onload = resolve;
+                s.onerror = () => reject(`Failed to load: ${url}`);
+                document.head.appendChild(s);
+            });
+        }
+
+        async function startApp() {
+            const badge = document.getElementById('engine-badge');
+            try {
+                // Load Mux first, then Shaka
+                await loadScript("https://cdn.jsdelivr.net");
+                await loadScript("https://cdn.jsdelivr.net");
+                
+                shaka.polyfill.installAll();
+                if (shaka.Player.isBrowserSupported()) {
+                    initPlayer();
+                } else {
+                    badge.innerText = "BROWSER NOT SUPPORTED";
                 }
-                console.error('Error loading stream:', e);
+            } catch (err) {
+                badge.innerText = "CDN BLOCKED - CHECK INTERNET";
+                badge.style.color = "red";
+                console.error(err);
             }
         }
 
-        // --- THE FIX: WAIT FOR LIBRARY ---
-        function startAppWhenReady() {
-            if (window.shaka && shaka.Player.isBrowserSupported()) {
-                console.log("Shaka is ready!");
-                initApp();
-            } else if (!window.shaka) {
-                console.warn("Shaka object still missing, retrying...");
-                setTimeout(startAppWhenReady, 200);
-            } else {
-                document.getElementById('engine-badge').innerText = "BROWSER NOT SUPPORTED";
-            }
-        }
-
-        // Re-load on channel change
         window.addEventListener('hashchange', () => window.location.reload());
-
-        // Standard window load event
-        window.onload = startAppWhenReady;
+        window.onload = startApp;
     </script>
 </body>
 </html>
