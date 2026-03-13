@@ -146,49 +146,55 @@
             loader.style.display = 'block';
         }
 
-        async function initPlayer() {
-            // Get Stream
+                async function initPlayer() {
             const hash = window.location.hash.substring(1);
             let index = parseInt(hash, 10) - 1;
             if (isNaN(index) || index < 0 || index >= streamList.length) index = 0;
             const stream = streamList[index];
 
-            setStatus("Loading " + stream.type.toUpperCase() + "...");
+            // Show Spinner
+            setStatus("Loading " + stream.name + "...");
 
-            // 1. HLS Logic
             if (stream.type === "hls") {
                 if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    const hls = new Hls();
+                    const hls = new Hls({ lowLatencyMode: true });
                     hls.loadSource(stream.url);
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, () => {
                         loader.style.display = 'none';
-                        video.play();
+                        video.play().catch(() => setStatus("Click Play to Start"));
                     });
-                } else {
-                    video.src = stream.url;
                 }
             } 
-            // 2. DASH Logic
-            else {
+            else if (stream.type === "dash") {
                 if (typeof shaka !== 'undefined') {
                     shaka.polyfill.installAll();
                     const player = new shaka.Player(video);
                     
+                    // Crucial: Faster buffering for DASH
+                    player.configure({
+                        streaming: { rebufferingGoal: 1, bufferingGoal: 5 }
+                    });
+
                     if (stream.drm) {
                         player.configure({ drm: { clearKeys: stream.drm } });
                     }
 
                     try {
-                        await player.load(stream.url);
+                        // Force DASH manifest type to prevent Error 4000
+                        await player.load(stream.url, null, 'application/dash+xml');
                         loader.style.display = 'none';
-                        video.play();
+                        video.play().catch(() => setStatus("Click Play to Start"));
                     } catch (e) {
+                        console.error("Shaka Error:", e.code);
                         setStatus("DASH Error: " + e.code);
                     }
+                } else {
+                    setStatus("Shaka Engine Not Loaded");
                 }
             }
         }
+
 
         // Run when window is ready
         window.onload = initPlayer;
