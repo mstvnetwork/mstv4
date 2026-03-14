@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live TV Channel</title>
+    <style>
+        body { background: #000; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        video { position: absolute; width: 100%; height: 100%; object-fit: contain; background: #000; }
+        .hidden { opacity: 0; pointer-events: none; }
+        #overlay { position: absolute; color: white; background: rgba(0,0,0,0.5); padding: 20px; cursor: pointer; z-index: 10; }
+    </style>
+</head>
+<body>
+
+    <!-- Start Button (Browsers block autoplay with sound) -->
+    <div id="overlay" onclick="startChannel()">Click to Tune In</div>
+
+    <!-- The Two Players -->
+    <video id="player1" playsinline></video>
+    <video id="player2" class="hidden" playsinline></video>
+
+    <script>
+        const playlist = [
+            { 
+                title: "My Recorded Video", 
+                duration: 180, // SET THIS TO EXACT SECONDS (use ffprobe)
+                url: "https://sto.vkcdn5.com/olaxljzox3uiolyobgk2hv3fgln57wkuamomn7v6czt3p5k46
+
+wgjgc7kgz6a/v.mp4" 
+            },
+            { 
+                title: "Backup Video", 
+                duration: 60, 
+                url: "https://commondatastorage.googleapis.com" 
+            }
+        ];
+
+        const channelStartTime = new Date("2024-01-01T00:00:00Z").getTime();
+        let activePlayer = document.getElementById('player1');
+        let idlePlayer = document.getElementById('player2');
+
+        function getSyncData() {
+            const totalDuration = playlist.reduce((acc, vid) => acc + vid.duration, 0);
+            const elapsed = (Date.now() - channelStartTime) / 1000;
+            const timeInLoop = elapsed % totalDuration;
+
+            let runningSum = 0;
+            for (let i = 0; i < playlist.length; i++) {
+                if (runningSum + playlist[i].duration > timeInLoop) {
+                    return { index: i, seekTo: timeInLoop - runningSum };
+                }
+                runningSum += playlist[i].duration;
+            }
+        }
+
+        function startChannel() {
+            document.getElementById('overlay').style.display = 'none';
+            const data = getSyncData();
+            
+            activePlayer.src = playlist[data.index].url;
+            activePlayer.currentTime = data.seekTo;
+            activePlayer.play();
+
+            // Prepare the NEXT video in the hidden player 10 seconds before end
+            setInterval(checkPreload, 1000);
+        }
+
+        function checkPreload() {
+            const timeLeft = activePlayer.duration - activePlayer.currentTime;
+            
+            // If 10 seconds left, start loading next video in hidden player
+            if (timeLeft < 10 && idlePlayer.dataset.loading !== "true") {
+                const nextIndex = (getSyncData().index + 1) % playlist.length;
+                idlePlayer.src = playlist[nextIndex].url;
+                idlePlayer.load();
+                idlePlayer.dataset.loading = "true";
+                console.log("Pre-loading next video...");
+            }
+
+            // Switch players exactly when video ends
+            if (activePlayer.ended || timeLeft <= 0.1) {
+                switchPlayers();
+            }
+        }
+
+        function switchPlayers() {
+            // Swap visibility
+            activePlayer.classList.add('hidden');
+            idlePlayer.classList.remove('hidden');
+
+            // Swap roles
+            let temp = activePlayer;
+            activePlayer = idlePlayer;
+            idlePlayer = temp;
+
+            activePlayer.play();
+            idlePlayer.dataset.loading = "false";
+        }
+    </script>
+</body>
+</html>
