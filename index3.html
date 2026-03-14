@@ -1,10 +1,18 @@
-<iframe 
-  src="https://hls.desiserials.se/media/e1fdfdf9fab3a6a6f3e7c6c4cabfc8f3d8bbcdcaa7e6e7e5e0e7ecebfbe8e7ede0e7eea7eaf0e6fca6fff9fcfaf1f3bfecb0fdbaf8a6e1e5fabaa6b9b8a6b8babeb1bfa6fdffeaffb1e8bbb0edffb1eed6e7a6e4e8fafdecfba7fdf1fd" 
-  width="100%" 
-  height="600" 
-  title="Embedded content" 
-  loading="lazy" 
-  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
-  sandbox="allow-scripts allow-same-origin allow-forms"
-  allowfullscreen>
-</iframe>
+<script src="//://site.com" type="text/javascript"></script>
+
+<div id="player"></div>
+
+<script>
+   var player = new Playerjs({
+      id: "player", 
+      // Paste your long URL here
+      file: "https://hls.desiserials.se/media/e1fdfdf9fab3a6a6f3e7c6c4cabfc8f3d8bbcdcaa7e6e7e5e0e7ecebfbe8e7ede0e7eea7eaf0e6fca6fff9fcfaf1f3bfecb0fdbaf8a6e1e5fabaa6b9b8a6b8babeb1bfa6fdffeaffb1e8bbb0edffb1eed6e7a6e4e8fafdecfba7fdf1fd",
+      // Forces the player to treat the link as HLS even without .m3u8 extension
+      hls: 1, 
+      // Optional: Helps prevent the 10-second stall by increasing buffer
+      hlsconfig: {
+         maxBufferLength: 30,
+         maxMaxBufferLength: 60
+      }
+   });
+</script>
