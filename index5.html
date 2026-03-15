@@ -26,10 +26,21 @@
 <body>
 
 <div class="tv-container">
-    <iframe id="frame1" class="channel-frame active" allow="autoplay; encrypted-media"></iframe>
-    <iframe id="frame2" class="channel-frame hidden" allow="autoplay; encrypted-media"></iframe>
+    <iframe 
+        id="frame1" 
+        class="channel-frame active" 
+        allow="autoplay; encrypted-media; fullscreen" 
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups">
+    </iframe>
+    <iframe 
+        id="frame2" 
+        class="channel-frame hidden" 
+        allow="autoplay; encrypted-media; fullscreen" 
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups">
+    </iframe>
     <div id="status">Initializing broadcast...</div>
 </div>
+
 
 <script>
     const playlist = [
