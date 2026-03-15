@@ -2,100 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Desi IPTV Hub | Global Sync</title>
     <style>
-        :root { --primary-red: #ff0000; --bg-muddy: #353530; --nav-bg: #2b2b27; --text-white: #ffffff; }
+        :root { --bg-muddy: #353530; --nav-bg: #2b2b27; --primary-red: #ff0000; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; overflow: hidden; background: var(--bg-muddy); color: var(--text-white); font-family: 'Segoe UI', sans-serif; }
+        html, body { height: 100%; overflow: hidden; background: var(--bg-muddy); color: #fff; font-family: sans-serif; }
         
-        header { background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #444; }
-        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary-red); text-transform: uppercase; text-decoration: none; }
+        header { background: var(--nav-bg); padding: 12px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; }
+        .logo { font-size: 1.3rem; font-weight: bold; color: var(--primary-red); text-decoration: none; }
         
-        .main-content { max-width: 1000px; margin: 30px auto; padding: 0 20px; text-align: center; }
-        .player-wrapper { width: 100%; background: #000; border: 1px solid #444; border-radius: 8px; position: relative; padding-top: 56.25%; overflow: hidden; }
+        .main-content { width: 100%; max-width: 900px; margin: 15px auto; padding: 0 10px; }
+        .player-wrapper { width: 100%; background: #000; border-radius: 6px; position: relative; padding-top: 56.25%; overflow: hidden; border: 1px solid #555; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
-        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .play-btn { background: var(--primary-red); color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; }
+        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .play-btn { background: var(--primary-red); color: white; padding: 18px 40px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div id="startOverlay" onclick="startLiveSync()">
-    <div class="play-btn">JOIN LIVE STREAM</div>
+<div id="startOverlay" onclick="startSync()">
+    <div class="play-btn">START GLOBAL LIVE SYNC</div>
 </div>
 
 <header>
     <a href="#" class="logo">DESI IPTV HUB</a>
-    <div id="syncStatus" style="color:#00ff00; font-size: 0.8rem;">● LIVE SYNC ACTIVE</div>
+    <div id="utcClock" style="color:#00ff00; font-size: 0.7rem; font-weight:bold;">● SYNCED TO UTC</div>
 </header>
 
 <div class="main-content">
     <div class="player-wrapper">
-        <iframe id="videoPlayer" allow="autoplay; fullscreen" referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
+        <!-- 'allow' attribute is critical for mobile autoplay -->
+        <iframe id="videoPlayer" allow="autoplay; fullscreen" referrerpolicy="no-referrer" src="about:blank"></iframe>
     </div>
-    <div style="margin-top: 15px; text-align: left;">
-        <h2 id="currentTitle">Synchronizing with Global Server...</h2>
-        <p id="timeRemaining" style="color:#aaa; font-size:0.9rem;"></p>
+    <div style="margin-top: 20px;">
+        <h3 id="currentTitle" style="font-size:1.1rem; color:#fff;">Connecting to Stream...</h3>
+        <p id="timerText" style="color:#aaa; font-size:0.85rem; margin-top:8px;"></p>
     </div>
 </div>
 
 <script>
+    // THE GLOBAL PLAYLIST
     const playlist = [
         { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-krk6z9lcyouj.html?autoplay=1&mute=1&rel=0"},
         { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0"},
         { title: "Zee TV - Latest", url: "https://www.dailymotion.com&?autoplay=1&mute=1&rel=0" }
     ];
 
-    const ROTATION_SECONDS = 8 * 60; // 480 seconds
-    const TOTAL_CYCLE_SECONDS = playlist.length * ROTATION_SECONDS;
 
-    function startLiveSync() {
+    const ROTATION_SECONDS = 8 * 60; // 8 minutes (480s)
+    const TOTAL_CYCLE = playlist.length * ROTATION_SECONDS;
+
+    function startSync() {
         document.getElementById('startOverlay').style.display = 'none';
-        runSync();
-        // Check for the next video switch every second
-        setInterval(runSync, 1000);
+        updateUI();
+        setInterval(updateUI, 1000);
     }
 
-    function runSync() {
+    function updateUI() {
         const now = new Date();
-        // Calculate seconds passed since midnight
-        const secondsSinceMidnight = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        // Calculate seconds since UTC Midnight (Universal for everyone)
+        const secondsTodayUTC = (now.getUTCHours() * 3600) + (now.getUTCMinutes() * 60) + now.getUTCSeconds();
         
-        // Find current position in the global loop
-        const currentPosInCycle = secondsSinceMidnight % TOTAL_CYCLE_SECONDS;
-        const videoIndex = Math.floor(currentPosInCycle / ROTATION_SECONDS);
-        const seekToSecond = currentPosInCycle % ROTATION_SECONDS;
+        // Find which video should be playing globally right now
+        const currentPos = secondsTodayUTC % TOTAL_CYCLE;
+        const videoIndex = Math.floor(currentPos / ROTATION_SECONDS);
+        const secondsIntoVideo = currentPos % ROTATION_SECONDS;
 
         const video = playlist[videoIndex];
         const player = document.getElementById('videoPlayer');
 
-        // IMPORTANT: Only update player SRC if the video actually changes
-        // This prevents the "Black Screen" reload issue
+        // CHANGE VIDEO ONLY WHEN THE 8-MINUTE MARK IS HIT
+        // This makes it "Live" because everyone switches at the exact same UTC second
         if (player.dataset.currentIndex != videoIndex) {
-            let finalUrl = "";
+            let url = "";
             if (video.type === "vk") {
-                // VKPrime uses ?t= for seeking
-                finalUrl = `https://vkprime.com{video.id}.html?autoplay=1&mute=1&t=${seekToSecond}`;
+                // We use autoplay and mute, but start from 0 to ensure it loads on mobile
+                url = `https://vkprime.com{video.id}.html?autoplay=1&mute=1`;
             } else if (video.type === "dm") {
-                // Dailymotion uses startTime=
-                finalUrl = `https://www.dailymotion.com{video.id}?autoplay=1&mute=true&startTime=${seekToSecond}`;
+                url = `https://www.dailymotion.com{video.id}?autoplay=1&mute=true`;
             }
             
-            player.src = finalUrl;
+            player.src = url;
             player.dataset.currentIndex = videoIndex;
             document.getElementById('currentTitle').innerText = "LIVE: " + video.title;
         }
 
-        // Update countdown text
-        const remaining = ROTATION_SECONDS - seekToSecond;
-        document.getElementById('timeRemaining').innerText = `Next switch in: ${Math.floor(remaining / 60)}m ${remaining % 60}s`;
+        // SHOW THE SYNCED COUNTDOWN
+        const remaining = ROTATION_SECONDS - secondsIntoVideo;
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        document.getElementById('timerText').innerText = `Next global switch in: ${m}m ${s < 10 ? '0' + s : s}s`;
     }
 </script>
 
 </body>
 </html>
+
 
 
 
