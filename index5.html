@@ -25,26 +25,21 @@
 </head>
 <body>
 
-<div class="tv-container" style="position: relative;">
-    <!-- The Shield: Blocks all manual clicks to stop invisible ad overlays -->
-    <div id="click-shield" style="
-        position: absolute; 
-        top: 0; left: 0; 
-        width: 100%; height: 100%; 
-        z-index: 5; 
-        background: transparent;
-        cursor: default;">
-    </div>
-
+<div class="tv-container" style="position: relative; width: 100vw; height: 100vh;">
+    <!-- Remove any overlay divs here to allow clicking the play button -->
+    
     <iframe 
         id="frame1" 
         class="channel-frame active" 
+        src="https://vkprime.com"
         allow="autoplay; encrypted-media; fullscreen" 
-        /* Removed allow-popups to kill ads */
+        /* REMOVED allow-popups: Clicks work, but windows cannot open */
         sandbox="allow-scripts allow-same-origin allow-forms allow-presentation">
     </iframe>
 
     <div id="status">Initializing broadcast...</div>
+</div>
+<div id="status">Initializing broadcast...</div>
 </div>
 
 
