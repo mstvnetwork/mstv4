@@ -1,9 +1,63 @@
-<div style="text-align: center; margin: 20px;">
-  <a href="https://103.175.73.12:8080/live/12/12_0.m3u8" 
-     target="_blank" 
-     referrerpolicy="no-referrer"
-     style="color: #0044cc; text-decoration: underline; font-size: 18px; font-weight: bold;">
-     Click here to open video in a new window
-  </a>
-  <p style="font-size: 12px; color: #777;">(Note: If the page says 'Not Secure', click 'Advanced' and then 'Proceed')</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTV Secure Player</title>
+    <!-- HLS.js Library for browser compatibility -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .container { width: 90%; max-width: 900px; text-align: center; }
+        video { width: 100%; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .status { margin-top: 10px; font-size: 14px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <video id="video" controls autoplay muted></video>
+    <div id="status" class="status">Initializing stream...</div>
 </div>
+
+<script>
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    
+    // We use the proxy path defined in your _redirects file
+    // This maps to http://103.175.73.12
+    const streamUrl = '/stream-proxy/live/12/12_0.m3u8';
+
+    function initPlayer() {
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+            });
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                status.innerText = "Stream Live - Playing via Proxy";
+                video.play();
+            });
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) status.innerText = "Error: Stream unreachable. Check if the IP is active.";
+            });
+        } 
+        // Fallback for Safari/iOS which supports HLS natively
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.addEventListener('loadedmetadata', () => {
+                status.innerText = "Stream Live (Native)";
+                video.play();
+            });
+        } else {
+            status.innerText = "Your browser does not support HLS streaming.";
+        }
+    }
+
+    initPlayer();
+</script>
+
+</body>
+</html>
