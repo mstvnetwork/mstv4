@@ -1,82 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>24/7 Pseudo-Live Stream</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Desi IPTV Hub | Live on Netlify</title>
     <style>
-        body { background: #111; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .player-container { position: relative; width: 90%; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        video { width: 100%; display: block; border-radius: 8px; }
-        
-        /* Disable seeking: Hide the progress bar and time displays */
-        video::-webkit-media-controls-timeline,
-        video::-webkit-media-controls-current-time-display,
-        video::-webkit-media-controls-time-remaining-display { display: none !important; }
-
-        .live-badge {
-            position: absolute; top: 15px; left: 15px;
-            background: #ff0000; padding: 4px 10px;
-            border-radius: 4px; font-weight: bold; font-size: 12px;
-            letter-spacing: 1px; z-index: 10;
+        :root { 
+            --primary-red: #ff0000; 
+            --bg-muddy: #353530; 
+            --nav-bg: #2b2b27; 
+            --text-white: #ffffff; 
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-muddy); color: var(--text-white); }
+        header { background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #444; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary-red); text-decoration: none; }
+        .nav-links { display: flex; list-style: none; gap: 20px; }
+        .nav-links li { position: relative; }
+        .nav-links a { color: #ccc; text-decoration: none; cursor: pointer; }
+        .dropdown { display: none; position: absolute; top: 100%; right: 0; background: #1a1a1a; min-width: 220px; padding: 10px 0; }
+        .nav-links li:hover .dropdown { display: block; }
+        .dropdown a { display: block; padding: 10px 20px; color: #ccc; text-decoration: none; border-bottom: 1px solid #2a2a2a; }
+        .main-content { max-width: 1100px; margin: 30px auto; padding: 0 20px; text-align: center; }
+        .player-wrapper { width: 100%; background: #000; border: 1px solid #444; border-radius: 8px; position: relative; padding-top: 56.25%; }
+        #videoPlayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        footer { background: #252521; padding: 40px 5%; margin-top: 50px; border-top: 1px solid #444; font-size: 0.85rem; color: #bbb; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
     </style>
 </head>
 <body>
-
-<div class="player-container">
-    <div class="live-badge">LIVE</div>
-    <video id="player" controls autoplay muted playsinline></video>
-</div>
-
-<script>
-    // 1. Playlist with exact durations (in seconds)
-    const playlist = [
-        { title: "Big Buck Bunny", duration: 800, url: "https://sys.vkcdn5.com/k44sjdc2uxzgds2ywodsvl3f3dmarw6qy5jqcff4b4ifgnwfpqc6tv2tbciq/v.mp4"}
-          ];
-
-    // 2. Set the "Launch" time of your channel (must be in the past)
-    const channelStartTime = new Date("2024-01-01T00:00:00Z").getTime();
-    const player = document.getElementById('player');
-
-    function syncPlayer() {
-        const totalPlaylistDuration = playlist.reduce((acc, vid) => acc + vid.duration, 0);
-        const now = Date.now();
-        const elapsedSinceStart = (now - channelStartTime) / 1000;
-        
-        // Find where we are in the infinite loop
-        const timeInLoop = elapsedSinceStart % totalPlaylistDuration;
-
-        let runningSum = 0;
-        for (let i = 0; i < playlist.length; i++) {
-            const video = playlist[i];
-            if (runningSum + video.duration > timeInLoop) {
-                const seekTo = timeInLoop - runningSum;
-                
-                // Only change source if it's different to prevent flickering
-                if (player.dataset.index !== i.toString()) {
-                    player.src = video.url;
-                    player.dataset.index = i;
-                    player.currentTime = seekTo;
-                    player.play().catch(e => console.log("Autoplay blocked, user interaction needed."));
-                } else if (Math.abs(player.currentTime - seekTo) > 2) {
-                    // Force re-sync if the user gets more than 2 seconds out of sync
-                    player.currentTime = seekTo;
-                }
-                break;
-            }
-            runningSum += video.duration;
+    <header>
+        <a href="/" class="logo">DESI IPTV HUB</a>
+        <ul class="nav-links">
+            <li>
+                <a>SERIALS ▼</a>
+                <div class="dropdown">
+                    <a onclick="manualSelect(0)">Star Plus Highlights</a>
+                    <a onclick="manualSelect(1)">Sony TV Special</a>
+                    <a onclick="manualSelect(2)">Zee TV Latest</a>
+                </div>
+            </li>
+            <li>
+                <a>LIVE CHANNELS ▼</a>
+                <div class="dropdown">
+                    <a href="https://www.hotstar.com" target="_blank">Live Star Plus</a>
+                </div>
+            </li>
+        </ul>
+    </header>
+    <div class="main-content">
+        <div class="player-wrapper">
+            <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allowfullscreen></iframe>
+        </div>
+        <div class="player-info">
+            <h2 id="currentTitle">TV Channel Mode: ON</h2>
+            <p>Automatically rotating serials every 20 minutes.</p>
+        </div>
+    </div>
+    <footer>
+        <div class="footer-grid">
+            <div><h4>About Us</h4><p>Your destination for automatic GEC serial updates.</p></div>
+            <div><h4>Disclaimer</h4><p>We do not host videos; all content is via 3rd party embeds.</p></div>
+        </div>
+    </footer>
+    <script>
+        const playlist = [
+            { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-q14w5x0i7a4f.html" },
+            { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-4yedhlkshnwv.html" }
+        ];
+        let currentIndex = 0;
+        function rotateVideo() {
+            const player = document.getElementById('videoPlayer');
+            player.src = playlist[currentIndex].url;
+            document.getElementById('currentTitle').innerText = "Playing: " + playlist[currentIndex].title;
+            currentIndex = (currentIndex + 1) % playlist.length;
         }
-    }
-
-    // Handle video ending: move to next immediately
-    player.onended = () => syncPlayer();
-
-    // Initial sync
-    syncPlayer();
-
-    // Re-sync every 30 seconds just in case of drift
-    setInterval(syncPlayer, 30000);
-</script>
-
+        function manualSelect(index) { currentIndex = index; rotateVideo(); }
+        rotateVideo();
+        setInterval(rotateVideo, 120); 
+    </script>
 </body>
 </html>
