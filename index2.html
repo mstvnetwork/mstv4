@@ -49,31 +49,30 @@
         <p id="timeInfo" style="color:#888; font-size:0.9rem;"></p>
     </div>
 </div>
-
 <script>
     const playlist = [
-        { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-4yedhlkshnwv.html?autoplay=1&mute=1&rel=0" },
-        { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0 "},
-        { title: "Zee TV - Latest", url: "https://www.dailymotion.com&?autoplay=1&mute=1&rel=0    " }
+        { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-4yedhlkshnwv.html?autoplay=1&mute=1&rel=0"},
+        { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0"},
+        { title: "Zee TV - Latest", url: "https://www.dailymotion.com&?autoplay=1&mute=1&rel=0" }
     ];
-
-
-    const ROTATION_TIME = 8 * 60; // 8 minutes in seconds (480s)
+ const ROTATION_TIME = 8 * 60; // 8 minutes (480 seconds)
     const TOTAL_PLAYLIST_TIME = playlist.length * ROTATION_TIME;
 
     function syncLiveTV() {
+        // Hide overlay and trigger first load
         document.getElementById('startOverlay').style.display = 'none';
+        
+        // Initial load
         updatePlayer();
-        // Update exactly when the next video is scheduled
+        
+        // Set interval to check every second for sync and countdown
         setInterval(updatePlayer, 1000); 
     }
 
     function updatePlayer() {
         const now = new Date();
-        // Global seconds passed today
         const totalSecondsToday = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
         
-        // Find where we are in the total playlist loop
         const currentCyclePosition = totalSecondsToday % TOTAL_PLAYLIST_TIME;
         const videoIndex = Math.floor(currentCyclePosition / ROTATION_TIME);
         const startAtSecond = currentCyclePosition % ROTATION_TIME;
@@ -81,28 +80,32 @@
         const currentVideo = playlist[videoIndex];
         const player = document.getElementById('videoPlayer');
         
-        // Build URL with specific start time (Seek)
-        let finalUrl = "";
-        if (currentVideo.type === "vk") {
-            // VKPrime uses ?start=XX
-            finalUrl = `https://vkprime.com{currentVideo.id}.html?autoplay=1&mute=1&start=${startAtSecond}`;
-        } else if (currentVideo.type === "dm") {
-            // Dailymotion uses ?start=XX
-            finalUrl = `https://www.dailymotion.com{currentVideo.id}?autoplay=1&mute=true&start=${startAtSecond}`;
-        }
-
-        // Only refresh the iframe if it's a NEW video index
+        // Only update the SRC if the video index has changed
+        // This prevents the video from restarting every second
         if (player.dataset.lastIndex != videoIndex) {
+            let finalUrl = "";
+            
+            if (currentVideo.type === "vk") {
+                // VKPrime often requires t= instead of start= for seeking
+                finalUrl = `https://vkprime.com{currentVideo.id}.html?autoplay=1&mute=1&t=${startAtSecond}s`;
+            } else if (currentVideo.type === "dm") {
+                // Dailymotion runtime parameter is startTime
+                finalUrl = `https://www.dailymotion.com{currentVideo.id}?autoplay=1&mute=true&startTime=${startAtSecond}`;
+            }
+
             player.src = finalUrl;
             player.dataset.lastIndex = videoIndex;
             document.getElementById('currentTitle').innerText = "LIVE: " + currentVideo.title;
         }
 
-        // Show countdown to next switch
+        // Always update countdown
         const remaining = ROTATION_TIME - startAtSecond;
-        document.getElementById('timeInfo').innerText = `Next serial in: ${Math.floor(remaining / 60)}m ${remaining % 60}s`;
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        document.getElementById('timeInfo').innerText = `Next serial in: ${mins}m ${secs}s`;
     }
 </script>
+
 
 </body>
 </html>
@@ -124,6 +127,5 @@
 
 
 
-
-
+  
 
