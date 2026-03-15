@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Desi IPTV Hub | Fixed Mobile Sync</title>
+    <title>Desi IPTV | Memory Sync</title>
     <style>
         :root { --bg-muddy: #353530; --nav-bg: #2b2b27; --red: #ff0000; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,28 +13,27 @@
         .main-content { width: 100%; max-width: 900px; margin: 15px auto; padding: 0 10px; }
         .player-wrapper { width: 100%; background: #000; border-radius: 6px; position: relative; padding-top: 56.25%; border: 1px solid #555; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .play-btn { background: var(--red); color: white; padding: 18px 40px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div id="startOverlay" onclick="startGlobalTV()">
-    <div class="play-btn">TAP TO JOIN LIVE</div>
+<div id="startOverlay" onclick="startTV()">
+    <div class="play-btn">RESUME WATCHING</div>
 </div>
 
 <header>
     <a href="#" class="logo">DESI IPTV HUB</a>
-    <div style="color:#00ff00; font-size: 0.7rem; font-weight:bold;">● SYNCED</div>
+    <div style="color:#aaa; font-size: 0.7rem;">Auto-Save Active</div>
 </header>
 
 <div class="main-content">
     <div class="player-wrapper">
-        <!-- CRITICAL: Removed sandbox for mobile compatibility -->
         <iframe id="videoPlayer" allow="autoplay; fullscreen" referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
     </div>
     <div style="margin-top: 20px;">
-        <h3 id="currentTitle" style="font-size:1.1rem;">Synchronizing...</h3>
+        <h3 id="currentTitle">Loading your stream...</h3>
         <p id="timerText" style="color:#aaa; font-size:0.85rem; margin-top:8px;"></p>
     </div>
 </div>
@@ -47,46 +46,56 @@
     ];
 
 
-
     const ROTATION_SEC = 8 * 60; 
-    const CYCLE_SEC = playlist.length * ROTATION_SEC;
 
-    function startGlobalTV() {
+    // Load saved data or start fresh
+    let currentIndex = parseInt(localStorage.getItem('iptv_index')) || 0;
+    let currentSeconds = parseInt(localStorage.getItem('iptv_seconds')) || 0;
+
+    function startTV() {
         document.getElementById('startOverlay').style.display = 'none';
-        updateFrame();
-        setInterval(updateFrame, 1000);
+        updatePlayer(true); // Force reload on first click
+        
+        // Save progress every second
+        setInterval(tick, 1000);
     }
 
-    function updateFrame() {
-        const now = new Date();
-        // Uses UTC for global sync across all devices
-        const secToday = (now.getUTCHours() * 3600) + (now.getUTCMinutes() * 60) + now.getUTCSeconds();
+    function tick() {
+        currentSeconds++;
         
-        const pos = secToday % CYCLE_SEC;
-        const idx = Math.floor(pos / ROTATION_SEC);
-        const seek = pos % ROTATION_SEC;
-
-        const vid = playlist[idx];
-        const player = document.getElementById('videoPlayer');
-
-        if (player.dataset.lastIdx != idx) {
-            let url = "";
-            if (vid.type === "vk") {
-                // Simplified URL for mobile
-                url = "https://vkprime.com" + vid.id + ".html?autoplay=1&mute=1";
-            } else if (vid.type === "dm") {
-                url = "https://www.dailymotion.com" + vid.id + "?autoplay=1&mute=true";
-            }
-            
-            player.src = url;
-            player.dataset.lastIdx = idx;
-            document.getElementById('currentTitle').innerText = "LIVE: " + vid.title;
+        // If 8 minutes pass, move to next video
+        if (currentSeconds >= ROTATION_SEC) {
+            currentSeconds = 0;
+            currentIndex = (currentIndex + 1) % playlist.length;
+            updatePlayer(true);
+        } else {
+            updatePlayer(false); // Just update the timer text
         }
 
-        const rem = ROTATION_SEC - seek;
-        const m = Math.floor(rem / 60);
-        const s = rem % 60;
-        document.getElementById('timerText').innerText = `Global switch in: ${m}m ${s < 10 ? '0' + s : s}s`;
+        // SAVE TO BROWSER MEMORY
+        localStorage.setItem('iptv_index', currentIndex);
+        localStorage.setItem('iptv_seconds', currentSeconds);
+    }
+
+    function updatePlayer(shouldReload) {
+        const vid = playlist[currentIndex];
+        const player = document.getElementById('videoPlayer');
+        const titleElem = document.getElementById('currentTitle');
+
+        if (shouldReload) {
+            let url = "";
+            if (vid.type === "vk") {
+                url = `https://vkprime.com{vid.id}.html?autoplay=1&mute=1&t=${currentSeconds}`;
+            } else if (vid.type === "dm") {
+                url = `https://www.dailymotion.com{vid.id}?autoplay=1&mute=true&startTime=${currentSeconds}`;
+            }
+            player.src = url;
+        }
+
+        titleElem.innerText = "PLAYING: " + vid.title;
+        
+        const rem = ROTATION_SEC - currentSeconds;
+        document.getElementById('timerText').innerText = `Next switch in: ${Math.floor(rem/60)}m ${rem%60}s (Progress Saved)`;
     }
 </script>
 </body>
