@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live TV Broadcast Player</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
+        .tv-container { position: relative; width: 100vw; height: 100vh; }
+        
+        /* Stack iframes on top of each other */
+        .channel-frame {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border: none; transition: opacity 1.5s ease-in-out; /* Smooth cross-fade */
+        }
+        .hidden { opacity: 0; z-index: 1; pointer-events: none; }
+        .active { opacity: 1; z-index: 2; }
+
+        /* Status Overlay for Testing */
+        #status {
+            position: absolute; bottom: 20px; left: 20px; z-index: 10;
+            background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px;
+            font-size: 14px; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="tv-container">
+    <iframe id="frame1" class="channel-frame active" allow="autoplay; encrypted-media"></iframe>
+    <iframe id="frame2" class="channel-frame hidden" allow="autoplay; encrypted-media"></iframe>
+    <div id="status">Initializing broadcast...</div>
+</div>
+
+<script>
+    const playlist = [
+        { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-krk6z9lcyouj.html?autoplay=1&mute=1&rel=0", duration: 120 },
+        { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0", duration: 120 },
+        { title: "Zee TV - Latest", url: "https://www.dailymotion.com" , duration: 120 }
+    ];
+
+    const frames = [document.getElementById('frame1'), document.getElementById('frame2')];
+    let activeFrameIdx = 0;
+
+    function getBroadcastState() {
+        const totalLoopTime = playlist.reduce((sum, item) => sum + item.duration, 0);
+        const now = Math.floor(Date.now() / 1000);
+        
+        // Use an absolute anchor (Start of Day) so all viewers see the same thing
+        const startOfDay = new Date().setHours(0,0,0,0) / 1000;
+        let elapsed = (now - startOfDay) % totalLoopTime;
+
+        for (let i = 0; i < playlist.length; i++) {
+            if (elapsed < playlist[i].duration) {
+                return { 
+                    index: i, 
+                    seek: elapsed, 
+                    remaining: playlist[i].duration - elapsed 
+                };
+            }
+            elapsed -= playlist[i].duration;
+        }
+    }
+
+    function updateDisplay() {
+        const state = getBroadcastState();
+        const currentShow = playlist[state.index];
+        const nextIdx = (state.index + 1) % playlist.length;
+        const nextShow = playlist[nextIdx];
+
+        // 1. Initial Load or Sync
+        if (!frames[activeFrameIdx].src || frames[activeFrameIdx].src === "about:blank") {
+            frames[activeFrameIdx].src = currentShow.url;
+        }
+
+        // 2. Pre-load logic (Buffer the next show 15 seconds early)
+        if (state.remaining <= 15) {
+            const bufferFrame = frames[1 - activeFrameIdx];
+            if (!bufferFrame.src.includes(nextShow.url)) {
+                console.log(`Pre-loading: ${nextShow.title}`);
+                bufferFrame.src = nextShow.url;
+            }
+        }
+
+        // 3. The Swap (Transition when show ends)
+        if (state.remaining <= 0.5) {
+            console.log("Swapping frames...");
+            const oldFrame = frames[activeFrameIdx];
+            const newFrame = frames[1 - activeFrameIdx];
+
+            newFrame.classList.replace('hidden', 'active');
+            oldFrame.classList.replace('active', 'hidden');
+
+            activeFrameIdx = 1 - activeFrameIdx;
+            
+            // Clean up the old frame after fade completes to save memory
+            setTimeout(() => { oldFrame.src = "about:blank"; }, 2000);
+        }
+
+        document.getElementById('status').innerText = 
+            `LIVE: ${currentShow.title} | Next in: ${Math.round(state.remaining)}s`;
+    }
+
+    // Run sync every second
+    setInterval(updateDisplay, 1000);
+    updateDisplay();
+</script>
+
+</body>
+</html>
