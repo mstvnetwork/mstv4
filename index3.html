@@ -2,63 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:,">
-
-    <title>MSTV Secure Player</title>
-    <!-- HLS.js Library for browser compatibility -->
-    <script src="https://cdn.jsdelivr.net"></script>
+    <title>M3U8 Web Player</title>
+    <!-- Include HLS.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { margin: 0; background: #000; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .container { width: 90%; max-width: 900px; text-align: center; }
-        video { width: 100%; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .status { margin-top: 10px; font-size: 14px; color: #aaa; }
+        body { font-family: sans-serif; display: flex; justify-content: center; background: #1a1a1a; color: white; }
+        .container { text-align: center; margin-top: 50px; }
+        video { width: 100%; max-width: 800px; border: 2px solid #444; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <video id="video" controls autoplay muted></video>
-    <div id="status" class="status">Initializing stream...</div>
+    <h2>Colors Rishtey - Live Stream</h2>
+    <video id="video" controls></video>
 </div>
 
 <script>
-    const video = document.getElementById('video');
-    const status = document.getElementById('status');
-    
-    // We use the proxy path defined in your _redirects file
-    // This maps to http://103.175.73.12
-    const streamUrl = '/stream-proxy/live/12/12_0.m3u8';
+  var video = document.getElementById('video');
+  var videoSrc = 'http://103.175.73.12:8080/live/12/12_0.m3u8';
 
-    function initPlayer() {
-        if (Hls.isSupported()) {
-            const hls = new Hls({
-                enableWorker: true,
-                lowLatencyMode: true,
-            });
-            hls.loadSource(streamUrl);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                status.innerText = "Stream Live - Playing via Proxy";
-                video.play();
-            });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) status.innerText = "Error: Stream unreachable. Check if the IP is active.";
-            });
-        } 
-        // Fallback for Safari/iOS which supports HLS natively
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = streamUrl;
-            video.addEventListener('loadedmetadata', () => {
-                status.innerText = "Stream Live (Native)";
-                video.play();
-            });
-        } else {
-            status.innerText = "Your browser does not support HLS streaming.";
-        }
-    }
-
-    initPlayer();
+  if (Hls.isSupported()) {
+    var hls = new Hls();
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+      video.play();
+    });
+  }
+  // For Safari/iOS which support HLS natively
+  else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = videoSrc;
+    video.addEventListener('loadedmetadata', function() {
+      video.play();
+    });
+  }
 </script>
 
 </body>
