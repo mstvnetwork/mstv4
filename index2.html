@@ -3,102 +3,127 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Desi IPTV Hub | Live on Netlify</title>
+    <title>Desi IPTV Hub | Pseudo-Live</title>
     <style>
-        :root { 
-            --primary-red: #ff0000; 
-            --bg-muddy: #353530; 
-            --nav-bg: #2b2b27; 
-            --text-white: #ffffff; 
+        :root { --bg-muddy: #353530; --nav-bg: #2b2b27; --text-white: #ffffff; }
+        
+        /* 1. STRIP OFF SCROLLBARS */
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            overflow: hidden; /* Removes main scrollbar */
+            background-color: var(--bg-muddy);
+            color: var(--text-white);
+            font-family: 'Segoe UI', sans-serif;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-muddy); color: var(--text-white); }
+
+        /* 2. LAYOUT STYLING */
         header { background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #444; }
-        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary-red); text-decoration: none; }
-        .nav-links { display: flex; list-style: none; gap: 20px; }
-        .nav-links li { position: relative; }
-        .nav-links a { color: #ccc; text-decoration: none; cursor: pointer; }
-        .dropdown { display: none; position: absolute; top: 100%; right: 0; background: #1a1a1a; min-width: 220px; padding: 10px 0; }
-        .nav-links li:hover .dropdown { display: block; }
-        .dropdown a { display: block; padding: 10px 20px; color: #ccc; text-decoration: none; border-bottom: 1px solid #2a2a2a; }
-        .main-content { max-width: 1100px; margin: 30px auto; padding: 0 20px; text-align: center; }
-        .player-wrapper { width: 100%; background: #000; border: 1px solid #444; border-radius: 8px; position: relative; padding-top: 56.25%; }
-        #videoPlayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        footer { background: #252521; padding: 40px 5%; margin-top: 50px; border-top: 1px solid #444; font-size: 0.85rem; color: #bbb; }
-        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #ff0000; text-decoration: none; }
+        .main-content { max-width: 1000px; margin: 20px auto; padding: 0 15px; text-align: center; }
+        .player-wrapper { width: 100%; background: #000; border-radius: 8px; position: relative; padding-top: 56.25%; border: 1px solid #444; overflow: hidden; }
+        iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        
+        /* Start Button for Autoplay Permission */
+        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn { background: #ff0000; color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <header>
-        <a href="/" class="logo">DESI IPTV HUB</a>
-        <ul class="nav-links">
-            <li>
-                <a>SERIALS ▼</a>
-                <div class="dropdown">
-                    <a onclick="manualSelect(0)">Star Plus Highlights</a>
-                    <a onclick="manualSelect(1)">Sony TV Special</a>
-                    <a onclick="manualSelect(2)">Zee TV Latest</a>
-                </div>
-            </li>
-            <li>
-                <a>LIVE CHANNELS ▼</a>
-                <div class="dropdown">
-                    <a href="https://www.hotstar.com" target="_blank">Live Star Plus</a>
-                </div>
-            </li>
-        </ul>
-    </header>
-    <div class="main-content">
-        <!-- Add this Overlay inside your .player-wrapper div -->
-<div class="player-wrapper">
-    <div id="interactionOverlay" onclick="startTV()" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-        <div style="background:#ff0000; color:white; padding:15px 30px; border-radius:50px; font-weight:bold; font-size:1.2rem;">CLICK TO START TV</div>
+
+<div id="startOverlay" onclick="syncLiveTV()">
+    <div class="btn">ENTER LIVE TV</div>
+</div>
+
+<header>
+    <a href="#" class="logo">DESI IPTV HUB</a>
+    <div style="color:#aaa; font-size: 0.8rem;">Live Sync Active</div>
+</header>
+
+<div class="main-content">
+    <div class="player-wrapper">
+        <iframe id="videoPlayer" allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" src="about:blank"></iframe>
     </div>
-    <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen" allowfullscreen src="about:blank"></iframe>
+    <div style="margin-top:15px; text-align:left;">
+        <h2 id="currentTitle">Waiting to Sync...</h2>
+        <p id="timeInfo" style="color:#888; font-size:0.9rem;"></p>
+    </div>
 </div>
 
 <script>
-    
-const playlist = [
+    const playlist = [
         { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-4yedhlkshnwv.html?autoplay=1&mute=1&rel=0" },
         { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0 "},
         { title: "Zee TV - Latest", url: "https://www.dailymotion.com&?autoplay=1&mute=1&rel=0    " }
     ];
 
-    let currentIndex = 0;
-    
-    // 2. UPDATED TIMER: 8 Minutes (480,000 ms)
-    const rotationTime = 8 * 60 * 1000; 
 
-    function startTV() {
-        const overlay = document.getElementById('interactionOverlay');
-        if (overlay) overlay.style.display = 'none';
-        
-        rotateVideo();
-        
-        // Start the 8-minute automatic loop
-        setInterval(rotateVideo, rotationTime);
+    const ROTATION_TIME = 8 * 60; // 8 minutes in seconds (480s)
+    const TOTAL_PLAYLIST_TIME = playlist.length * ROTATION_TIME;
+
+    function syncLiveTV() {
+        document.getElementById('startOverlay').style.display = 'none';
+        updatePlayer();
+        // Update exactly when the next video is scheduled
+        setInterval(updatePlayer, 1000); 
     }
 
+    function updatePlayer() {
+        const now = new Date();
+        // Global seconds passed today
+        const totalSecondsToday = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        
+        // Find where we are in the total playlist loop
+        const currentCyclePosition = totalSecondsToday % TOTAL_PLAYLIST_TIME;
+        const videoIndex = Math.floor(currentCyclePosition / ROTATION_TIME);
+        const startAtSecond = currentCyclePosition % ROTATION_TIME;
 
-    function rotateVideo() {
+        const currentVideo = playlist[videoIndex];
         const player = document.getElementById('videoPlayer');
-        const titleElem = document.getElementById('currentTitle');
         
-        // Load URL with Autoplay and Mute parameters
-        player.src = playlist[currentIndex].url;
-        titleElem.innerText = "Playing: " + playlist[currentIndex].title;
-        
-        // Move to next index for the next rotation
-        currentIndex = (currentIndex + 1) % playlist.length;
-    }
+        // Build URL with specific start time (Seek)
+        let finalUrl = "";
+        if (currentVideo.type === "vk") {
+            // VKPrime uses ?start=XX
+            finalUrl = `https://vkprime.com{currentVideo.id}.html?autoplay=1&mute=1&start=${startAtSecond}`;
+        } else if (currentVideo.type === "dm") {
+            // Dailymotion uses ?start=XX
+            finalUrl = `https://www.dailymotion.com{currentVideo.id}?autoplay=1&mute=true&start=${startAtSecond}`;
+        }
 
-    function manualSelect(index) {
-        currentIndex = index;
-        document.getElementById('interactionOverlay').style.display = 'none';
-        rotateVideo();
+        // Only refresh the iframe if it's a NEW video index
+        if (player.dataset.lastIndex != videoIndex) {
+            player.src = finalUrl;
+            player.dataset.lastIndex = videoIndex;
+            document.getElementById('currentTitle').innerText = "LIVE: " + currentVideo.title;
+        }
+
+        // Show countdown to next switch
+        const remaining = ROTATION_TIME - startAtSecond;
+        document.getElementById('timeInfo').innerText = `Next serial in: ${Math.floor(remaining / 60)}m ${remaining % 60}s`;
     }
 </script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
