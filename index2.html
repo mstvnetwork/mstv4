@@ -3,64 +3,32 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Desi IPTV Hub | Weekly Updates</title>
+    <title>Desi IPTV Hub | Global Sync</title>
     <style>
         :root { --primary-red: #ff0000; --bg-muddy: #353530; --nav-bg: #2b2b27; --text-white: #ffffff; }
-        
-        /* Reset & Strip Scrollbars */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; overflow: hidden; background-color: var(--bg-muddy); color: var(--text-white); font-family: 'Segoe UI', sans-serif; }
-
-        /* Header */
+        html, body { height: 100%; overflow: hidden; background: var(--bg-muddy); color: var(--text-white); font-family: 'Segoe UI', sans-serif; }
+        
         header { background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #444; }
         .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary-red); text-transform: uppercase; text-decoration: none; }
         
-        /* Navigation Dropdowns */
-        .nav-links { display: flex; list-style: none; gap: 20px; }
-        .nav-links li { position: relative; }
-        .nav-links a { color: #ccc; text-decoration: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; }
-        .dropdown { display: none; position: absolute; top: 100%; right: 0; background: #1a1a1a; min-width: 220px; border-radius: 4px; padding: 10px 0; z-index: 1000; }
-        .nav-links li:hover .dropdown { display: block; }
-        .dropdown a { display: block; padding: 10px 20px; color: #ccc; text-decoration: none; border-bottom: 1px solid #2a2a2a; }
-        .dropdown a:hover { background: #222; color: var(--primary-red); }
-
-        /* Player Main Area */
         .main-content { max-width: 1000px; margin: 30px auto; padding: 0 20px; text-align: center; }
         .player-wrapper { width: 100%; background: #000; border: 1px solid #444; border-radius: 8px; position: relative; padding-top: 56.25%; overflow: hidden; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
-        /* Start Overlay (Crucial for Autoplay) */
-        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .play-btn { background: var(--primary-red); color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; }
-
-        footer { background: #252521; padding: 30px 5%; border-top: 1px solid #444; position: absolute; bottom: 0; width: 100%; font-size: 0.8rem; color: #888; }
     </style>
 </head>
 <body>
 
-<div id="startOverlay" onclick="beginTV()">
-    <div class="play-btn">START WATCHING LIVE</div>
+<div id="startOverlay" onclick="startLiveSync()">
+    <div class="play-btn">JOIN LIVE STREAM</div>
 </div>
 
 <header>
-    <a href="/" class="logo">DESI IPTV HUB</a>
-    <ul class="nav-links">
-        <li>
-            <a>SERIALS ▼</a>
-            <div class="dropdown">
-                <a onclick="manualSelect(0)">Star Plus - Anupamaa</a>
-                <a onclick="manualSelect(1)">Sony TV - CID Special</a>
-                <a onclick="manualSelect(2)">Zee TV - Latest</a>
-            </div>
-        </li>
-        <li>
-            <a>LIVE CHANNELS ▼</a>
-            <div class="dropdown">
-                <a href="https://www.hotstar.com" target="_blank">Live Star Plus</a>
-                <a href="https://www.sonyliv.com" target="_blank">Live Sony TV</a>
-            </div>
-        </li>
-    </ul>
+    <a href="#" class="logo">DESI IPTV HUB</a>
+    <div id="syncStatus" style="color:#00ff00; font-size: 0.8rem;">● LIVE SYNC ACTIVE</div>
 </header>
 
 <div class="main-content">
@@ -68,51 +36,86 @@
         <iframe id="videoPlayer" allow="autoplay; fullscreen" referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
     </div>
     <div style="margin-top: 15px; text-align: left;">
-        <h2 id="currentTitle">TV Mode: Initializing...</h2>
-        <p id="statusDesc" style="color:#aaa; font-size:0.9rem;">Auto-rotating every 8 minutes.</p>
+        <h2 id="currentTitle">Synchronizing with Global Server...</h2>
+        <p id="timeRemaining" style="color:#aaa; font-size:0.9rem;"></p>
     </div>
 </div>
 
-<footer>
-    <div style="display: flex; justify-content: space-between;">
-        <div>&copy; 2026 Desi IPTV Hub</div>
-        <div>Disclaimer: Content hosted by 3rd parties.</div>
-    </div>
-</footer>
-
 <script>
-    // 1. ADD YOUR CORRECT URLS HERE
-     const playlist = [
-        { title: "Star Plus - Anupamaa", url: "https://stmify.com/live-tv/discovery/?autoplay=1&mute=1&rel=0"},
+    const playlist = [
+        { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-krk6z9lcyouj.html?autoplay=1&mute=1&rel=0"},
         { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0"},
         { title: "Zee TV - Latest", url: "https://www.dailymotion.com&?autoplay=1&mute=1&rel=0" }
     ];
 
-    let currentIndex = 0;
-    const rotationInterval = 8 * 60 * 1000; // 8 Minutes
+    const ROTATION_SECONDS = 8 * 60; // 480 seconds
+    const TOTAL_CYCLE_SECONDS = playlist.length * ROTATION_SECONDS;
 
-    function beginTV() {
+    function startLiveSync() {
         document.getElementById('startOverlay').style.display = 'none';
-        playNext();
-        setInterval(playNext, rotationInterval);
+        runSync();
+        // Check for the next video switch every second
+        setInterval(runSync, 1000);
     }
 
-    function playNext() {
+    function runSync() {
+        const now = new Date();
+        // Calculate seconds passed since midnight
+        const secondsSinceMidnight = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        
+        // Find current position in the global loop
+        const currentPosInCycle = secondsSinceMidnight % TOTAL_CYCLE_SECONDS;
+        const videoIndex = Math.floor(currentPosInCycle / ROTATION_SECONDS);
+        const seekToSecond = currentPosInCycle % ROTATION_SECONDS;
+
+        const video = playlist[videoIndex];
         const player = document.getElementById('videoPlayer');
-        const titleText = document.getElementById('currentTitle');
-        
-        player.src = playlist[currentIndex].url;
-        titleText.innerText = "NOW PLAYING: " + playlist[currentIndex].title;
-        
-        currentIndex = (currentIndex + 1) % playlist.length;
-    }
 
-    function manualSelect(index) {
-        currentIndex = index;
-        document.getElementById('startOverlay').style.display = 'none';
-        playNext();
+        // IMPORTANT: Only update player SRC if the video actually changes
+        // This prevents the "Black Screen" reload issue
+        if (player.dataset.currentIndex != videoIndex) {
+            let finalUrl = "";
+            if (video.type === "vk") {
+                // VKPrime uses ?t= for seeking
+                finalUrl = `https://vkprime.com{video.id}.html?autoplay=1&mute=1&t=${seekToSecond}`;
+            } else if (video.type === "dm") {
+                // Dailymotion uses startTime=
+                finalUrl = `https://www.dailymotion.com{video.id}?autoplay=1&mute=true&startTime=${seekToSecond}`;
+            }
+            
+            player.src = finalUrl;
+            player.dataset.currentIndex = videoIndex;
+            document.getElementById('currentTitle').innerText = "LIVE: " + video.title;
+        }
+
+        // Update countdown text
+        const remaining = ROTATION_SECONDS - seekToSecond;
+        document.getElementById('timeRemaining').innerText = `Next switch in: ${Math.floor(remaining / 60)}m ${remaining % 60}s`;
     }
 </script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
