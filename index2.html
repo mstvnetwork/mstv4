@@ -3,36 +3,23 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Desi IPTV Hub | Pseudo-Live</title>
+    <title>Desi IPTV Hub | Live Sync Fix</title>
     <style>
         :root { --bg-muddy: #353530; --nav-bg: #2b2b27; --text-white: #ffffff; }
-        
-        /* 1. STRIP OFF SCROLLBARS */
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            overflow: hidden; /* Removes main scrollbar */
-            background-color: var(--bg-muddy);
-            color: var(--text-white);
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        /* 2. LAYOUT STYLING */
+        html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg-muddy); color: var(--text-white); font-family: 'Segoe UI', sans-serif; }
         header { background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #444; }
         .logo { font-size: 1.5rem; font-weight: bold; color: #ff0000; text-decoration: none; }
         .main-content { max-width: 1000px; margin: 20px auto; padding: 0 15px; text-align: center; }
         .player-wrapper { width: 100%; background: #000; border-radius: 8px; position: relative; padding-top: 56.25%; border: 1px solid #444; overflow: hidden; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        
-        /* Start Button for Autoplay Permission */
-        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .btn { background: #ff0000; color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="startOverlay" onclick="syncLiveTV()">
-    <div class="btn">ENTER LIVE TV</div>
+    <div class="btn">CLICK TO UNMUTE & WATCH LIVE</div>
 </div>
 
 <header>
@@ -42,37 +29,46 @@
 
 <div class="main-content">
     <div class="player-wrapper">
-        <iframe id="videoPlayer" allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" src="about:blank"></iframe>
+        <iframe id="videoPlayer" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen src="about:blank"></iframe>
     </div>
     <div style="margin-top:15px; text-align:left;">
-        <h2 id="currentTitle">Waiting to Sync...</h2>
+        <h2 id="currentTitle">Synchronizing...</h2>
         <p id="timeInfo" style="color:#888; font-size:0.9rem;"></p>
     </div>
 </div>
+
 <script>
     const playlist = [
-        { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-4yedhlkshnwv.html?autoplay=1&mute=1&rel=0"},
-        { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0"},
-        { title: "Zee TV - Latest", url: "https://www.dailymotion.com&?autoplay=1&mute=1&rel=0" }
-    ];
- const ROTATION_TIME = 8 * 60; // 8 minutes (480 seconds)
+    { 
+        title: "Star Plus - Anupamaa", 
+        id: "4yedhlkshnwv", // Just the ID from the VK URL
+        type: "vk" 
+    },
+    { 
+        title: "Sony TV - CID Special", 
+        id: "xkhlust7wikn", // Just the ID from the VK URL
+        type: "vk" 
+    },
+    { 
+        title: "Zee TV - Latest", 
+        id: "x8m6m7b", // Just the ID from the Dailymotion URL
+        type: "dm" 
+    }
+];
+
+
+    const ROTATION_TIME = 8 * 60; 
     const TOTAL_PLAYLIST_TIME = playlist.length * ROTATION_TIME;
 
     function syncLiveTV() {
-        // Hide overlay and trigger first load
         document.getElementById('startOverlay').style.display = 'none';
-        
-        // Initial load
         updatePlayer();
-        
-        // Set interval to check every second for sync and countdown
         setInterval(updatePlayer, 1000); 
     }
 
     function updatePlayer() {
         const now = new Date();
         const totalSecondsToday = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-        
         const currentCyclePosition = totalSecondsToday % TOTAL_PLAYLIST_TIME;
         const videoIndex = Math.floor(currentCyclePosition / ROTATION_TIME);
         const startAtSecond = currentCyclePosition % ROTATION_TIME;
@@ -80,16 +76,13 @@
         const currentVideo = playlist[videoIndex];
         const player = document.getElementById('videoPlayer');
         
-        // Only update the SRC if the video index has changed
-        // This prevents the video from restarting every second
         if (player.dataset.lastIndex != videoIndex) {
             let finalUrl = "";
-            
             if (currentVideo.type === "vk") {
-                // VKPrime often requires t= instead of start= for seeking
-                finalUrl = `https://vkprime.com{currentVideo.id}.html?autoplay=1&mute=1&t=${startAtSecond}s`;
+                // VKPrime Fix: Use ?autoplay=1&mute=1. Some versions use 't' for start time.
+                finalUrl = `https://vkprime.com{currentVideo.id}.html?autoplay=1&mute=1&t=${startAtSecond}`;
             } else if (currentVideo.type === "dm") {
-                // Dailymotion runtime parameter is startTime
+                // Dailymotion Fix: Uses startTime (in seconds) and mute=true
                 finalUrl = `https://www.dailymotion.com{currentVideo.id}?autoplay=1&mute=true&startTime=${startAtSecond}`;
             }
 
@@ -98,34 +91,9 @@
             document.getElementById('currentTitle').innerText = "LIVE: " + currentVideo.title;
         }
 
-        // Always update countdown
         const remaining = ROTATION_TIME - startAtSecond;
-        const mins = Math.floor(remaining / 60);
-        const secs = remaining % 60;
-        document.getElementById('timeInfo').innerText = `Next serial in: ${mins}m ${secs}s`;
+        document.getElementById('timeInfo').innerText = `Syncing Global Time... Next serial in: ${Math.floor(remaining / 60)}m ${remaining % 60}s`;
     }
 </script>
-
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
