@@ -1,112 +1,54 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-  /* Container for the player */
-  .video-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 720px;
-    aspect-ratio: 16 / 9;
-    background: #000;
-    cursor: pointer;
-    overflow: hidden;
-    border-radius: 8px;
-  }
+    <style>
+        /* Container to hold the video and the blocker */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            margin: 0 auto;
+            background: #000;
+        }
 
-  /* The thumbnail image */
-  .video-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
+        /* The actual video iframe */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
 
-  /* Custom play button overlay */
-  .play-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.3);
-    transition: background 0.3s;
-  }
-
-  .video-wrapper:hover .play-overlay {
-    background: rgba(0, 0, 0, 0.5);
-  }
-
-  .play-btn {
-    width: 70px;
-    height: 70px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  }
-
-  /* CSS Triangle for Play icon */
-  .play-btn::after {
-    content: "";
-    display: block;
-    width: 0;
-    height: 0;
-    border-top: 12px solid transparent;
-    border-bottom: 12px solid transparent;
-    border-left: 20px solid #000;
-    margin-left: 5px;
-  }
-</style>
+        /* The invisible "shield" that blocks clicks on the seek bar */
+        .seek-bar-blocker {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 55px; /* Adjust height based on the player's control bar size */
+            background: rgba(255, 0, 0, 0); /* Keep at 0 to stay invisible */
+            z-index: 9999;
+            cursor: default;
+        }
+    </style>
 </head>
 <body>
 
-<!-- 1. The Video Block -->
-<!-- Change data-id to your YouTube ID -->
-<div class="video-wrapper" id="myVideo" data-id="dQw4w9WgXcQ">
-  <img src="https://img.youtube.com" alt="Thumbnail">
-  <div class="play-overlay">
-    <div class="play-btn"></div>
-  </div>
+<div class="video-wrapper">
+    <!-- Attributes removed: allowfullscreen, webkitallowfullscreen, mozallowfullscreen -->
+    <!-- Attributes added: playsinline to force inline play on mobile -->
+    <iframe 
+        src="https://vkprime.com/embed-8o62hu1w5m8k.html" 
+        playsinline="1">
+    </iframe>
+    
+    <!-- This div covers the controls to prevent jumping -->
+    <div class="seek-bar-blocker"></div>
 </div>
 
-<!-- 2. The Interaction Logic -->
-<script>
-  document.getElementById('myVideo').addEventListener('click', function() {
-    const videoId = this.getAttribute('data-id');
-    
-    // Inject the iframe ONLY after the click occurs.
-    // autoplay=1 starts the video. 
-    // mute=1 ensures autoplay works on mobile/Samsung browsers.
-    // controls=0 hides native bars to discourage browser extraction.
-    this.innerHTML = `
-      <iframe 
-        width="100%" 
-        height="100%" 
-        src="https://vkprime.com/embed-8o62hu1w5m8k.html?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0" 
-        frameborder="0" 
-        allow="autoplay; encrypted-media; picture-in-picture" 
-        allowfullscreen
-        style="position:absolute; top:0; left:0;">
-      </iframe>`;
-  });
-</script>
+<p style="text-align:center; font-family: sans-serif; color: #333;">
+    Skipping is disabled for this video.
+</p>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
