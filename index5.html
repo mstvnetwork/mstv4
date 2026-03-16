@@ -180,7 +180,8 @@ const playlist = [
 // 4. EPG FETCH & SYNC (MELBOURNE TIME)
 async function loadEPG() {
     try {
-        const res = await fetch(GITHUB_JSON_URL);
+        // 1. Double-check the URL is built correctly
+    const finalURL = "https://raw.githubusercontent.com" + Date.now();
         const data = await res.json();
         const grid = document.getElementById('epg-grid');
         
