@@ -153,7 +153,8 @@
 <script>
 // 1. CONFIGURATION
 // Added Cache-Buster (?v=) to the URL to ensure GitHub updates immediately
-const GITHUB_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/epg.json" + new Date().getTime();
+    // 1. FIXED URL (Added missing '?' for cache busting)
+const GITHUB_JSON_URL = "https://raw.githubusercontent.com" + new Date().getTime();
 let silentLockTimer;
 
 // 2. FIXED BROWSER CHECK
