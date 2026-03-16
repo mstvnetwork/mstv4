@@ -1,54 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* Container to hold the video and the blocker */
-        .video-wrapper {
+        .video-stage {
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 700px;
             aspect-ratio: 16 / 9;
-            margin: 0 auto;
+            margin: 20px auto;
             background: #000;
         }
 
-        /* The actual video iframe */
+        /* 1. The Video */
         iframe {
             width: 100%;
             height: 100%;
             border: none;
+            pointer-events: none; /* Disables all interaction in most browsers */
         }
 
-        /* The invisible "shield" that blocks clicks on the seek bar */
-        .seek-bar-blocker {
+        /* 2. The Total Shield: Blocks all touches/clicks on mobile */
+        .touch-shield {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 55px; /* Adjust height based on the player's control bar size */
-            background: rgba(255, 0, 0, 0); /* Keep at 0 to stay invisible */
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 9999;
-            cursor: default;
+            background: rgba(0,0,0,0);
+        }
+
+        /* 3. Custom Play Button: Since the real one is blocked */
+        .custom-play-btn {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 10000;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<div class="video-wrapper">
-    <!-- Attributes removed: allowfullscreen, webkitallowfullscreen, mozallowfullscreen -->
-    <!-- Attributes added: playsinline to force inline play on mobile -->
-    <iframe 
-        src="https://vkprime.com/embed-8o62hu1w5m8k.html" 
-        playsinline="1">
-    </iframe>
+<div class="video-stage">
+    <!-- Note: We added 'pointer-events: none' to the iframe style -->
+    <iframe id="myVideo" src="https://vkprime.com/embed-8o62hu1w5m8k.html"></iframe>
     
-    <!-- This div covers the controls to prevent jumping -->
-    <div class="seek-bar-blocker"></div>
+    <!-- This invisible wall stops Samsung Internet's Video Assistant from activating -->
+    <div class="touch-shield" id="shield"></div>
+
+    <!-- User must click THIS to start, as they can't reach the real button -->
+    <button class="custom-play-btn" id="playBtn">CLICK TO PLAY</button>
 </div>
 
-<p style="text-align:center; font-family: sans-serif; color: #333;">
-    Skipping is disabled for this video.
-</p>
+<script>
+    const playBtn = document.getElementById('playBtn');
+    const shield = document.getElementById('shield');
+    const video = document.getElementById('myVideo');
+
+    playBtn.addEventListener('click', function() {
+        // 1. Reload the iframe with autoplay to start the video
+        // Most third-party players start if you append ?autoplay=1 or similar
+        video.src += "?autoplay=1";
+        
+        // 2. Hide the button but KEEP THE SHIELD active
+        playBtn.style.display = 'none';
+        
+        alert("Video started. Seeking is disabled.");
+    });
+</script>
 
 </body>
 </html>
