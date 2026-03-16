@@ -3,6 +3,9 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; background: #f8f9fa; padding: 20px; }
+        #main-content { display: none; }
+        
         .video-container {
             position: relative;
             width: 100%;
@@ -10,80 +13,83 @@
             aspect-ratio: 16 / 9;
             margin: 20px auto;
             background: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* 1. THE TOTAL BLOCKER: Covers everything except the center */
-        .seek-lock {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 999;
-            /* Using a border-image or box-shadow to "punch a hole" in the middle */
-            pointer-events: auto; 
-        }
-
-        /* 2. THE MASKING TEXT: Placed exactly over the source play button */
+        /* Lock and Mask */
         .play-mask {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: #ff0000; /* Matches typical play button colors */
-            color: white;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-family: sans-serif;
-            z-index: 1001;
-            
-            /* KEY PROPERTY: This allows the click to pass through to the iframe */
-            pointer-events: none; 
-            
-            white-space: nowrap;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: #d93025; color: white;
+            padding: 14px 28px; border-radius: 24px;
+            font-weight: 500; z-index: 1001;
+            pointer-events: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .bottom-lock {
+            position: absolute; bottom: 0; left: 0;
+            width: 100%; height: 60px;
+            background: rgba(0,0,0,0); z-index: 1002;
         }
 
-        /* 3. INVISIBLE SHIELD FOR THE SEEK BAR ONLY */
-        /* This covers the bottom 20% of the video permanently */
-        .bottom-lock {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background: rgba(0,0,0,0);
-            z-index: 1002;
-            pointer-events: auto;
-        }
+        /* Error UI */
+        #error-message { max-width: 500px; margin: 50px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn-download { display: inline-block; margin-top: 15px; padding: 12px 24px; background: #1a73e8; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; }
+        .btn-download:hover { background: #1765cc; }
     </style>
 </head>
 <body>
 
-<div class="video-container">
-    <!-- The Source Video -->
-    <iframe src="https://vkprime.com/embed-8o62hu1w5m8k.html"></iframe>
+    <!-- Access Restricted Message -->
+    <div id="error-message">
+        <h2 style="color: #d93025;">Unsupported Browser</h2>
+        <p>For security and to ensure all video features work correctly, this content is only available on <strong>Google Chrome</strong>.</p>
+        
+        <p>Please download or switch to Chrome to continue:</p>
+        
+        <a href="https://www.google.com/chrome/" class="btn-download" target="_blank">Download Chrome for Desktop</a>
+        <br>
+        <a href="https://play.google.com/store/apps/details?id=com.android.chrome" class="btn-download" style="background: #34a853;" target="_blank">Get Chrome on Play Store</a>
+    </div>
 
-    <!-- This text covers the real button but lets the click "pass through" -->
-    <div class="play-mask" id="mask">CLICK TO START WATCHING</div>
+    <!-- Protected Content -->
+    <div id="main-content">
+        <div class="video-container">
+            <iframe src="https://vkprime.com/embed-8o62hu1w5m8k.html"></iframe>
+            <div class="play-mask" id="mask">CLICK TO PLAY</div>
+            <div class="bottom-lock"></div>
+        </div>
+        <p style="color: #666; font-size: 0.9em;">Forward seeking is disabled.</p>
+    </div>
 
-    <!-- This invisible wall stays on the bottom to block the seek bar forever -->
-    <div class="bottom-lock"></div>
-</div>
+    <script>
+        function isStrictChrome() {
+            const ua = window.navigator.userAgent;
+            const vendor = window.navigator.vendor;
+            
+            // Checks for Chrome's unique vendor string and excludes known Chromium variations
+            const isChromium = window.chrome !== null && typeof window.chrome !== "undefined";
+            const isGoogle = vendor === "Google Inc.";
+            const isEdge = ua.indexOf("Edg") > -1;
+            const isSamsung = ua.indexOf("SamsungBrowser") > -1;
+            const isOpera = ua.indexOf("OPR") > -1 || ua.indexOf("Opera") > -1;
 
-<script>
-    // Optional: Hide the red "Mask" after the first click so it doesn't stay on screen
-    document.querySelector('.video-container').addEventListener('click', function() {
-        setTimeout(() => {
-            document.getElementById('mask').style.display = 'none';
-        }, 500); 
-    });
-</script>
+            return isChromium && isGoogle && !isEdge && !isSamsung && !isOpera;
+        }
 
+        if (isStrictChrome()) {
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        // Hide play mask after first interaction
+        document.querySelector('.video-container').addEventListener('click', function() {
+            setTimeout(() => {
+                const mask = document.getElementById('mask');
+                if (mask) mask.style.display = 'none';
+            }, 800);
+        });
+    </script>
 </body>
 </html>
