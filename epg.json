@@ -1,5 +1,4 @@
 [
-  { "time": "03:19 AM", "program": "Indian Idol", "channel": "Star Plus" },
-  { "time": "03:22 AM", "program": "Mtv", "channel": "Sony TV" }
-  
+  { "time": "03:25 AM", "program": "Indian Idol", "channel": "Star Plus", "logo": "https://raw.githubusercontent.com" },
+  { "time": "03:27 AM", "program": "Mtv", "channel": "MTV India", "logo": "https://raw.githubusercontent.com" }
 ]
