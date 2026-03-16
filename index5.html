@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .video-stage {
+        .video-container {
             position: relative;
             width: 100%;
             max-width: 700px;
@@ -12,66 +12,76 @@
             background: #000;
         }
 
-        /* 1. The Video */
         iframe {
             width: 100%;
             height: 100%;
             border: none;
-            pointer-events: none; /* Disables all interaction in most browsers */
         }
 
-        /* 2. The Total Shield: Blocks all touches/clicks on mobile */
-        .touch-shield {
+        /* 1. THE TOTAL BLOCKER: Covers everything except the center */
+        .seek-lock {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 9999;
-            background: rgba(0,0,0,0);
+            z-index: 999;
+            /* Using a border-image or box-shadow to "punch a hole" in the middle */
+            pointer-events: auto; 
         }
 
-        /* 3. Custom Play Button: Since the real one is blocked */
-        .custom-play-btn {
+        /* 2. THE MASKING TEXT: Placed exactly over the source play button */
+        .play-mask {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
+            background: #ff0000; /* Matches typical play button colors */
+            color: white;
             padding: 15px 30px;
-            background: #ff0000;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-weight: bold;
-            z-index: 10000;
-            cursor: pointer;
+            font-family: sans-serif;
+            z-index: 1001;
+            
+            /* KEY PROPERTY: This allows the click to pass through to the iframe */
+            pointer-events: none; 
+            
+            white-space: nowrap;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* 3. INVISIBLE SHIELD FOR THE SEEK BAR ONLY */
+        /* This covers the bottom 20% of the video permanently */
+        .bottom-lock {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(0,0,0,0);
+            z-index: 1002;
+            pointer-events: auto;
         }
     </style>
 </head>
 <body>
 
-<div class="video-stage">
-    <!-- Note: We added 'pointer-events: none' to the iframe style -->
-    <iframe id="myVideo" src="https://vkprime.com/embed-8o62hu1w5m8k.html"></iframe>
-    
-    <!-- This invisible wall stops Samsung Internet's Video Assistant from activating -->
-    <div class="touch-shield" id="shield"></div>
+<div class="video-container">
+    <!-- The Source Video -->
+    <iframe src="https://vkprime.com/embed-8o62hu1w5m8k.html"></iframe>
 
-    <!-- User must click THIS to start, as they can't reach the real button -->
-    <button class="custom-play-btn" id="playBtn">CLICK TO PLAY</button>
+    <!-- This text covers the real button but lets the click "pass through" -->
+    <div class="play-mask" id="mask">CLICK TO START WATCHING</div>
+
+    <!-- This invisible wall stays on the bottom to block the seek bar forever -->
+    <div class="bottom-lock"></div>
 </div>
 
 <script>
-    const playBtn = document.getElementById('playBtn');
-    const shield = document.getElementById('shield');
-    const video = document.getElementById('myVideo');
-
-    playBtn.addEventListener('click', function() {
-        // 1. Reload the iframe with autoplay to start the video
-        // Most third-party players start if you append ?autoplay=1 or similar
-        video.src += "?autoplay=1";
-        
-        // 2. Hide the button but KEEP THE SHIELD active
-        playBtn.style.display = 'none';
-        
-        alert("Video started. Seeking is disabled.");
+    // Optional: Hide the red "Mask" after the first click so it doesn't stay on screen
+    document.querySelector('.video-container').addEventListener('click', function() {
+        setTimeout(() => {
+            document.getElementById('mask').style.display = 'none';
+        }, 500); 
     });
 </script>
 
