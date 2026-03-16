@@ -151,9 +151,7 @@
     <!-- SCRIPT SECTION FOLLOWS HERE -->
 
 <script>
-// 1. CONFIGURATION
-// Added Cache-Buster (?v=) to the URL to ensure GitHub updates immediately
-    // 1. FIXED URL (Added missing '?' for cache busting)
+// FIXED: Added the '?' before 'v='
 const GITHUB_JSON_URL = "https://raw.githubusercontent.com" + new Date().getTime();
 
 let silentLockTimer;
