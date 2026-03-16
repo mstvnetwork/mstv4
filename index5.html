@@ -1,76 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Chrome Only Player</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; background: #f8f9fa; padding: 20px; }
-        #main-content { display: none; }
+        :root { 
+            --primary-red: #ff0000; 
+            --bg-muddy: #353530; 
+            --nav-bg: #2b2b27; 
+            --text-white: #ffffff; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-muddy); color: var(--text-white); }
         
-        .video-container {
-            position: relative;
+        .main-content { max-width: 1100px; margin: 30px auto; padding: 0 20px; text-align: center; }
+        
+        /* THE PLAYER WRAPPER */
+        .player-wrapper {
             width: 100%;
-            max-width: 700px;
-            aspect-ratio: 16 / 9;
-            margin: 20px auto;
             background: #000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        iframe { width: 100%; height: 100%; border: none; }
-
-        /* Lock and Mask */
-        .play-mask {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #d93025; color: white;
-            padding: 14px 28px; border-radius: 24px;
-            font-weight: 500; z-index: 1001;
-            pointer-events: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .bottom-lock {
-            position: absolute; bottom: 0; left: 0;
-            width: 100%; height: 60px;
-            background: rgba(0,0,0,0); z-index: 1002;
+            border-radius: 6px;
+            border: 1px solid #555;
+            position: relative;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
         }
 
-        /* Error UI */
-        #error-message { max-width: 500px; margin: 50px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .btn-download { display: inline-block; margin-top: 15px; padding: 12px 24px; background: #1a73e8; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; }
-        .btn-download:hover { background: #1765cc; }
+        #videoPlayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* THE SEEK BAR BLOCKER (Invisible Wall) */
+        .seek-lock {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px; /* Adjust height to match the specific player's seek bar */
+            background: rgba(0,0,0,0);
+            z-index: 9999;
+            pointer-events: auto; /* This captures clicks so they don't hit the seek bar */
+        }
+
+        /* BROWSER RESTRICTION UI */
+        #chrome-only-content { display: none; }
+        #browser-error { 
+            padding: 50px 20px; 
+            background: #1a1a1a; 
+            border-radius: 8px; 
+            margin-top: 50px; 
+            border: 1px solid #444;
+        }
+        .error-title { color: var(--primary-red); font-size: 1.5rem; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-
-    <!-- Access Restricted Message -->
-    <div id="error-message">
-        <h2 style="color: #d93025;">Unsupported Browser</h2>
-        <p>For security and to ensure all video features work correctly, this content is only available on <strong>Google Chrome</strong>.</p>
-        
-        <p>Please download or switch to Chrome to continue:</p>
-        
-        <a href="https://www.google.com/chrome/" class="btn-download" target="_blank">Download Chrome for Desktop</a>
-        <br>
-        <a href="https://play.google.com/store/apps/details?id=com.android.chrome" class="btn-download" style="background: #34a853;" target="_blank">Get Chrome on Play Store</a>
-    </div>
-
-    <!-- Protected Content -->
-    <div id="main-content">
-        <div class="video-container">
-            <iframe src="https://vkprime.com/embed-8o62hu1w5m8k.html"></iframe>
-            <div class="play-mask" id="mask">CLICK TO PLAY</div>
-            <div class="bottom-lock"></div>
+    
+    <div class="main-content">
+        <!-- 1. Error Message (Shown by default) -->
+        <div id="browser-error">
+            <h2 class="error-title">Access Restricted</h2>
+            <p>This video content is exclusively available on <strong>Google Chrome</strong>.</p>
+            <p style="margin-top:10px; color:#aaa;">Please open this page in the Chrome browser to continue.</p>
         </div>
-        <p style="color: #666; font-size: 0.9em;">Forward seeking is disabled.</p>
+
+        <!-- 2. Protected Content (Hidden by default) -->
+        <div id="chrome-only-content">
+            <h3 id="currentTitle" style="margin-bottom: 15px; color: #ccc;">Loading...</h3>
+            <div class="player-wrapper">
+                <!-- Removed allowfullscreen to prevent bypass via full-screen mode -->
+                <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
+                
+                <!-- The Invisible Blocker -->
+                <div class="seek-lock"></div>
+            </div>
+            <p style="margin-top:10px; font-size: 0.8rem; color: #888;">Note: Forward seeking is disabled.</p>
+        </div>
     </div>
 
     <script>
+        // --- BROWSER DETECTION LOGIC ---
         function isStrictChrome() {
             const ua = window.navigator.userAgent;
             const vendor = window.navigator.vendor;
-            
-            // Checks for Chrome's unique vendor string and excludes known Chromium variations
             const isChromium = window.chrome !== null && typeof window.chrome !== "undefined";
             const isGoogle = vendor === "Google Inc.";
+            
+            // Exclude common Chromium browsers that aren't "Pure" Chrome
             const isEdge = ua.indexOf("Edg") > -1;
             const isSamsung = ua.indexOf("SamsungBrowser") > -1;
             const isOpera = ua.indexOf("OPR") > -1 || ua.indexOf("Opera") > -1;
@@ -78,18 +101,38 @@
             return isChromium && isGoogle && !isEdge && !isSamsung && !isOpera;
         }
 
-        if (isStrictChrome()) {
-            document.getElementById('main-content').style.display = 'block';
-            document.getElementById('error-message').style.display = 'none';
+        // --- PLAYLIST & ROTATION LOGIC ---
+        const playlist = [
+            { title: "Star Plus - Anupamaa", url: "https://vkprime.com/embed-krk6z9lcyouj.html?autoplay=1&mute=1&rel=0"},
+            { title: "Sony TV - CID Special", url: "https://vkprime.com/embed-xkhlust7wikn.html?autoplay=1&mute=1&rel=0"},
+            { title: "Zee TV - Latest", url: "https://www.dailymotion.com" }
+        ];
+
+        let currentIndex = 0;
+
+        function rotateVideo() {
+            const player = document.getElementById('videoPlayer');
+            if (player) {
+                player.src = playlist[currentIndex].url;
+                document.getElementById('currentTitle').innerText = "Playing: " + playlist[currentIndex].title;
+                currentIndex = (currentIndex + 1) % playlist.length;
+            }
         }
 
-        // Hide play mask after first interaction
-        document.querySelector('.video-container').addEventListener('click', function() {
-            setTimeout(() => {
-                const mask = document.getElementById('mask');
-                if (mask) mask.style.display = 'none';
-            }, 800);
-        });
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            if (isStrictChrome()) {
+                // User is on Chrome: Show content and start player
+                document.getElementById('chrome-only-content').style.display = 'block';
+                document.getElementById('browser-error').style.display = 'none';
+                
+                rotateVideo();
+                setInterval(rotateVideo, 1200000); // 20 minute rotation
+            } else {
+                // Not on Chrome: Keep error message visible
+                console.log("Access denied: Not Google Chrome.");
+            }
+        };
     </script>
 </body>
 </html>
