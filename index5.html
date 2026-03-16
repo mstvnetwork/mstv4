@@ -155,6 +155,7 @@
 // Added Cache-Buster (?v=) to the URL to ensure GitHub updates immediately
     // 1. FIXED URL (Added missing '?' for cache busting)
 const GITHUB_JSON_URL = "https://raw.githubusercontent.com" + new Date().getTime();
+
 let silentLockTimer;
 
 // 2. FIXED BROWSER CHECK
