@@ -1,4 +1,8 @@
-[
-  { "time": "12:31 PM", "program": "Indian Idol", "channel": "Star Plus", "logo": "https://raw.githubusercontent.com" },
-  { "time": "12:33 PM", "program": "Mtv", "channel": "MTV India", "logo": "https://raw.githubusercontent.com" }
-]
+{
+  "channel": "Apna TV 24/7",
+  "schedule": [
+    { "title": "Morning Show", "start": "2026-03-17T02:30:00Z", "end": "2026-03-17T03:30:00Z" },
+    { "title": "Indian Idol", "start": "2026-03-17T03:30:00Z", "end": "2026-03-17T05:00:00Z" },
+    { "title": "MTV Music Hour", "start": "2026-03-17T05:00:00Z", "end": "2026-03-17T06:00:00Z" }
+  ]
+}
