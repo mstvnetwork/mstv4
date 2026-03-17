@@ -149,8 +149,8 @@
     allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
     referrerpolicy="no-referrer"
     sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+    style="width:100%; height:100%; border:none;"
 ></iframe>
-
     <!-- TICKER -->
     <div id="epg-ticker">
         <div id="epg-track"></div>
@@ -255,19 +255,11 @@ function syncVideo(liveTitle) {
     if (liveVideo && player.src !== liveVideo.url) {
         player.src = liveVideo.url;
 
-        // Reset lock shields (optional, keep if you still use them)
-        const silentShield = document.getElementById('silent-touch-shield');
-        const lockIcon = document.getElementById('lock-status-icon');
-
-        if (silentShield) silentShield.style.display = 'none';
-        if (lockIcon) lockIcon.style.display = 'none';
-
-        clearTimeout(silentLockTimer);
-
-        silentLockTimer = setTimeout(() => {
-            if (silentShield) silentShield.style.display = 'block';
-            if (lockIcon) lockIcon.style.display = 'block';
-        }, 60000);
+        // 🔁 auto-retry if player fails
+        setTimeout(() => {
+            if (!player.contentWindow) return;
+            player.src = liveVideo.url;
+        }, 5000);
     }
 }
 
