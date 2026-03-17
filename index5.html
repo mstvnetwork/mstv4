@@ -8,27 +8,49 @@
 <style>
 :root {
     --primary-red: #ff0000;
-    --bg-muddy: #1a1a1a;
+    --bg-muddy: #1a1a1a; /* Dark Cinema background */
     --live-green: #00ff00;
 }
+
+/* --- RESET & BASE --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* prevent scrollbars in iframe */
+}
 body {  
     font-family: 'Segoe UI', sans-serif;  
     background-color: var(--bg-muddy);
     color: #fff;  
     overflow-x: hidden;  
 }
-.main-content { max-width: 1200px; margin: 0 auto; padding: 20px; text-align: center; }
-.player-wrapper {
+
+/* --- CINEMA PLAYER --- */
+.main-content { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 20px; 
+    text-align: center; 
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.player-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16 / 9; /* maintain 16:9 */
     background: #000;
     border-radius: 8px;  
     border: 1px solid #333;
-    position: relative;
-    padding-top: 56.25%; /* 16:9 */
-    height: 0;
-    overflow: hidden;  
+    overflow: hidden;
     box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    margin-bottom: 30px;
 }
 #videoPlayer {
     position: absolute;  
@@ -37,8 +59,10 @@ body {
     width: 100%;  
     height: 100%;
     border: none;
-    z-index: 1;
+    display: block; /* remove iframe inline spacing */
 }
+
+/* --- SHIELDS --- */
 .universal-seek-shield, #silent-touch-shield {
     position: absolute;  
     width: 100%;  
@@ -47,6 +71,8 @@ body {
 }
 .universal-seek-shield { bottom: 0; height: 65px; z-index: 2147483647 !important; }
 #silent-touch-shield { display: none; top: 0; height: calc(100% - 65px); z-index: 2147483646 !important; }
+
+/* --- LOCK ICON --- */
 #lock-status-icon {
     display: none;  
     position: absolute;  
@@ -60,17 +86,42 @@ body {
     animation: pulse-lock 2s infinite;
 }
 @keyframes pulse-lock { 0%,100%{opacity:0.5;}50%{opacity:1;} }
-.epg-section { margin-top: 30px; text-align: left; }
+
+/* --- EPG SECTION --- */
+.epg-section { margin-top: 30px; text-align: left; width: 100%; }
 .epg-scroll-wrapper { width: 100%; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
 .epg-container { display: flex; gap: 15px; }
-.epg-card { flex: 0 0 260px; background: #222; border: 1px solid #444; border-radius: 8px; padding: 15px; position: relative; }
+.epg-card { 
+    flex: 0 0 260px; 
+    background: #222; 
+    border: 1px solid #444;
+    border-radius: 8px; 
+    padding: 15px; 
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+}
+.epg-card:hover { transform: translateY(-3px); border-color: var(--primary-red); }
 .epg-card.is-live { border-color: var(--live-green); }
 .channel-logo { height: 30px; margin-bottom: 10px; display: block; object-fit: contain; }
 .progress-bg { width: 100%; height: 4px; background: #444; margin-top: 10px; border-radius: 5px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--primary-red); transition: width 0.5s; }
-#currentTitle { margin-bottom: 15px; color: #888; }
-#chrome-only-content { display: none; }
+
+/* --- HEADER --- */
+#currentTitle { margin-bottom: 15px; color: #888; font-size: 1.1rem; }
+
+/* --- UI CONTROLS --- */
+#chrome-only-content { display: none; width: 100%; height: 100%; }
 #browser-error { padding: 100px 20px; text-align: center; }
+
+/* --- RESPONSIVE --- */
+@media(max-width: 768px){
+    .epg-card { flex: 0 0 45%; }
+    .channel-logo { height: 25px; }
+}
+@media(max-width: 480px){
+    .epg-card { flex: 0 0 80%; }
+    #currentTitle { font-size: 1rem; }
+}
 </style>
 </head>
 <body>
