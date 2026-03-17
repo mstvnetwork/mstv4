@@ -4,39 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>MSNET IPTV Cinema Mode - Locked</title>
-
 <style>
 :root {
-    --bg-muddy: #1a1a1a;
+    --bg-black: #000000;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-muddy); color: #fff; overflow: hidden; }
 
-.main-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
+/* Fill the entire browser window */
+html, body { 
+    height: 100%; 
     width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+    background-color: var(--bg-black); 
+    overflow: hidden; 
 }
 
+/* The wrapper now fills the whole screen */
 .player-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 1280px;
-    aspect-ratio: 16 / 9;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: #000;
-    border-radius: 8px;
-    border: 1px solid #333;
-    overflow: hidden;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
-    margin-bottom: 30px;
+    z-index: 1;
 }
 
 #videoPlayer {
@@ -46,15 +37,9 @@ html, body { height: 100%; font-family: 'Segoe UI', sans-serif; background-color
     width: 100%;
     height: 100%;
     border: none;
-    display: block;
 }
 
-/* 
-   The critical fix: 
-   z-index must be higher than the iframe. 
-   pointer-events: none allows clicks to pass through.
-   pointer-events: auto blocks all clicks.
-*/
+/* The Lock Overlay - remains invisible but blocks clicks */
 #silentLockOverlay {
     position: absolute;
     top: 0;
@@ -63,29 +48,35 @@ html, body { height: 100%; font-family: 'Segoe UI', sans-serif; background-color
     height: 100%;
     z-index: 9999; 
     pointer-events: none; 
-    background: rgba(0, 0, 0, 0); /* invisible */
-    transition: background 0.3s ease;
+    background: rgba(0, 0, 0, 0);
+}
+
+/* Hide everything else */
+#currentTitle, #lockStatus {
+    display: none;
 }
 </style>
 </head>
 <body>
 
-<div id="browser-error" style="display:none; padding: 50px; text-align: center;">
+<div id="browser-error" style="display:none; color: white; padding: 20px;">
     <h2>Chrome Required</h2>
-    <p>This Cinema experience is only available on <strong>Google Chrome</strong>.</p>
 </div>
 
-<div id="chrome-only-content" class="main-content" style="display:none;">
-    <h2 id="currentTitle" style="margin-bottom: 15px;">Cinema Mode Initializing...</h2>
+<div id="chrome-only-content" style="display:none;">
+    <!-- Hidden titles for logic purposes, but not visible to user -->
+    <h2 id="currentTitle" style="display:none;"></h2>
     
     <div class="player-wrapper">
         <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" playsinline></iframe>
-        <!-- This div sits ON TOP of the video -->
         <div id="silentLockOverlay"></div>
     </div>
-    <p id="lockStatus" style="font-size: 0.8em; color: #666;">Interaction: Enabled</p>
+    
+    <p id="lockStatus" style="display:none;"></p>
 </div>
 
+
+    
 <script>
 const GITHUB_JSON_URL = "https://raw.githubusercontent.com" + Date.now();
 const playlist = [
