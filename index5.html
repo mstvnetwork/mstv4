@@ -185,6 +185,12 @@ function syncVideo(liveTitle){
     const player = document.getElementById('videoPlayer');
     const titleHeader = document.getElementById('currentTitle');
     const liveVideo = playlist.find(v=>v.title===liveTitle);
+    if (!liveTitle) {
+    // pick next in playlist cyclically
+    const currentIndex = playlist.findIndex(v => v.url === player.src);
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    liveTitle = playlist[nextIndex].title;
+    }
     if(liveVideo && (!player.src || !titleHeader.innerText.includes(liveTitle))){
         player.src = liveVideo.url;
         if(MODE==="private") titleHeader.innerText = "Playing: "+liveVideo.title;
