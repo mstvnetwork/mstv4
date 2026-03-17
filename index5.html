@@ -86,20 +86,21 @@ function isStrictChrome() {
 }
 
 async function loadEPG() {
-    // 2. DYNAMIC CACHE BUSTING: Appends a unique timestamp to every request URL
-    const freshUrl = BASE_JSON_URL + "?nocache=" + new Date().getTime();
+    // 1. Keep the dynamic URL for cache-busting
+    const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
     
     try {
-        // 3. FETCH NO-CACHE: Extra instruction to ignore the browser cache
-        const res = await fetch(freshUrl, { 
-            cache: "no-store",
-            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-        });
+        // 2. Remove 'headers' and 'cache: no-store' to keep the request "simple"
+        // This prevents the browser from sending a CORS pre-flight OPTIONS request.
+        const res = await fetch(freshUrl);
+        
+        if (!res.ok) throw new Error("Network response was not ok");
         
         const data = await res.json();
         const now = new Date();
         let currentProgramTitle = null;
 
+        // Same logic as before...
         for (let i = 0; i < data.schedule.length; i++) {
             const start = new Date(data.schedule[i].start);
             const end = new Date(data.schedule[i].end);
@@ -110,19 +111,17 @@ async function loadEPG() {
         }
 
         if(!currentProgramTitle) {
-            const player = document.getElementById('videoPlayer');
-            const currentIndex = playlist.findIndex(v => v.url === player.src);
-            const nextIndex = (currentIndex + 1) % playlist.length;
-            currentProgramTitle = playlist[nextIndex].title;
+            rotateLocal();
+        } else {
+            syncVideo(currentProgramTitle);
         }
 
-        syncVideo(currentProgramTitle);
-
     } catch(e) {
-        console.error("Fetch failed, rotating locally:", e);
+        console.error("CORS or Fetch error, rotating locally:", e);
         rotateLocal();
     }
 }
+
 
 function rotateLocal() {
     const player = document.getElementById('videoPlayer');
