@@ -151,8 +151,7 @@
     <!-- SCRIPT SECTION FOLLOWS HERE -->
 
 <script>
-// FIXED: Added the '?' before 'v='
-const GITHUB_JSON_URL = "https://raw.githubusercontent.com" + new Date().getTime();
+const GITHUB_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/epg.json?v=" + Date.now();
 
 let silentLockTimer;
 
@@ -180,7 +179,7 @@ const playlist = [
 // 4. EPG FETCH & SYNC (MELBOURNE TIME)
 async function loadEPG() {
     try {
-        const finalURL = GITHUB_JSON_URL;
+        const res = await fetch(GITHUB_JSON_URL);
 
         const res = await fetch(finalURL);
         const data = await res.json();
