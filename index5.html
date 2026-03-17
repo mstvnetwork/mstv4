@@ -152,21 +152,22 @@ const playlist = [
 // ----------------------
 // 4. LOAD EPG GRID
 // ----------------------
-async function loadEPG() {
+                    async function loadEPG() {
     try {
         const res = await fetch(GITHUB_JSON_URL);
         const data = await res.json();
 
         const grid = document.getElementById('epg-grid');
-        const melbourneTime = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
-        const now = new Date(melbourneTime);
+
+        // Force Melbourne timezone
+        const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" }));
         const currentTotalMin = now.getHours() * 60 + now.getMinutes();
 
         let liveTitle = "";
 
         grid.innerHTML = data.map((item, idx) => {
 
-            const parse = (t) => {
+            const parseTime = (t) => {
                 let [time, mod] = t.split(' ');
                 let [h, m] = time.split(':').map(Number);
                 if (mod === 'PM' && h < 12) h += 12;
@@ -174,16 +175,13 @@ async function loadEPG() {
                 return h * 60 + m;
             };
 
-            const start = parse(item.time);
-            const end = data[idx + 1] ? parse(data[idx + 1].time) : start + 60;
+            const start = parseTime(item.time);
+            const end = data[idx + 1] ? parseTime(data[idx + 1].time) : start + 60;
             const isLive = currentTotalMin >= start && currentTotalMin < end;
 
             if (isLive) liveTitle = item.program;
 
-            let progPercent = 0;
-            if (isLive) {
-                progPercent = Math.floor(((currentTotalMin - start) / (end - start)) * 100);
-            }
+            let progPercent = isLive ? Math.floor(((currentTotalMin - start) / (end - start)) * 100) : 0;
 
             return `
                 <div class="epg-card ${isLive ? 'is-live' : ''}" id="${isLive ? 'liveCard' : ''}">
@@ -198,17 +196,19 @@ async function loadEPG() {
                 </div>`;
         }).join('');
 
-        // Auto-scroll to Live Card
+        // Scroll to live program card
         const target = document.getElementById('liveCard');
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
+        if (target) target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+        // Force fallback: if no live program found, pick first channel
+        if (!liveTitle && playlist.length) liveTitle = playlist[0].title;
 
         syncVideo(liveTitle);
+
     } catch (e) {
         console.error("EPG Error:", e);
     }
-}
+                    }
 
 // ----------------------
 // 5. PLAYER SYNC
