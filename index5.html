@@ -178,15 +178,13 @@ const playlist = [
 
 // 4. EPG FETCH & SYNC (MELBOURNE TIME)
 async function loadEPG() {
+
     try {
         const res = await fetch(GITHUB_JSON_URL);
-
-        const res = await fetch(finalURL);
         const data = await res.json();
 
         const grid = document.getElementById('epg-grid');
 
-        // Melbourne Time
         const melbourneTime = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
         const now = new Date(melbourneTime);
         const currentTotalMin = now.getHours() * 60 + now.getMinutes();
@@ -228,7 +226,6 @@ async function loadEPG() {
                 </div>`;
         }).join('');
 
-        // Scroll to live
         const target = document.getElementById('liveCard');
         if (target) {
             target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -239,7 +236,7 @@ async function loadEPG() {
     } catch (e) {
         console.error("EPG Error:", e);
     }
-    }
+}
 
 // 5. PLAYER SYNC LOGIC
 function syncVideo(liveTitle) {
