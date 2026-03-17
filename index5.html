@@ -175,64 +175,66 @@ const playlist = [
     }
 ];
 
-// 4. EPG FETCH & SYNC (MELBOURNE TIME)
 async function loadEPG() {
-    try {
-        // 1. Double-check the URL is built correctly
-    
-        const res = await fetch(GITHUB_JSON_URL);
-        const grid = document.getElementById('epg-grid');
-        
-        // Force Melbourne Time Zone
-        const melbourneTime = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
-        const now = new Date(melbourneTime);
-        const currentTotalMin = now.getHours() * 60 + now.getMinutes();
-        let liveTitle = "";
+    const res = await fetch(GITHUB_JSON_URL);   
+        const data = await res.json
 
-        grid.innerHTML = data.map((item, idx) => {
-            const parse = (t) => {
-                let [time, mod] = t.split(' ');
-                let [h, m] = time.split(':').map(Number);
-                if (mod === 'PM' && h < 12) h += 12;
-                if (mod === 'AM' && h === 12) h = 0;
-                return h * 60 + m;
-            };
-            
-            const start = parse(item.time);
-            const end = data[idx + 1] ? parse(data[idx + 1].time) : start + 60;
-            const isLive = currentTotalMin >= start && currentTotalMin < end;
-            
-            if (isLive) liveTitle = item.program;
+        const grid = document.getElementById('epg-grid');
 
-            let progPercent = 0;
-            if (isLive) {
-                progPercent = Math.floor(((currentTotalMin - start) / (end - start)) * 100);
-            }
+        // Melbourne Time
+        const melbourneTime = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
+        const now = new Date(melbourneTime);
+        const currentTotalMin = now.getHours() * 60 + now.getMinutes();
 
-            return `
-                <div class="epg-card ${isLive ? 'is-live' : ''}" id="${isLive ? 'liveCard' : ''}">
-                    <div class="epg-header">
-                        <img src="${item.logo}" class="channel-logo">
-                        ${isLive ? '<div class="live-indicator">LIVE</div>' : ''}
-                    </div>
-                    <div class="epg-time">${item.time}</div>
-                    <div class="epg-program">${item.program}</div>
-                    <div style="color:#666; font-size:0.75rem;">${item.channel}</div>
-                    ${isLive ? `<div class="progress-bg"><div class="progress-fill" style="width:${progPercent}%"></div></div>` : ''}
-                </div>`;
-        }).join('');
+        let liveTitle = "";
 
-        // Auto-scroll to Live Card
-        const target = document.getElementById('liveCard');
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
+        grid.innerHTML = data.map((item, idx) => {
 
-        syncVideo(liveTitle);
-    } catch (e) {
-        console.error("EPG Error:", e);
-    }
-}
+            const parse = (t) => {
+                let [time, mod] = t.split(' ');
+                let [h, m] = time.split(':').map(Number);
+                if (mod === 'PM' && h < 12) h += 12;
+                if (mod === 'AM' && h === 12) h = 0;
+                return h * 60 + m;
+            };
+
+            const start = parse(item.time);
+            const end = data[idx + 1] ? parse(data[idx + 1].time) : start + 60;
+
+            const isLive = currentTotalMin >= start && currentTotalMin < end;
+
+            if (isLive) liveTitle = item.program;
+
+            let progPercent = 0;
+            if (isLive) {
+                progPercent = Math.floor(((currentTotalMin - start) / (end - start)) * 100);
+            }
+
+            return `
+                <div class="epg-card ${isLive ? 'is-live' : ''}" id="${isLive ? 'liveCard' : ''}">
+                    <div class="epg-header">
+                        <img src="${item.logo}" class="channel-logo">
+                        ${isLive ? '<div class="live-indicator">LIVE</div>' : ''}
+                    </div>
+                    <div class="epg-time">${item.time}</div>
+                    <div class="epg-program">${item.program}</div>
+                    <div style="color:#666; font-size:0.75rem;">${item.channel}</div>
+                    ${isLive ? `<div class="progress-bg"><div class="progress-fill" style="width:${progPercent}%"></div></div>` : ''}
+                </div>`;
+        }).join('');
+
+        // Scroll to live
+        const target = document.getElementById('liveCard');
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        syncVideo(liveTitle);
+
+    } catch (e) {
+        console.error("EPG Error:", e);
+    }
+  }
 
 // 5. PLAYER SYNC LOGIC
 function syncVideo(liveTitle) {
