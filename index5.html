@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MSNET IPTV Cinema Mode</title>
+<title>MSNET IPTV Cinema Mode - Locked</title>
 
 <style>
 :root {
-    --primary-red: #ff0000;
     --bg-muddy: #1a1a1a;
-    --live-green: #00ff00;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,54 +49,54 @@ html, body { height: 100%; font-family: 'Segoe UI', sans-serif; background-color
     display: block;
 }
 
-#lock-status-icon {
-    display: none;
+/* 
+   The critical fix: 
+   z-index must be higher than the iframe. 
+   pointer-events: none allows clicks to pass through.
+   pointer-events: auto blocks all clicks.
+*/
+#silentLockOverlay {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 2147483647;
-    background: rgba(0,0,0,0.7);
-    padding: 8px;
-    border-radius: 50%;
-    border: 1px solid red;
-    animation: pulse-lock 2s infinite;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999; 
+    pointer-events: none; 
+    background: rgba(0, 0, 0, 0); /* invisible */
+    transition: background 0.3s ease;
 }
-
-@keyframes pulse-lock { 0%,100%{opacity:0.5;}50%{opacity:1;} }
 </style>
 </head>
 <body>
 
-<div id="browser-error" style="display:none;">
+<div id="browser-error" style="display:none; padding: 50px; text-align: center;">
     <h2>Chrome Required</h2>
     <p>This Cinema experience is only available on <strong>Google Chrome</strong>.</p>
 </div>
 
 <div id="chrome-only-content" class="main-content" style="display:none;">
-    <h2 id="currentTitle">Cinema Mode Initializing...</h2>
+    <h2 id="currentTitle" style="margin-bottom: 15px;">Cinema Mode Initializing...</h2>
     
     <div class="player-wrapper">
         <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" playsinline></iframe>
-        <div id="lock-status-icon">
-            <svg width="20" height="20" fill="red" viewBox="0 0 24 24">
-                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/>
-            </svg>
-        </div>
+        <!-- This div sits ON TOP of the video -->
+        <div id="silentLockOverlay"></div>
     </div>
+    <p id="lockStatus" style="font-size: 0.8em; color: #666;">Interaction: Enabled</p>
 </div>
 
 <script>
-const GITHUB_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/epg.json?v=" + Date.now();
-
-// Playlist mapping titles to iframe URLs
+const GITHUB_JSON_URL = "https://raw.githubusercontent.com" + Date.now();
 const playlist = [
-    { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
-    { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
+    { title: "Indian Idol", url: "https://vkprime.com" },
+    { title: "Mtv", url: "https://vkprime.com" }
 ];
 
 let silentLockTimer;
+const lockOverlay = document.getElementById('silentLockOverlay');
+const lockStatusText = document.getElementById('lockStatus');
 
-// Chrome check
 function isStrictChrome() {
     const ua = navigator.userAgent;
     const isChrome = (ua.indexOf("Chrome") > -1 || ua.indexOf("CriOS") > -1);
@@ -106,74 +104,78 @@ function isStrictChrome() {
     return isChrome && !isOther;
 }
 
-// Fetch JSON, find current program, and sync iframe
 async function loadEPG() {
+    console.log("Checking EPG/Rotation...");
     try {
         const res = await fetch(GITHUB_JSON_URL, { cache: "no-store" });
         const data = await res.json();
-        const now = new Date(); // UTC now
-
-        let currentProgram = null;
+        const now = new Date();
+        let currentProgramTitle = null;
 
         for (let i = 0; i < data.schedule.length; i++) {
             const start = new Date(data.schedule[i].start);
             const end = new Date(data.schedule[i].end);
             if (now >= start && now < end) {
-                currentProgram = data.schedule[i].title;
+                currentProgramTitle = data.schedule[i].title;
                 break;
             }
         }
 
-        // If no live program found, fallback to playlist loop
-        if(!currentProgram && playlist.length) {
+        if(!currentProgramTitle) {
             const player = document.getElementById('videoPlayer');
             const currentIndex = playlist.findIndex(v => v.url === player.src);
             const nextIndex = (currentIndex + 1) % playlist.length;
-            currentProgram = playlist[nextIndex].title;
+            currentProgramTitle = playlist[nextIndex].title;
         }
 
-        syncVideo(currentProgram);
+        syncVideo(currentProgramTitle);
 
     } catch(e) {
         console.error("EPG Error:", e);
-        document.getElementById('currentTitle').innerText = "EPG loading error";
+        const player = document.getElementById('videoPlayer');
+        const currentIndex = playlist.findIndex(v => v.url === player.src);
+        const nextIndex = (currentIndex + 1) % playlist.length;
+        syncVideo(playlist[nextIndex].title);
     }
 }
 
-// Update iframe src and title
 function syncVideo(liveTitle){
     const player = document.getElementById('videoPlayer');
     const currentTitleEl = document.getElementById('currentTitle');
     let liveVideo = playlist.find(v => v.title === liveTitle);
 
-    if(!liveVideo){
-        const currentIndex = playlist.findIndex(v => v.url === player.src);
-        const nextIndex = (currentIndex + 1) % playlist.length;
-        liveVideo = playlist[nextIndex];
-    }
-
-    if(liveVideo && (!player.src || !currentTitleEl.innerText.includes(liveTitle))){
+    // Trigger update if URL is different
+    if(liveVideo && player.src !== liveVideo.url){
+        console.log("New Video Detected. Updating player...");
+        
         player.src = liveVideo.url;
         currentTitleEl.innerText = "Playing: " + liveVideo.title;
 
-        const lockIcon = document.getElementById('lock-status-icon');
+        // 1. UNLOCK: Reset overlay so user can click Play/Pause
         clearTimeout(silentLockTimer);
-        silentLockTimer = setTimeout(()=>{
-            if(lockIcon) lockIcon.style.display='block';
-        }, 40000);
+        lockOverlay.style.pointerEvents = 'none'; 
+        lockOverlay.style.background = 'rgba(0,0,0,0)';
+        lockStatusText.innerText = "Interaction: Enabled (Reset)";
+        lockStatusText.style.color = "#4CAF50";
+
+        // 2. START LOCK TIMER: Disable interaction after 40 seconds
+        silentLockTimer = setTimeout(() => {
+            lockOverlay.style.pointerEvents = 'auto'; // This blocks the iframe
+            lockStatusText.innerText = "Interaction: LOCKED";
+            lockStatusText.style.color = "#FF5252";
+            console.log("40 Seconds reached. Screen Locked.");
+        }, 40000); 
     }
 }
 
-// INIT
 window.onload = function(){
     if(isStrictChrome()){
         document.getElementById('chrome-only-content').style.display='block';
-        document.getElementById('browser-error').style.display='none';
         loadEPG();
-        setInterval(loadEPG, 60000); // refresh every minute
+        // Check for title/URL changes every 60 seconds
+        setInterval(loadEPG, 60000); 
     } else {
         document.getElementById('browser-error').style.display='block';
-        document.getElementById('chrome-only-content').style.display='none';
     }
 };
 </script>
