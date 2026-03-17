@@ -87,41 +87,57 @@ body {
 }
 @keyframes pulse-lock { 0%,100%{opacity:0.5;}50%{opacity:1;} }
 
-/* --- EPG SECTION --- */
-.epg-section { margin-top: 30px; text-align: left; width: 100%; }
-.epg-scroll-wrapper { width: 100%; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
-.epg-container { display: flex; gap: 15px; }
-.epg-card { 
-    flex: 0 0 260px; 
-    background: #222; 
-    border: 1px solid #444;
-    border-radius: 8px; 
-    padding: 15px; 
-    position: relative;
-    transition: transform 0.2s, border-color 0.2s;
-}
-.epg-card:hover { transform: translateY(-3px); border-color: var(--primary-red); }
-.epg-card.is-live { border-color: var(--live-green); }
-.channel-logo { height: 30px; margin-bottom: 10px; display: block; object-fit: contain; }
-.progress-bg { width: 100%; height: 4px; background: #444; margin-top: 10px; border-radius: 5px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--primary-red); transition: width 0.5s; }
+// --- EPG TICKER LOGIC ---
+const ticker = document.getElementById("ticker");
 
-/* --- HEADER --- */
-#currentTitle { margin-bottom: 15px; color: #888; font-size: 1.1rem; }
+async function loadEPG() {
+    try {
+        const res = await fetch("https://raw.githubusercontent.com/mstvnetwork/mstv4/refs/heads/main/epg.json?ts=" + Date.now(), {
+            cache: "no-store"
+        });
+        const data = await res.json();
 
-/* --- UI CONTROLS --- */
-#chrome-only-content { display: none; width: 100%; height: 100%; }
-#browser-error { padding: 100px 20px; text-align: center; }
+        const now = new Date(); // user local time
 
-/* --- RESPONSIVE --- */
-@media(max-width: 768px){
-    .epg-card { flex: 0 0 45%; }
-    .channel-logo { height: 25px; }
+        let current = null;
+        let next = null;
+
+        for (let i = 0; i < data.schedule.length; i++) {
+            const start = new Date(data.schedule[i].start);
+            const end = new Date(data.schedule[i].end);
+
+            if (now >= start && now < end) {
+                current = data.schedule[i];
+                next = data.schedule[i + 1] || null;
+                break;
+            }
+        }
+
+        if (current) {
+            const formatTime = (t) =>
+                new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const text = `
+                🔴 Now: ${current.title} (Ends ${formatTime(current.end)})
+                &nbsp;&nbsp;&nbsp;➡️ Next: ${next ? next.title : "N/A"} 
+                ${next ? `(Ends ${formatTime(next.end)})` : ""}
+            `;
+
+            ticker.innerHTML = `<span>${text}</span>`;
+        } else {
+            ticker.innerHTML = `<span>No program data available</span>`;
+        }
+
+    } catch (err) {
+        ticker.innerHTML = `<span>EPG loading error</span>`;
+    }
 }
-@media(max-width: 480px){
-    .epg-card { flex: 0 0 80%; }
-    #currentTitle { font-size: 1rem; }
-}
+
+// Initial load
+loadEPG();
+
+// Refresh every 30 seconds
+setInterval(loadEPG, 30000);
 </style>
 </head>
 <body>
