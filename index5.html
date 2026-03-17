@@ -180,18 +180,22 @@ const playlist = [
 // 4. EPG FETCH & SYNC (MELBOURNE TIME)
 async function loadEPG() {
     try {
-        // 1. Double-check the URL is built correctly
-    const finalURL = "https://raw.githubusercontent.com" + Date.now();
+        const finalURL = GITHUB_JSON_URL;
+
+        const res = await fetch(finalURL);
         const data = await res.json();
+
         const grid = document.getElementById('epg-grid');
-        
-        // Force Melbourne Time Zone
+
+        // Melbourne Time
         const melbourneTime = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
         const now = new Date(melbourneTime);
         const currentTotalMin = now.getHours() * 60 + now.getMinutes();
+
         let liveTitle = "";
 
         grid.innerHTML = data.map((item, idx) => {
+
             const parse = (t) => {
                 let [time, mod] = t.split(' ');
                 let [h, m] = time.split(':').map(Number);
@@ -199,11 +203,12 @@ async function loadEPG() {
                 if (mod === 'AM' && h === 12) h = 0;
                 return h * 60 + m;
             };
-            
+
             const start = parse(item.time);
             const end = data[idx + 1] ? parse(data[idx + 1].time) : start + 60;
+
             const isLive = currentTotalMin >= start && currentTotalMin < end;
-            
+
             if (isLive) liveTitle = item.program;
 
             let progPercent = 0;
@@ -224,17 +229,18 @@ async function loadEPG() {
                 </div>`;
         }).join('');
 
-        // Auto-scroll to Live Card
+        // Scroll to live
         const target = document.getElementById('liveCard');
         if (target) {
             target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         }
 
         syncVideo(liveTitle);
+
     } catch (e) {
         console.error("EPG Error:", e);
     }
-}
+    }
 
 // 5. PLAYER SYNC LOGIC
 function syncVideo(liveTitle) {
