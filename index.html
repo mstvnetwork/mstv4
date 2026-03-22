@@ -2,60 +2,34 @@
 <html>
 <head>
     <style>
-        /* This container acts as a 'window' that crops the edges */
-        .video-wrapper {
+        /* Container that crops the YouTube interface */
+        .player-window {
             position: relative;
             width: 100%;
-            max-width: 800px; /* Adjust as needed */
+            max-width: 800px;
             aspect-ratio: 16 / 9;
             overflow: hidden;
             background: #000;
         }
 
-        /* Scale and shift the iframe to hide Title (top) and Logo (bottom/corners) */
-        .video-wrapper iframe {
+        /* Scale and shift the iframe to hide Title (top) and Logo (bottom) */
+        .player-window iframe {
             position: absolute;
-            top: -15%;       /* Pushes title & share out of view */
-            left: -10%;      /* Pushes side-anchored logos out */
-            width: 120%;     /* Scales up to fill gap */
-            height: 130%;    /* Scales up to fill gap */
+            top: -12%;      /* Shifts the top branding out of view */
+            left: -5%;      /* Centers the scaled video */
+            width: 110%;    /* Scales up to fill the gaps */
+            height: 124%;   /* Scales up to fill the gaps */
             border: 0;
-            pointer-events: none; /* Prevents hovering from showing UI */
-        }
-
-        /* Overlay for a custom play button (since video is muted) */
-        .overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .play-btn {
-            font-size: 50px;
-            color: white;
-            background: rgba(0,0,0,0.6);
-            border-radius: 50%;
-            padding: 20px;
+            pointer-events: none; /* Optional: prevents hover effects */
         }
     </style>
 </head>
 <body>
 
-<div class="video-wrapper">
-    <!-- Overlay to simulate a play interaction -->
-    <div class="overlay" onclick="this.style.display='none'">
-        <div class="play-btn">▶</div>
-    </div>
-    
-    <!-- Video with specific parameters -->
+<div class="player-window">
     <iframe 
         src="https://www.youtube.com/watch?v=KMWcefrAKLg" 
-        allow="autoplay"
+        allow="autoplay; encrypted-media" 
         frameborder="0">
     </iframe>
 </div>
