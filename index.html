@@ -2,8 +2,8 @@
 <html>
 <head>
     <style>
-        /* Container to crop out YouTube UI */
-        .player-wrapper {
+        /* 1. The Container: Acts as a window to crop the YouTube UI */
+        .video-window {
             position: relative;
             width: 100%;
             max-width: 800px;
@@ -12,58 +12,50 @@
             background: #000;
         }
 
-        /* Scaled iframe to hide the Title and Logo */
-        #yt-iframe {
+        /* 2. The Player: Scaled and shifted to hide branding */
+        .video-window iframe {
             position: absolute;
-            top: -12%; 
-            left: -5%;
-            width: 110%;
-            height: 124%;
+            top: -12%;      /* Pushes the Title/Share buttons off the top */
+            left: -5%;      /* Centers the video after scaling */
+            width: 110%;    /* Scales wider than the container */
+            height: 124%;   /* Scales taller than the container */
             border: 0;
-            pointer-events: none; /* Prevents user from clicking/pausing the video */
+            /* REMOVED: pointer-events: none; (This allows you to click play) */
         }
 
-        /* Custom Unmute Button Overlay */
-        .unmute-btn {
+        /* 3. Custom Unmute Button (Optional) */
+        #unmute-btn {
             position: absolute;
             bottom: 20px;
             right: 20px;
             padding: 10px 15px;
             background: rgba(255, 255, 255, 0.9);
-            color: #000;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            font-family: sans-serif;
+            z-index: 10;
             font-weight: bold;
-            z-index: 100;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body>
 
-<div class="player-wrapper">
-    <!-- enablejsapi=1 is required to control the video with our button -->
+<div class="video-window">
     <iframe 
-        id="yt-iframe"
-        src="https://www.youtube.com/embed/KMWcefrAKLg?si=zTCOpmIeQOL_mc3q" 
+        id="yt-player"
+        src="https://www.youtube.com/embed/KMWcefrAKLg?si=SidgpdhhzytgBwbX" 
         allow="autoplay; encrypted-media">
     </iframe>
 
-    <!-- Custom Button -->
-    <button class="unmute-btn" id="unmuteTrigger" onclick="unmuteVideo()">UNMUTE 🔊</button>
+    <button id="unmute-btn" onclick="unmuteVideo()">UNMUTE 🔊</button>
 </div>
 
 <script>
     function unmuteVideo() {
-        var iframe = document.getElementById('yt-iframe');
-        
-        // This sends a command directly into the YouTube iframe to unmute
+        var iframe = document.getElementById('yt-player');
+        // Sends command to YouTube to unmute the video
         iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-        
-        // Hide the button after unmuting
-        document.getElementById('unmuteTrigger').style.display = 'none';
+        document.getElementById('unmute-btn').style.display = 'none';
     }
 </script>
 
