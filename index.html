@@ -1,40 +1,89 @@
-<div class="video-outer-wrap">
-    <div class="video-inner-crop">
-        <iframe 
-            src="https://cdn.stmify.com/embed/v1/discovery-channel-in-jw" 
-            frameborder="0" 
-            scrolling="no" 
-            allow="autoplay; encrypted-media" 
-            style="pointer-events: none;">
-        </iframe>
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* Container to crop out YouTube UI */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* The actual iframe scaled to hide logos */
+        #player {
+            position: absolute;
+            top: -12%; 
+            left: -5%;
+            width: 110%;
+            height: 124%;
+        }
+
+        /* Custom Play Overlay */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://img.youtube.com') center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        /* Custom Play Button Style */
+        .play-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="video-wrapper">
+    <div id="player"></div>
+    <!-- Custom Overlay -->
+    <div id="overlay" onclick="playVideo()">
+        <div class="play-btn">▶</div>
     </div>
 </div>
 
-<style>
-/* 1. Prevents page jumping and handles the aspect ratio */
-.video-outer-wrap {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%; /* 16:9 ratio */
-    height: 0;
-    overflow: hidden;
-    background: #000; /* Hides flicker during load */
-}
+<script>
+    // Load YouTube API
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/watch?v=KMWcefrAKLg";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-/* 2. Hidden "Cropping" layer to strip all remaining edges */
-.video-inner-crop {
-    position: absolute;
-    top: -10%; 
-    left: -10%;
-    width: 120%;
-    height: 120%;
-}
+    var player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            videoId: 'e1FIApIafWE',
+            playerVars: {
+                'autoplay': 0,
+                'controls': 0,
+                'modestbranding': 1,
+                'rel': 0,
+                'iv_load_policy': 3
+            }
+        });
+    }
 
-/* 3. The Iframe itself - Set to 'no scroll' */
-.video-inner-crop iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    overflow: hidden; /* Extra insurance against scrollbars */
-}
-</style>
+    function playVideo() {
+        player.playVideo();
+        // Hide the overlay once clicked
+        document.getElementById('overlay').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
