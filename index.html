@@ -1,63 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        /* 1. The Container: Acts as a window to crop the YouTube UI */
-        .video-window {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 16 / 9;
-            overflow: hidden;
-            background: #000;
-        }
-
-        /* 2. The Player: Scaled and shifted to hide branding */
-        .video-window iframe {
-            position: absolute;
-            top: -20%;      /* Pushes the Title/Share buttons off the top */
-            left: -5%;      /* Centers the video after scaling */
-            width: 110%;    /* Scales wider than the container */
-            height: 124%;   /* Scales taller than the container */
-            border: 0;
-            /* REMOVED: pointer-events: none; (This allows you to click play) */
-        }
-
-        /* 3. Custom Unmute Button (Optional) */
-        #unmute-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            z-index: 10;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-
-<div class="video-window">
-    <iframe 
-        id="yt-player"
-        src="https://www.youtube.com/embed/pfeOfoyIn9k?si=EKPNvpNVATr1uKvc" 
-        allow="autoplay; encrypted-media">
-    </iframe>
-
-    <button id="unmute-btn" onclick="unmuteVideo()">UNMUTE 🔊</button>
-</div>
-
-<script>
-    function unmuteVideo() {
-        var iframe = document.getElementById('yt-player');
-        // Sends command to YouTube to unmute the video
-        iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-        document.getElementById('unmute-btn').style.display = 'none';
-    }
-</script>
-
-</body>
-</html>
+<iframe width="560" height="315" 
+  src="https://www.youtube.com/embed/pfeOfoyIn9k?si=EKPNvpNVATr1uKvc" 
+  frameborder="0" 
+  allow="autoplay; encrypted-media" 
+  allowfullscreen>
+</iframe>
