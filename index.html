@@ -3,57 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Locked YouTube Playback</title>
+    <title>Universal Cropped YouTube Embed</title>
     <style>
-        /* 1. The Wrapper: Manages the 16:9 ratio and hides all scrollbars */
-        .video-wrapper {
+        /* 1. The Container: The actual visible window on your site */
+        .crop-window {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 Ratio */
-            height: 0;
-            overflow: hidden;
+            width: 100%;
+            padding-bottom: 56.25%; /* Maintains 16:9 aspect ratio */
+            overflow: hidden; /* This acts as the "cropper" */
             background: #000;
         }
 
-        /* 2. The IFrame: Fits perfectly inside the wrapper */
-        .video-wrapper iframe {
+        /* 2. The Iframe: Pushed outside the bounds of the container */
+        .crop-window iframe {
             position: absolute;
-            top: 0;
-            left: 0;
+            /* Scale it up to push controls off-edge */
             width: 100%;
-            height: 100%;
+            height: 120%; 
+            /* Offset it vertically to hide top/bottom bars */
+            top: -10%; 
+            left: 0;
             border: 0;
-            pointer-events: none; /* Disables mouse/touch interaction inside the iframe */
+            pointer-events: none; /* Block interaction */
         }
 
-        /* 3. The Shield: An extra layer of protection to block clicks/drags entirely */
-        .video-shield {
+        /* 3. The Shield: Total lockout of mouse/touch events */
+        .shield {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 10;
-            cursor: default;
         }
     </style>
 </head>
 <body>
 
-    <div class="video-wrapper">
-        <!-- The Shield prevents any direct interaction with the video underneath -->
-        <div class="video-shield"></div>
-
-        <!-- 
-          URL Parameters used:
-          - autoplay=1 & mute=1: Necessary because users can't click "Play" 
-          - controls=0: Hides the bar
-          - disablekb=1: Disables keyboard jumps (spacebar, arrows)
-          - rel=0: Limits related videos
-        -->
+    <div class="crop-window">
+        <div class="shield"></div>
         <iframe 
             src="https://www.youtube.com/embed/KMWcefrAKLg?si=cbCLpqbCnossfPvi" 
-            allow="autoplay; encrypted-media" 
-            tabindex="-1">
+            allow="autoplay; encrypted-media">
         </iframe>
     </div>
 
@@ -75,4 +66,4 @@
 
 
 
-l
+
