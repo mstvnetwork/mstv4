@@ -7,37 +7,53 @@
 <title>Apna Tv</title>
 
 <style>
-body {
+html, body {
+    height: 100%;
     margin: 0;
+    overflow: hidden; /* 🔥 removes scrollbar */
     font-family: Arial, sans-serif;
     background: #0b0b0b;
     color: #fff;
 }
 
+/* MAIN LAYOUT */
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
 /* HEADER */
 .header {
-    padding: 16px;
+    padding: 10px 14px;
+    flex-shrink: 0;
 }
 
 .header h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 18px;
 }
 
 .header p {
-    margin: 4px 0 0;
-    font-size: 13px;
+    margin: 2px 0 0;
+    font-size: 12px;
     opacity: 0.7;
 }
 
-/* PLAYER 16:9 */
+/* PLAYER AREA */
+.player-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 16:9 BOX */
 .player-container {
     width: 100%;
     max-width: 1000px;
-    margin: auto;
     aspect-ratio: 16 / 9;
     background: black;
-    position: relative;
 }
 
 #videoPlayer {
@@ -46,38 +62,36 @@ body {
     border: none;
 }
 
-/* EPG SECTION */
+/* EPG */
 .epg {
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 0 12px;
-    display: grid;
-    gap: 12px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .card {
+    flex: 1;
     background: #1a1a1a;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .card-title {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.6;
-    margin-bottom: 4px;
 }
 
 .card-main {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
 }
 
-/* PROGRESS BAR */
+/* Progress */
 .progress-container {
-    margin-top: 8px;
+    margin-top: 6px;
     height: 4px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px;
+    background: rgba(255,255,255,0.2);
 }
 
 .progress-bar {
@@ -89,47 +103,50 @@ body {
 /* FOOTER */
 .footer {
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.5;
-    padding: 20px 10px;
+    padding: 6px;
+    flex-shrink: 0;
 }
+
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
-<div class="header">
-    <h1>Apna Tv</h1>
-    <p>Watch serials, web series & movies</p>
-</div>
+<div class="app">
 
-<!-- PLAYER -->
-<div class="player-container">
-    <iframe id="videoPlayer"></iframe>
-</div>
+    <div class="header">
+        <h1>Apna Tv</h1>
+        <p>Watch serials, web series & movies</p>
+    </div>
 
-<!-- EPG -->
-<div class="epg">
-    <div class="card">
-        <div class="card-title">Live Now</div>
-        <div class="card-main" id="nowTitle">Loading...</div>
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
+    <div class="player-wrapper">
+        <div class="player-container">
+            <iframe id="videoPlayer"></iframe>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-title">Next</div>
-        <div class="card-main" id="nextTitle"></div>
+    <div class="epg">
+        <div class="card">
+            <div class="card-title">Live Now</div>
+            <div class="card-main" id="nowTitle"></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Next</div>
+            <div class="card-main" id="nextTitle"></div>
+        </div>
     </div>
-</div>
 
-<!-- FOOTER -->
-<div class="footer">
-    Apna TV 24/7 • Streaming everywhere
-</div>
+    <div class="footer">
+        Apna TV 24/7
+    </div>
 
+</div>
 <script>
 const BASE_JSON_URL = "https://mstvnetwork.github.io/mstv4/epg.json";
 
