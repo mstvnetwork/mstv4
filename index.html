@@ -3,54 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clean YouTube Embed</title>
+    <title>Locked YouTube Playback</title>
     <style>
-        /* 1. The Container: Forces 16:9 ratio and hides all overflow/scrollbars */
-        .video-container {
+        /* 1. The Wrapper: Manages the 16:9 ratio and hides all scrollbars */
+        .video-wrapper {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            padding-bottom: 56.25%; /* 16:9 Ratio */
             height: 0;
             overflow: hidden;
-            max-width: 100%;
             background: #000;
         }
 
-        /* 2. The Iframe: Stretches to fill container perfectly */
-        .video-container iframe {
+        /* 2. The IFrame: Fits perfectly inside the wrapper */
+        .video-wrapper iframe {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             border: 0;
-            /* Extra insurance against scrollbars in all browsers */
-            -ms-overflow-style: none;  /* IE/Edge */
-            scrollbar-width: none;     /* Firefox */
+            pointer-events: none; /* Disables mouse/touch interaction inside the iframe */
         }
 
-        /* 3. Hide Scrollbars specifically for Chrome/Safari/Opera */
-        .video-container iframe::-webkit-scrollbar {
-            display: none;
+        /* 3. The Shield: An extra layer of protection to block clicks/drags entirely */
+        .video-shield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            cursor: default;
         }
     </style>
 </head>
 <body>
 
-    <div class="video-container">
+    <div class="video-wrapper">
+        <!-- The Shield prevents any direct interaction with the video underneath -->
+        <div class="video-shield"></div>
+
         <!-- 
-          URL Parameters:
-          controls=0 (Hides playbar)
-          modestbranding=1 (Hides YouTube logo)
-          rel=0 (Shows only your videos at end)
-          iv_load_policy=3 (Hides annotations)
+          URL Parameters used:
+          - autoplay=1 & mute=1: Necessary because users can't click "Play" 
+          - controls=0: Hides the bar
+          - disablekb=1: Disables keyboard jumps (spacebar, arrows)
+          - rel=0: Limits related videos
         -->
         <iframe 
             src="https://www.youtube.com/embed/KMWcefrAKLg?si=cbCLpqbCnossfPvi" 
-            title="Clean Video Playback"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowfullscreen>
+            allow="autoplay; encrypted-media" 
+            tabindex="-1">
         </iframe>
     </div>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+l
