@@ -22,13 +22,16 @@
     </div>
 
     <script>
-        const jsonUrl = 'https://raw.githubusercontent.com';
-        let currentUrl = "https://mstvnetwork.github.io/mstv4/epg.json";
+        // Use the full link here
+const jsonUrl = "https://mstvnetwork.github.io/mstv4/epg.json"; 
 
-        async function updatePlayer() {
-            try {
-                const response = await fetch(jsonUrl);
-                const schedule = await response.json();
+async function updatePlayer() {
+    try {
+        const response = await fetch(jsonUrl); // This now points to the correct file
+        const schedule = await response.json();
+        // ... rest of your logic
+
+        
                 const now = new Date();
 
                 let currentIndex = schedule.findIndex(item => 
