@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<title>MSNET IPTV Cinema Mode</title>
+
+<style>
 :root { --bg-black: #000000; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; width: 100%; background-color: var(--bg-black); overflow: hidden; }
 
-/* Fixed Fullscreen Player Container */
 .player-wrapper {
     position: fixed;
     top: 0;
@@ -21,98 +27,185 @@ html, body { height: 100%; width: 100%; background-color: var(--bg-black); overf
 
 #videoPlayer {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
     border: none;
-    display: block;
 }
-        .epg-bar { background: #222; padding: 15px; width: 90%; max-width: 900px; margin: 0 auto; border-radius: 8px; }
-        
 
-/* Invisible Lock Overlay */
-#silentLockOverlay {
-    position: absolute;
-    top: 0;
+/* EPG BAR */
+#epgBar {
+    position: fixed;
+    bottom: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    z-index: 9999; 
-    pointer-events: none; 
-    background: rgba(0, 0, 0, 0);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    background: rgba(0,0,0,0.6);
+    padding: 10px 15px;
+    z-index: 99999;
 }
 
-/* Hide UI elements from view */
-#currentTitle, #lockStatus, #browser-error { display: none; }
+#epgNow {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#epgNext {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Progress bar */
+#progressContainer {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    margin-top: 6px;
+}
+
+#progressBar {
+    height: 100%;
+    width: 0%;
+    background: #00ffcc;
+}
+
+/* Lock */
+#silentLockOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+}
 </style>
-        
-        
-    </style>
 </head>
+
 <body>
 
-    <div id="player-container">
-        <iframe id="main-player" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+<div class="player-wrapper">
+    <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
+    <div id="silentLockOverlay"></div>
+</div>
+
+<div id="epgBar">
+    <div id="epgNow">Loading...</div>
+    <div id="epgNext"></div>
+    <div id="progressContainer">
+        <div id="progressBar"></div>
     </div>
+</div>
 
-    <div class="epg-bar">
-        <div id="now-playing"><span class="live">STATUS:</span> Loading...</div>
-        <div id="next-up" style="color: #888; font-size: 0.9em; margin-top: 5px;"></div>
-    </div>
+<script>
+const BASE_JSON_URL = "https://raw.githubusercontent.com/your-username/your-repo/main/epg.json";
 
-    <script>
-        const BASE_JSON_URL = "https://mstvnetwork.github.io/mstv4/epg.json";
-        let currentUrl = "";
+const playlist = [
+    { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
+    { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
+];
 
-        async function loadEPG() {
-            // 1. Correct cache-busting syntax
-            const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
-            
-            try {
-                const res = await fetch(freshUrl);
-                if (!res.ok) throw new Error("Network response was not ok");
-                
-                const data = await res.json();
-                const now = new Date();
-                
-                // 2. Find the current show (Works for both [ ] and { schedule: [ ] } formats)
-                const programs = Array.isArray(data) ? data : data.schedule;
-                let currentIndex = programs.findIndex(item => {
-                    const start = new Date(item.start);
-                    const end = new Date(item.end);
-                    return now >= start && now < end;
-                });
+let silentLockTimer;
+let progressTimer;
+let currentProgramData = null;
 
-                if (currentIndex !== -1) {
-                    const currentShow = programs[currentIndex];
-                    const nextShow = programs[currentIndex + 1];
+const lockOverlay = document.getElementById('silentLockOverlay');
 
-                    // 3. Sync Video (only if URL changed)
-                    const player = document.getElementById('main-player');
-                    if (currentUrl !== currentShow.url) {
-                        player.src = currentShow.url;
-                        currentUrl = currentShow.url;
-                    }
+async function loadEPG() {
+    const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
 
-                    // 4. Update UI
-                    document.getElementById('now-playing').innerHTML = `<span class="live">● LIVE:</span> ${currentShow.title}`;
-                    document.getElementById('next-up').innerText = nextShow ? `NEXT: ${nextShow.title}` : "NEXT: End of Schedule";
-                } else {
-                    document.getElementById('now-playing').innerText = "OFF AIR";
-                    document.getElementById('main-player').src = "";
-                    currentUrl = "";
-                }
+    try {
+        const res = await fetch(freshUrl);
+        const data = await res.json();
 
-            } catch(e) {
-                console.error("Fetch error:", e);
-                document.getElementById('now-playing').innerText = "Error Loading EPG";
+        const now = Date.now(); // epoch time (timezone safe)
+
+        let current = null;
+        let next = null;
+
+        for (let i = 0; i < data.schedule.length; i++) {
+            const start = new Date(data.schedule[i].start).getTime();
+            const end = new Date(data.schedule[i].end).getTime();
+
+            if (now >= start && now < end) {
+                current = data.schedule[i];
+                next = data.schedule[i + 1] || null;
+                break;
             }
         }
 
-        // Run every 10 seconds
-        loadEPG();
-        setInterval(loadEPG, 10000);
-    </script>
+        if (!current) {
+            rotateLocal();
+            updateEPG("No live program", "");
+            stopProgress();
+        } else {
+            syncVideo(current.title);
+            currentProgramData = current;
+
+            updateEPG(
+                "Now: " + current.title,
+                next ? "Next: " + next.title : ""
+            );
+
+            startProgress(current);
+        }
+
+    } catch (e) {
+        console.error("EPG error:", e);
+        rotateLocal();
+    }
+}
+
+function startProgress(program) {
+    clearInterval(progressTimer);
+
+    progressTimer = setInterval(() => {
+        const now = Date.now();
+        const start = new Date(program.start).getTime();
+        const end = new Date(program.end).getTime();
+
+        const progress = ((now - start) / (end - start)) * 100;
+        document.getElementById("progressBar").style.width = Math.min(progress, 100) + "%";
+
+    }, 1000);
+}
+
+function stopProgress() {
+    clearInterval(progressTimer);
+    document.getElementById("progressBar").style.width = "0%";
+}
+
+function updateEPG(nowText, nextText) {
+    document.getElementById("epgNow").textContent = nowText;
+    document.getElementById("epgNext").textContent = nextText;
+}
+
+function rotateLocal() {
+    const player = document.getElementById('videoPlayer');
+    const currentIndex = playlist.findIndex(v => v.url === player.src);
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    syncVideo(playlist[nextIndex].title);
+}
+
+function syncVideo(liveTitle) {
+    const player = document.getElementById('videoPlayer');
+    const liveVideo = playlist.find(v => v.title === liveTitle);
+
+    if (liveVideo && player.src !== liveVideo.url) {
+        player.src = liveVideo.url;
+
+        clearTimeout(silentLockTimer);
+        lockOverlay.style.pointerEvents = 'none';
+
+        silentLockTimer = setTimeout(() => {
+            lockOverlay.style.pointerEvents = 'auto';
+        }, 40000);
+    }
+}
+
+window.onload = function () {
+    loadEPG();
+    setInterval(loadEPG, 60000);
+};
+</script>
+
 </body>
 </html>
