@@ -2,97 +2,132 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
-<title>MSNET IPTV Cinema Mode</title>
+<title>Apna Tv</title>
 
 <style>
-:root { --bg-black: #000000; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; width: 100%; background-color: var(--bg-black); overflow: hidden; }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0b;
+    color: #fff;
+}
 
-.player-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-    z-index: 1;
+/* HEADER */
+.header {
+    padding: 16px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* PLAYER 16:9 */
+.player-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+    aspect-ratio: 16 / 9;
+    background: black;
+    position: relative;
 }
 
 #videoPlayer {
-    position: absolute;
     width: 100%;
     height: 100%;
     border: none;
 }
 
-/* EPG BAR */
-#epgBar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    color: #fff;
-    font-family: Arial, sans-serif;
-    background: rgba(0,0,0,0.6);
-    padding: 10px 15px;
-    z-index: 99999;
+/* EPG SECTION */
+.epg {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 0 12px;
+    display: grid;
+    gap: 12px;
 }
 
-#epgNow {
+.card {
+    background: #1a1a1a;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.card-title {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-bottom: 4px;
+}
+
+.card-main {
     font-size: 16px;
     font-weight: bold;
 }
 
-#epgNext {
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-/* Progress bar */
-#progressContainer {
-    width: 100%;
+/* PROGRESS BAR */
+.progress-container {
+    margin-top: 8px;
     height: 4px;
-    background: rgba(255,255,255,0.2);
-    margin-top: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
 }
 
-#progressBar {
+.progress-bar {
     height: 100%;
     width: 0%;
     background: #00ffcc;
 }
 
-/* Lock */
-#silentLockOverlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 9999;
-    pointer-events: none;
+/* FOOTER */
+.footer {
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.5;
+    padding: 20px 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="player-wrapper">
-    <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
-    <div id="silentLockOverlay"></div>
+<!-- HEADER -->
+<div class="header">
+    <h1>Apna Tv</h1>
+    <p>Watch serials, web series & movies</p>
 </div>
 
-<div id="epgBar">
-    <div id="epgNow">Loading...</div>
-    <div id="epgNext"></div>
-    <div id="progressContainer">
-        <div id="progressBar"></div>
+<!-- PLAYER -->
+<div class="player-container">
+    <iframe id="videoPlayer"></iframe>
+</div>
+
+<!-- EPG -->
+<div class="epg">
+    <div class="card">
+        <div class="card-title">Live Now</div>
+        <div class="card-main" id="nowTitle">Loading...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
     </div>
+
+    <div class="card">
+        <div class="card-title">Next</div>
+        <div class="card-main" id="nextTitle"></div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+    Apna TV 24/7 • Streaming everywhere
 </div>
 
 <script>
@@ -103,20 +138,14 @@ const playlist = [
     { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
 ];
 
-let silentLockTimer;
 let progressTimer;
-let currentProgramData = null;
-
-const lockOverlay = document.getElementById('silentLockOverlay');
 
 async function loadEPG() {
-    const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
-
     try {
-        const res = await fetch(freshUrl);
+        const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
         const data = await res.json();
 
-        const now = Date.now(); // epoch time (timezone safe)
+        const nowTime = Date.now();
 
         let current = null;
         let next = null;
@@ -125,33 +154,27 @@ async function loadEPG() {
             const start = new Date(data.schedule[i].start).getTime();
             const end = new Date(data.schedule[i].end).getTime();
 
-            if (now >= start && now < end) {
+            if (nowTime >= start && nowTime < end) {
                 current = data.schedule[i];
                 next = data.schedule[i + 1] || null;
                 break;
             }
         }
 
-        if (!current) {
-            rotateLocal();
-            updateEPG("No live program", "");
-            stopProgress();
-        } else {
-            syncVideo(current.title);
-            currentProgramData = current;
+        if (!current) return;
 
-            updateEPG(
-                "Now: " + current.title,
-                next ? "Next: " + next.title : ""
-            );
-
-            startProgress(current);
-        }
+        updateUI(current, next);
+        syncVideo(current.title);
+        startProgress(current);
 
     } catch (e) {
         console.error("EPG error:", e);
-        rotateLocal();
     }
+}
+
+function updateUI(current, next) {
+    document.getElementById("nowTitle").textContent = current.title;
+    document.getElementById("nextTitle").textContent = next ? next.title : "";
 }
 
 function startProgress(program) {
@@ -162,46 +185,22 @@ function startProgress(program) {
         const start = new Date(program.start).getTime();
         const end = new Date(program.end).getTime();
 
-        const progress = ((now - start) / (end - start)) * 100;
-        document.getElementById("progressBar").style.width = Math.min(progress, 100) + "%";
+        const percent = ((now - start) / (end - start)) * 100;
+        document.getElementById("progressBar").style.width = percent + "%";
 
     }, 1000);
 }
 
-function stopProgress() {
-    clearInterval(progressTimer);
-    document.getElementById("progressBar").style.width = "0%";
-}
+function syncVideo(title) {
+    const player = document.getElementById("videoPlayer");
+    const video = playlist.find(v => v.title === title);
 
-function updateEPG(nowText, nextText) {
-    document.getElementById("epgNow").textContent = nowText;
-    document.getElementById("epgNext").textContent = nextText;
-}
-
-function rotateLocal() {
-    const player = document.getElementById('videoPlayer');
-    const currentIndex = playlist.findIndex(v => v.url === player.src);
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    syncVideo(playlist[nextIndex].title);
-}
-
-function syncVideo(liveTitle) {
-    const player = document.getElementById('videoPlayer');
-    const liveVideo = playlist.find(v => v.title === liveTitle);
-
-    if (liveVideo && player.src !== liveVideo.url) {
-        player.src = liveVideo.url;
-
-        clearTimeout(silentLockTimer);
-        lockOverlay.style.pointerEvents = 'none';
-
-        silentLockTimer = setTimeout(() => {
-            lockOverlay.style.pointerEvents = 'auto';
-        }, 40000);
+    if (video && player.src !== video.url) {
+        player.src = video.url;
     }
 }
 
-window.onload = function () {
+window.onload = () => {
     loadEPG();
     setInterval(loadEPG, 60000);
 };
