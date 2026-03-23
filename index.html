@@ -25,43 +25,50 @@
         // Use the full link here
 const jsonUrl = "https://mstvnetwork.github.io/mstv4/epg.json"; 
 
+ to give us the LATEST version
+const jsonUrl = 'https://raw.githubusercontent.com' + new Date().getTime();
+
 async function updatePlayer() {
     try {
-        const response = await fetch(jsonUrl); // This now points to the correct file
+        const response = await fetch(jsonUrl);
         const schedule = await response.json();
-        // ... rest of your logic
-
         
-                const now = new Date();
+        // This 'now' uses your computer's exact clock
+        const now = new Date();
+        
+        let currentIndex = schedule.findIndex(item => {
+            // Fix: Ensure we parse the JSON string correctly as local time
+            const startTime = new Date(item.start);
+            const endTime = new Date(item.end);
+            return now >= startTime && now < endTime;
+        });
 
-                let currentIndex = schedule.findIndex(item => 
-                    now >= new Date(item.start) && now < new Date(item.end)
-                );
+        if (currentIndex !== -1) {
+            const currentShow = schedule[currentIndex];
+            const nextShow = schedule[currentIndex + 1] || { title: "End of Stream" };
 
-                if (currentIndex !== -1) {
-                    const currentShow = schedule[currentIndex];
-                    const nextShow = schedule[currentIndex + 1] || { title: "End of Stream" };
-
-                    // Update Iframe only if the URL changed
-                    if (currentUrl !== currentShow.url) {
-                        document.getElementById('main-player').src = currentShow.url;
-                        currentUrl = currentShow.url;
-                    }
-
-                    // Update EPG Text
-                    document.getElementById('now-playing').innerHTML = `<span class="live">NOW:</span> ${currentShow.title}`;
-                    document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
-                } else {
-                    document.getElementById('now-playing').innerText = "Off Air";
-                }
-            } catch (err) {
-                console.error("Failed to fetch EPG:", err);
+            // Update Iframe only if the URL is different to prevent refreshing the video
+            const player = document.getElementById('main-player');
+            if (player.src !== currentShow.url) {
+                player.src = currentShow.url;
             }
-        }
 
-        // Run every 5 seconds to keep EPG and Player in sync
-        setInterval(updatePlayer, 5000);
-        updatePlayer();
+            document.getElementById('now-playing').innerHTML = `<span class="live">NOW:</span> ${currentShow.title}`;
+            document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
+        } else {
+            // If we are between 22:25 and 22:28, this shouldn't happen anymore
+            document.getElementById('now-playing').innerText = "Off Air - No show scheduled for " + now.toLocaleTimeString();
+        }
+    } catch (err) {
+        console.error("Error:", err);
+        document.getElementById('now-playing').innerText = "Error loading schedule.";
+    }
+}
+
+// Refresh every 10 seconds
+setInterval(updatePlayer, 10000);
+updatePlayer();
+
     </script>
 </body>
 </html>
