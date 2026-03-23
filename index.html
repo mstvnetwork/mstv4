@@ -1,71 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTV Network Player</title>
     <style>
-        body { background: #111; color: #fff; font-family: sans-serif; text-align: center; }
-        #player-container { width: 80%; margin: 20px auto; aspect-ratio: 16/9; background: #000; }
+        body { background: #111; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; padding: 20px; }
+        #player-container { width: 90%; max-width: 1000px; margin: 20px auto; aspect-ratio: 16/9; background: #000; border: 2px solid #333; border-radius: 8px; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
-        .epg-bar { background: #222; padding: 15px; width: 80%; margin: 0 auto; border-radius: 8px; }
-        .live { color: #ff4545; font-weight: bold; }
-        .next { color: #aaa; font-size: 0.9em; }
+        .epg-bar { background: #222; padding: 20px; width: 90%; max-width: 1000px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .live { color: #ff4545; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        #now-playing { font-size: 1.4em; margin-bottom: 10px; }
+        #next-up { color: #aaa; font-size: 1em; border-top: 1px solid #333; padding-top: 10px; }
+        .debug-info { margin-top: 20px; font-size: 0.8em; color: #666; }
     </style>
 </head>
 <body>
 
     <div id="player-container">
-        <iframe id="main-player" src="" allowfullscreen></iframe>
+        <iframe id="main-player" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
     </div>
 
     <div class="epg-bar">
-        <div id="now-playing"><span class="live">LIVE:</span> Loading...</div>
-        <div id="next-up" class="next">UP NEXT: Loading...</div>
+        <div id="now-playing"><span class="live">Status:</span> Loading Schedule...</div>
+        <div id="next-up">Next: Checking...</div>
+    </div>
+
+    <div class="debug-info">
+        System Time: <span id="current-time-display">--:--:--</span> | 
+        Last Update: <span id="last-update">Never</span>
     </div>
 
     <script>
- to give us the LATEST version
-const jsonUrl = 'https://raw.githubusercontent.com' + new Date().getTime();
+        // SINGLE SOURCE OF TRUTH: Using Raw GitHub with Cache-Buster
+        const jsonUrl = 'https://raw.githubusercontent.com' + new Date().getTime();
+        let currentActiveUrl = "";
 
-async function updatePlayer() {
-    try {
-        const response = await fetch(jsonUrl);
-        const schedule = await response.json();
-        
-        // This 'now' uses your computer's exact clock
-        const now = new Date();
-        
-        let currentIndex = schedule.findIndex(item => {
-            // Fix: Ensure we parse the JSON string correctly as local time
-            const startTime = new Date(item.start);
-            const endTime = new Date(item.end);
-            return now >= startTime && now < endTime;
-        });
+        async function updatePlayer() {
+            try {
+                const response = await fetch(jsonUrl);
+                if (!response.ok) throw new Error("Network response was not ok");
+                
+                const schedule = await response.json();
+                const now = new Date();
+                
+                // Update the debug clock on screen
+                document.getElementById('current-time-display').innerText = now.toLocaleTimeString();
 
-        if (currentIndex !== -1) {
-            const currentShow = schedule[currentIndex];
-            const nextShow = schedule[currentIndex + 1] || { title: "End of Stream" };
+                // Find the show where: Now is GREATER than Start AND Now is LESS than End
+                let currentIndex = schedule.findIndex(item => {
+                    const startTime = new Date(item.start);
+                    const endTime = new Date(item.end);
+                    return now >= startTime && now < endTime;
+                });
 
-            // Update Iframe only if the URL is different to prevent refreshing the video
-            const player = document.getElementById('main-player');
-            if (player.src !== currentShow.url) {
-                player.src = currentShow.url;
+                if (currentIndex !== -1) {
+                    const currentShow = schedule[currentIndex];
+                    const nextShow = schedule[currentIndex + 1] || { title: "End of Programming" };
+
+                    // Only refresh the iframe if the show URL actually changed
+                    const player = document.getElementById('main-player');
+                    if (currentActiveUrl !== currentShow.url) {
+                        player.src = currentShow.url;
+                        currentActiveUrl = currentShow.url;
+                        console.log("Switching to: " + currentShow.title);
+                    }
+
+                    document.getElementById('now-playing').innerHTML = `<span class="live">● LIVE:</span> ${currentShow.title}`;
+                    document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
+                } else {
+                    document.getElementById('now-playing').innerHTML = `<span style="color:gray">OFF AIR</span>`;
+                    document.getElementById('next-up').innerText = "Check back later for new shows.";
+                    document.getElementById('main-player').src = ""; // Clear player if off-air
+                    currentActiveUrl = "";
+                }
+
+                document.getElementById('last-update').innerText = now.toLocaleTimeString();
+
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                document.getElementById('now-playing').innerText = "Schedule Error: Ensure JSON format is correct.";
             }
-
-            document.getElementById('now-playing').innerHTML = `<span class="live">NOW:</span> ${currentShow.title}`;
-            document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
-        } else {
-            // If we are between 22:25 and 22:28, this shouldn't happen anymore
-            document.getElementById('now-playing').innerText = "Off Air - No show scheduled for " + now.toLocaleTimeString();
         }
-    } catch (err) {
-        console.error("Error:", err);
-        document.getElementById('now-playing').innerText = "Error loading schedule.";
-    }
-}
 
-// Refresh every 10 seconds
-setInterval(updatePlayer, 10000);
-updatePlayer();
-
+        // Run immediately, then check every 10 seconds for show changes
+        updatePlayer();
+        setInterval(updatePlayer, 10000);
     </script>
 </body>
 </html>
