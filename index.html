@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Apna Tv</title>
 
 <style>
@@ -15,7 +14,7 @@ html, body {
     font-family: Arial, sans-serif;
 }
 
-/* FULLSCREEN PLAYER (your original) */
+/* FULLSCREEN PLAYER */
 .player-wrapper {
     position: fixed;
     top: 0;
@@ -23,34 +22,23 @@ html, body {
     width: 100vw;
     height: 100vh;
     background: #000;
-    z-index: 1;
 }
 
-#videoPlayer {
+#videoPlayer, #nextPlayer {
     position: absolute;
     width: 100%;
     height: 100%;
     border: none;
 }
 
-/* LOCK */
-#silentLockOverlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 9999;
-    pointer-events: none;
-}
-
-/* HEADER OVERLAY */
+/* HEADER */
 .header {
     position: absolute;
     top: 0;
-    left: 0;
     width: 100%;
     padding: 12px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
     z-index: 10;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
 }
 
 .header h1 {
@@ -64,11 +52,10 @@ html, body {
     opacity: 0.7;
 }
 
-/* EPG OVERLAY */
+/* EPG */
 .epg {
     position: absolute;
-    bottom: 40px;
-    left: 0;
+    bottom: 60px;
     width: 100%;
     padding: 10px;
     display: flex;
@@ -78,32 +65,68 @@ html, body {
 
 .card {
     flex: 1;
-    background: rgba(0,0,0,0.7);
-    padding: 10px;
-    border-radius: 8px;
+    background: rgba(0,0,0,0.85);
+    padding: 12px;
+    border-radius: 10px;
+}
+
+/* CARD HEADER WITH LOGO */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #222;
 }
 
 .card-title {
-    font-size: 11px;
-    opacity: 0.6;
+    font-size: 12px;
+    color: #bbb;
 }
 
 .card-main {
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* TIME RANGE + LIVE badge */
+.time-range {
+    font-size: 11px;
+    color: #ccc;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.live-badge {
+    width: 8px;
+    height: 8px;
+    background: red;
+    border-radius: 50%;
 }
 
 /* PROGRESS */
 .progress-container {
-    margin-top: 6px;
+    margin-top: 8px;
     height: 4px;
     background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .progress-bar {
     height: 100%;
     width: 0%;
     background: #00ffcc;
+    transition: width 0.5s linear; /* smooth animation */
 }
 
 /* FOOTER */
@@ -122,8 +145,10 @@ html, body {
 <body>
 
 <div class="player-wrapper">
+    <!-- Current player -->
     <iframe id="videoPlayer"></iframe>
-    <div id="silentLockOverlay"></div>
+    <!-- Preload next player (hidden) -->
+    <iframe id="nextPlayer" style="display:none;"></iframe>
 
     <!-- HEADER -->
     <div class="header">
@@ -133,17 +158,32 @@ html, body {
 
     <!-- EPG -->
     <div class="epg">
+        <!-- LIVE NOW CARD -->
         <div class="card">
-            <div class="card-title">Live Now</div>
+            <div class="card-header">
+                <img id="nowLogo" class="logo" src="">
+                <div class="card-title">Live Now</div>
+            </div>
             <div class="card-main" id="nowTitle">Loading...</div>
+            <div class="time-range">
+                <div class="live-badge"></div>
+                <span id="nowTime">00:00–00:00</span>
+            </div>
             <div class="progress-container">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
         </div>
 
+        <!-- NEXT CARD -->
         <div class="card">
-            <div class="card-title">Next</div>
+            <div class="card-header">
+                <img id="nextLogo" class="logo" src="">
+                <div class="card-title">Next</div>
+            </div>
             <div class="card-main" id="nextTitle"></div>
+            <div class="time-range">
+                <span id="nextTime">00:00–00:00</span>
+            </div>
         </div>
     </div>
 
@@ -157,67 +197,106 @@ html, body {
 const BASE_JSON_URL = "https://mstvnetwork.github.io/mstv4/epg.json";
 
 const playlist = [
-    { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
-    { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
+    { 
+        title: "Indian Idol", 
+        url: "https://vkprime.com/embed-k1ipwza01c0d.html",
+        logo: "https://upload.wikimedia.org/wikipedia/en/6/6f/Indian_Idol_logo.png"
+    },
+    { 
+        title: "Mtv", 
+        url: "https://vkprime.com/embed-e6r4icq8gcq1.html",
+        logo: "https://upload.wikimedia.org/wikipedia/commons/7/7a/MTV_Logo_2010.svg"
+    }
 ];
 
 let progressTimer;
+
+function formatTimeRange(start, end){
+    const s = new Date(start);
+    const e = new Date(end);
+    const pad = n => n.toString().padStart(2,'0');
+    return `${pad(s.getHours())}:${pad(s.getMinutes())}–${pad(e.getHours())}:${pad(e.getMinutes())}`;
+}
 
 async function loadEPG() {
     try {
         const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
         const data = await res.json();
-
         const nowTime = Date.now();
 
         let current = null;
         let next = null;
 
-        for (let i = 0; i < data.schedule.length; i++) {
+        for (let i=0; i<data.schedule.length; i++){
             const start = new Date(data.schedule[i].start).getTime();
             const end = new Date(data.schedule[i].end).getTime();
 
-            if (nowTime >= start && nowTime < end) {
+            if(nowTime >= start && nowTime < end){
                 current = data.schedule[i];
-                next = data.schedule[i + 1] || null;
+                next = data.schedule[i+1] || null;
                 break;
             }
         }
 
-        if (!current) return;
+        if(!current){
+            document.getElementById("nowTitle").textContent = "No Live Program";
+            document.getElementById("nowLogo").src = "";
+            return;
+        }
 
-        document.getElementById("nowTitle").textContent = current.title;
-        document.getElementById("nextTitle").textContent = next ? next.title : "";
-
+        updateUI(current, next);
+        preloadNext(next);
         syncVideo(current.title);
         startProgress(current);
 
-    } catch (e) {
+    } catch(e){
         console.error("EPG error:", e);
     }
 }
 
-function startProgress(program) {
-    clearInterval(progressTimer);
+function updateUI(current, next){
+    const currentChannel = playlist.find(v => v.title === current.title);
+    const nextChannel = next ? playlist.find(v => v.title === next.title) : null;
 
-    progressTimer = setInterval(() => {
+    document.getElementById("nowTitle").textContent = current.title;
+    document.getElementById("nextTitle").textContent = next ? next.title : "";
+
+    document.getElementById("nowLogo").src = currentChannel?.logo || "";
+    document.getElementById("nextLogo").src = nextChannel?.logo || "";
+
+    document.getElementById("nowTime").textContent = formatTimeRange(current.start, current.end);
+    document.getElementById("nextTime").textContent = next ? formatTimeRange(next.start, next.end) : "";
+}
+
+function startProgress(program){
+    clearInterval(progressTimer);
+    const progressBar = document.getElementById("progressBar");
+
+    function update(){
         const now = Date.now();
         const start = new Date(program.start).getTime();
         const end = new Date(program.end).getTime();
-
-        const percent = ((now - start) / (end - start)) * 100;
-        document.getElementById("progressBar").style.width = percent + "%";
-
-    }, 1000);
+        const percent = Math.min(((now-start)/(end-start))*100, 100);
+        progressBar.style.width = percent + "%";
+        requestAnimationFrame(update); // smooth animation
+    }
+    requestAnimationFrame(update);
 }
 
-function syncVideo(title) {
+function syncVideo(title){
     const player = document.getElementById("videoPlayer");
     const video = playlist.find(v => v.title === title);
-
-    if (video && player.src !== video.url) {
+    if(video && player.src !== video.url){
         player.src = video.url;
     }
+}
+
+// Preload next stream
+function preloadNext(next){
+    const nextPlayer = document.getElementById("nextPlayer");
+    if(!next) return;
+    const video = playlist.find(v => v.title === next.title);
+    if(video) nextPlayer.src = video.url;
 }
 
 window.onload = () => {
