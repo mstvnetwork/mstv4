@@ -2,17 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MSTV Network Player</title>
     <style>
-        body { background: #111; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; padding: 20px; }
-        #player-container { width: 90%; max-width: 1000px; margin: 20px auto; aspect-ratio: 16/9; background: #000; border: 2px solid #333; border-radius: 8px; overflow: hidden; }
+        body { background: #111; color: #fff; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        #player-container { width: 90%; max-width: 900px; margin: 20px auto; aspect-ratio: 16/9; background: #000; }
         iframe { width: 100%; height: 100%; border: none; }
-        .epg-bar { background: #222; padding: 20px; width: 90%; max-width: 1000px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .live { color: #ff4545; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-        #now-playing { font-size: 1.4em; margin-bottom: 10px; }
-        #next-up { color: #aaa; font-size: 1em; border-top: 1px solid #333; padding-top: 10px; }
-        .debug-info { margin-top: 20px; font-size: 0.8em; color: #666; }
+        .epg-bar { background: #222; padding: 15px; width: 90%; max-width: 900px; margin: 0 auto; border-radius: 8px; }
+        .live { color: #ff4545; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -22,65 +17,62 @@
     </div>
 
     <div class="epg-bar">
-        <div id="now-playing"><span class="live">Status:</span> Loading Schedule...</div>
-        <div id="next-up">Next: Checking...</div>
+        <div id="now-playing"><span class="live">STATUS:</span> Loading...</div>
+        <div id="next-up" style="color: #888; font-size: 0.9em; margin-top: 5px;"></div>
     </div>
 
-    <div class="debug-info">
-        System Time: <span id="current-time-display">--:--:--</span> | 
-        Last Update: <span id="last-update">Never</span>
-    </div>
-<script>
-    // FIXED URL: Includes the full path PLUS the cache-buster
-    const jsonUrl = 'https://mstvnetwork.github.io/mstv4/epg.json' + new Date().getTime();
-    let currentActiveUrl = "";
+    <script>
+        const BASE_JSON_URL = "https://raw.githubusercontent.com";
+        let currentUrl = "";
 
-    async function updatePlayer() {
-        try {
-            const response = await fetch(jsonUrl);
-            if (!response.ok) throw new Error("File not found on GitHub");
+        async function loadEPG() {
+            // 1. Correct cache-busting syntax
+            const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
             
-            const schedule = await response.json();
-            const now = new Date();
-            
-            document.getElementById('current-time-display').innerText = now.toLocaleTimeString();
+            try {
+                const res = await fetch(freshUrl);
+                if (!res.ok) throw new Error("Network response was not ok");
+                
+                const data = await res.json();
+                const now = new Date();
+                
+                // 2. Find the current show (Works for both [ ] and { schedule: [ ] } formats)
+                const programs = Array.isArray(data) ? data : data.schedule;
+                let currentIndex = programs.findIndex(item => {
+                    const start = new Date(item.start);
+                    const end = new Date(item.end);
+                    return now >= start && now < end;
+                });
 
-            let currentIndex = schedule.findIndex(item => {
-                const startTime = new Date(item.start);
-                const endTime = new Date(item.end);
-                return now >= startTime && now < endTime;
-            });
+                if (currentIndex !== -1) {
+                    const currentShow = programs[currentIndex];
+                    const nextShow = programs[currentIndex + 1];
 
-            if (currentIndex !== -1) {
-                const currentShow = schedule[currentIndex];
-                const nextShow = schedule[currentIndex + 1] || { title: "End of Programming" };
+                    // 3. Sync Video (only if URL changed)
+                    const player = document.getElementById('main-player');
+                    if (currentUrl !== currentShow.url) {
+                        player.src = currentShow.url;
+                        currentUrl = currentShow.url;
+                    }
 
-                const player = document.getElementById('main-player');
-                if (currentActiveUrl !== currentShow.url) {
-                    player.src = currentShow.url;
-                    currentActiveUrl = currentShow.url;
+                    // 4. Update UI
+                    document.getElementById('now-playing').innerHTML = `<span class="live">● LIVE:</span> ${currentShow.title}`;
+                    document.getElementById('next-up').innerText = nextShow ? `NEXT: ${nextShow.title}` : "NEXT: End of Schedule";
+                } else {
+                    document.getElementById('now-playing').innerText = "OFF AIR";
+                    document.getElementById('main-player').src = "";
+                    currentUrl = "";
                 }
 
-                document.getElementById('now-playing').innerHTML = `<span class="live">● LIVE:</span> ${currentShow.title}`;
-                document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
-            } else {
-                document.getElementById('now-playing').innerHTML = `<span style="color:gray">OFF AIR</span>`;
-                document.getElementById('next-up').innerText = "No show scheduled.";
-                document.getElementById('main-player').src = ""; 
-                currentActiveUrl = "";
+            } catch(e) {
+                console.error("Fetch error:", e);
+                document.getElementById('now-playing').innerText = "Error Loading EPG";
             }
-
-            document.getElementById('last-update').innerText = now.toLocaleTimeString();
-
-        } catch (err) {
-            console.error("Fetch Error:", err);
-            document.getElementById('now-playing').innerText = "Connection Error. Check console.";
         }
-    }
 
-    updatePlayer();
-    setInterval(updatePlayer, 10000); 
-</script>
-
+        // Run every 10 seconds
+        loadEPG();
+        setInterval(loadEPG, 10000);
+    </script>
 </body>
 </html>
