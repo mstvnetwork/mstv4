@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <style>
-        .crop-window {
+        .outer-cropper {
             position: relative;
             width: 100%;
             padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
@@ -10,38 +10,44 @@
             background: #000;
         }
 
-        .crop-window iframe {
+        .outer-cropper iframe {
             position: absolute;
             width: 100%;
-            height: 120%; /* Vertical crop to hide logo/bars */
+            height: 120%; /* Crops top/bottom bars off-screen */
             top: -10%; 
             left: 0;
             border: 0;
-            /* Prevents clicking/scrubbing */
-            pointer-events: none; 
+            z-index: 1;
+            /* pointer-events: none;  <-- Remove this if the button stays solid */
         }
 
-        /* The Shield ensures no touch/click reaches the iframe */
-        .shield {
+        /* This layer blocks user "jumping" while allowing the iframe to load */
+        .interaction-blocker {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 10;
+            z-index: 5;
+            background: rgba(0,0,0,0); /* Fully transparent */
         }
     </style>
 </head>
 <body>
 
-    <div class="crop-window">
-        <div class="shield"></div>
+    <div class="outer-cropper">
+        <!-- The interaction blocker prevents scrubbing/pausing -->
+        <div class="interaction-blocker"></div>
+
         <iframe 
             src="https://www.youtube.com/embed/KMWcefrAKLg?si=cbCLpqbCnossfPvi" 
-            allow="autoplay; encrypted-media">
+            allow="autoplay; encrypted-media; picture-in-picture" 
+            tabindex="-1">
         </iframe>
     </div>
 
 </body>
 </html>
+
+
 
 
 
