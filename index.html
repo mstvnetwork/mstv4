@@ -30,62 +30,57 @@
         System Time: <span id="current-time-display">--:--:--</span> | 
         Last Update: <span id="last-update">Never</span>
     </div>
+<script>
+    // FIXED URL: Includes the full path PLUS the cache-buster
+    const jsonUrl = 'https://raw.githubusercontent.com' + new Date().getTime();
+    let currentActiveUrl = "";
 
-    <script>
-        // SINGLE SOURCE OF TRUTH: Using Raw GitHub with Cache-Buster
-        const jsonUrl = 'https://raw.githubusercontent.com' + new Date().getTime();
-        let currentActiveUrl = "";
+    async function updatePlayer() {
+        try {
+            const response = await fetch(jsonUrl);
+            if (!response.ok) throw new Error("File not found on GitHub");
+            
+            const schedule = await response.json();
+            const now = new Date();
+            
+            document.getElementById('current-time-display').innerText = now.toLocaleTimeString();
 
-        async function updatePlayer() {
-            try {
-                const response = await fetch(jsonUrl);
-                if (!response.ok) throw new Error("Network response was not ok");
-                
-                const schedule = await response.json();
-                const now = new Date();
-                
-                // Update the debug clock on screen
-                document.getElementById('current-time-display').innerText = now.toLocaleTimeString();
+            let currentIndex = schedule.findIndex(item => {
+                const startTime = new Date(item.start);
+                const endTime = new Date(item.end);
+                return now >= startTime && now < endTime;
+            });
 
-                // Find the show where: Now is GREATER than Start AND Now is LESS than End
-                let currentIndex = schedule.findIndex(item => {
-                    const startTime = new Date(item.start);
-                    const endTime = new Date(item.end);
-                    return now >= startTime && now < endTime;
-                });
+            if (currentIndex !== -1) {
+                const currentShow = schedule[currentIndex];
+                const nextShow = schedule[currentIndex + 1] || { title: "End of Programming" };
 
-                if (currentIndex !== -1) {
-                    const currentShow = schedule[currentIndex];
-                    const nextShow = schedule[currentIndex + 1] || { title: "End of Programming" };
-
-                    // Only refresh the iframe if the show URL actually changed
-                    const player = document.getElementById('main-player');
-                    if (currentActiveUrl !== currentShow.url) {
-                        player.src = currentShow.url;
-                        currentActiveUrl = currentShow.url;
-                        console.log("Switching to: " + currentShow.title);
-                    }
-
-                    document.getElementById('now-playing').innerHTML = `<span class="live">● LIVE:</span> ${currentShow.title}`;
-                    document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
-                } else {
-                    document.getElementById('now-playing').innerHTML = `<span style="color:gray">OFF AIR</span>`;
-                    document.getElementById('next-up').innerText = "Check back later for new shows.";
-                    document.getElementById('main-player').src = ""; // Clear player if off-air
-                    currentActiveUrl = "";
+                const player = document.getElementById('main-player');
+                if (currentActiveUrl !== currentShow.url) {
+                    player.src = currentShow.url;
+                    currentActiveUrl = currentShow.url;
                 }
 
-                document.getElementById('last-update').innerText = now.toLocaleTimeString();
-
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                document.getElementById('now-playing').innerText = "Schedule Error: Ensure JSON format is correct.";
+                document.getElementById('now-playing').innerHTML = `<span class="live">● LIVE:</span> ${currentShow.title}`;
+                document.getElementById('next-up').innerHTML = `UP NEXT: ${nextShow.title}`;
+            } else {
+                document.getElementById('now-playing').innerHTML = `<span style="color:gray">OFF AIR</span>`;
+                document.getElementById('next-up').innerText = "No show scheduled.";
+                document.getElementById('main-player').src = ""; 
+                currentActiveUrl = "";
             }
-        }
 
-        // Run immediately, then check every 10 seconds for show changes
-        updatePlayer();
-        setInterval(updatePlayer, 10000);
-    </script>
+            document.getElementById('last-update').innerText = now.toLocaleTimeString();
+
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            document.getElementById('now-playing').innerText = "Connection Error. Check console.";
+        }
+    }
+
+    updatePlayer();
+    setInterval(updatePlayer, 10000); 
+</script>
+
 </body>
 </html>
