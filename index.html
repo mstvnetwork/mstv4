@@ -1,7 +1,56 @@
-<iframe width="560" height="315" 
-  src="https://www.youtube.com/embed/pfeOfoyIn9k?si=EKPNvpNVATr1uKvc" 
-  frameborder="0" 
-  scrolling="no"
-  allow="autoplay; encrypted-media" 
-  allowfullscreen>
-</iframe>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean YouTube Embed</title>
+    <style>
+        /* 1. The Container: Forces 16:9 ratio and hides all overflow/scrollbars */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+        }
+
+        /* 2. The Iframe: Stretches to fill container perfectly */
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            /* Extra insurance against scrollbars in all browsers */
+            -ms-overflow-style: none;  /* IE/Edge */
+            scrollbar-width: none;     /* Firefox */
+        }
+
+        /* 3. Hide Scrollbars specifically for Chrome/Safari/Opera */
+        .video-container iframe::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-container">
+        <!-- 
+          URL Parameters:
+          controls=0 (Hides playbar)
+          modestbranding=1 (Hides YouTube logo)
+          rel=0 (Shows only your videos at end)
+          iv_load_policy=3 (Hides annotations)
+        -->
+        <iframe 
+            src="https://www.youtube.com/embed/KMWcefrAKLg?si=cbCLpqbCnossfPvi" 
+            title="Clean Video Playback"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+        </iframe>
+    </div>
+
+</body>
+</html>
