@@ -171,28 +171,46 @@
         }
 
         function updatePlayer() {
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-            
-            const currentItem = schedule.find(item => currentTime >= item.start && currentTime < item.end);
-            const player = document.getElementById('main-player');
-            
-            if (currentItem && player.src !== currentItem.url) {
-                player.src = currentItem.url;
-                document.getElementById('current-time-range').innerText = `${currentItem.start} - ${currentItem.end}`;
-                
-                // Set Next Start
-                const currentIndex = schedule.indexOf(currentItem);
-                const nextItem = schedule[currentIndex + 1] || schedule;
-                document.getElementById('next-start').innerText = nextItem.start;
-            }
-
-            // Update Progress Bar (dummy calculation for demo)
-            const progress = (now.getMinutes() / 60) * 100;
-            document.getElementById('progress-fill').style.width = progress + "%";
+    const now = new Date();
+    // Format: "HH:mm"
+    const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                           now.getMinutes().toString().padStart(2, '0');
+    
+    // Find the current show
+    const currentItem = schedule.find(item => currentTimeStr >= item.start && currentTimeStr < item.end);
+    
+    if (currentItem) {
+        const player = document.getElementById('main-player');
+        
+        // Only update the iframe if the URL has actually changed (prevents flicker)
+        if (player.src !== currentItem.url) {
+            player.src = currentItem.url;
         }
 
-        init();
+        // Update UI Text
+        document.getElementById('current-time-range').innerText = `${currentItem.start} - ${currentItem.end}`;
+        document.getElementById('current-logo').src = currentItem.logo;
+
+        // Calculate Progress Bar %
+        const [startH, startM] = currentItem.start.split(':').map(Number);
+        const [endH, endM] = currentItem.end.split(':').map(Number);
+        
+        const startTotalMinutes = (startH * 60) + startM;
+        const endTotalMinutes = (endH * 60) + endM;
+        const nowTotalMinutes = (now.getHours() * 60) + now.getMinutes();
+        
+        const duration = endTotalMinutes - startTotalMinutes;
+        const elapsed = nowTotalMinutes - startTotalMinutes;
+        const percent = Math.min(Math.max((elapsed / duration) * 100, 0), 100);
+        
+        document.getElementById('progress-fill').style.width = percent + "%";
+
+        // Update Next Start Time
+        const currentIndex = schedule.indexOf(currentItem);
+        const nextItem = schedule[currentIndex + 1] || schedule; // Loops back to first
+        document.getElementById('next-start').innerText = nextItem.start;
+    }
+        }
     </script>
 </body>
 </html>
