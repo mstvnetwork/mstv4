@@ -1,16 +1,19 @@
-[
-  {
-    "title": "Anupama",
-    "url": "https://vkprime.com/embed-hadd6y958qqh-600x350.html",
-    "logo": "https://yourdomain.com/logo1.png",
-    "start": "00:00",
-    "end": "02:45"
-  },
-  {
-    "title": "Nagin",
-    "url": "https://vkprime.com/embed-ye6sl712dw59-600x350.html",
-    "logo": "https://yourdomain.com/logo2.png",
-    "start": "02:45",
-    "end": "02:48" 
-  }
-]
+{
+  "schedule": [
+    {
+      "title": "Indian Idol",
+      "start": "2026-03-29T02:00:00",
+      "end": "2026-03-29T04:00:00"
+    },
+    {
+      "title": "Mtv",
+      "start": "2026-03-29T04:00:00",
+      "end": "2026-03-29T06:00:00"
+    },
+    {
+      "title": "Roadies",
+      "start": "2026-03-29T06:00:00",
+      "end": "2026-03-29T07:30:00"
+    }
+  ]
+}
