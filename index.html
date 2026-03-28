@@ -175,12 +175,35 @@ footer {
 
 <script>
 // --- CONFIG ---
-const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/schedule.json";
+const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
 const playlist = [
     { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
     { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
 ];
-    
+  let silentLockTimer;
+const lockOverlay = document.getElementById('silentLockOverlay');
+
+function syncVideo(newUrl) {
+    const player = document.getElementById('videoPlayer');
+
+    // Only trigger if the source is actually changing
+    if (player.src !== newUrl) {
+        player.src = newUrl;
+
+        // 1. Clear any existing timer
+        clearTimeout(silentLockTimer);
+        
+        // 2. ACTIVATE LOCK: Enable pointer events so clicks hit the overlay, not the video
+        lockOverlay.style.pointerEvents = 'auto'; 
+        console.log("Interaction Locked for 40 seconds");
+
+        // 3. SET TIMER: Disable lock after 40,000ms
+        silentLockTimer = setTimeout(() => {
+            lockOverlay.style.pointerEvents = 'none';
+            console.log("Interaction Unlocked");
+        }, 40000); 
+    }
+    }  
 async function loadEPG() {
     try {
         const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
