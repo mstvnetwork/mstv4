@@ -3,271 +3,225 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>Player</title>
+<title>MSNET | Cinema Stream</title>
 
 <style>
 :root { 
-    --bg-black: #0a0a0a; 
-    --accent: #e50914; /* Netflix Red style */
-    --glass: rgba(255, 255, 255, 0.1);
+    --muddy-white: #f4f4f2; 
+    --text-dark: #2c2c2c;
+    --accent-red: #d32f2f;
+    --card-bg: #ffffff;
+    --footer-bg: #e2e2df;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-html, body { height: 100%; width: 100%; background-color: var(--bg-black); color: white; overflow: hidden; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-/* Fixed Fullscreen Player Container */
-.player-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
-}
-
-#videoPlayer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* UI Overlay Container */
-.ui-layer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
-    padding: 40px 20px 20px;
-    pointer-events: none;
-}
-
-/* EPG Cards */
-.epg-container {
+body { 
+    background-color: var(--muddy-white); 
+    color: var(--text-dark);
     display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Header Section */
+header {
+    padding: 20px;
+    text-align: center;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+header h1 { font-size: 1.8rem; color: var(--accent-red); letter-spacing: 1px; }
+header p { font-size: 0.9rem; color: #777; margin-top: 5px; }
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Player Styling */
+.player-container {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+#videoPlayer { width: 100%; height: 100%; border: none; }
+
+/* EPG Section */
+.epg-section {
+    width: 100%;
+    margin-top: 25px;
+    transition: all 0.3s ease;
+}
+
+.epg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
-    margin-bottom: 20px;
-    pointer-events: auto;
 }
 
 .epg-card {
-    background: var(--glass);
-    backdrop-filter: blur(10px);
-    padding: 15px;
-    border-radius: 8px;
-    min-width: 280px;
-    border-left: 4px solid var(--accent);
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-.epg-card.next {
-    border-left-color: #666;
-    opacity: 0.8;
-}
-
-.label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px; }
-.title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
-.time { font-size: 0.85rem; color: #eee; }
+.label { font-size: 0.75rem; font-weight: bold; color: var(--accent-red); text-transform: uppercase; margin-bottom: 8px; }
+.prog-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 5px; }
+.prog-time { font-size: 0.9rem; color: #666; }
 
 /* Progress Bar */
-.progress-container {
+.progress-wrapper {
     width: 100%;
-    height: 6px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 3px;
-    margin: 15px 0;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin-top: 15px;
     overflow: hidden;
 }
-
-#progressBar {
-    height: 100%;
-    width: 0%;
-    background: var(--accent);
-    transition: width 1s linear;
-}
+#progressBar { height: 100%; width: 0%; background: var(--accent-red); transition: width 0.5s ease; }
 
 /* Footer */
-.footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    color: #888;
+footer {
+    background: var(--footer-bg);
+    padding: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 40px;
+}
+
+/* LANDSCAPE HIDING LOGIC */
+/* Hides EPG and Progress when device is horizontal or in fullscreen */
+@media (orientation: landscape) {
+    header, .epg-section, footer {
+        display: none !important;
+    }
+    .main-content { padding: 0; max-width: 100%; }
+    .player-container {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        border-radius: 0;
+    }
 }
 
 #silentLockOverlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 9999; 
-    pointer-events: none; 
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 99; pointer-events: none;
 }
-
-#browser-error { display: none; background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
 
-<div id="browser-error">
-    <h2 style="color: white;">Chrome Browser Required for Cinema Mode</h2>
-</div>
+<header>
+    <h1>MSNET IPTV</h1>
+    <p>Premium Entertainment, Redefined.</p>
+</header>
 
-<div id="chrome-only-content" style="display:none;">
-    <div class="player-wrapper">
+<div class="main-content">
+    <div class="player-container">
         <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" playsinline></iframe>
         <div id="silentLockOverlay"></div>
-        
-        <div class="ui-layer">
-            <div class="epg-container">
-                <div class="epg-card">
-                    <div class="label">Now Playing</div>
-                    <div id="currentTitle" class="title">Loading...</div>
-                    <div id="currentTimeRange" class="time">--:-- until --:--</div>
-                </div>
-                <div class="epg-card next">
-                    <div class="label">Up Next</div>
-                    <div id="nextTitle" class="title">Scanning...</div>
-                    <div id="nextStartTime" class="time">Starts at --:--</div>
+    </div>
+
+    <div class="epg-section" id="epgSection">
+        <div class="epg-grid">
+            <div class="epg-card">
+                <div class="label">Now Playing</div>
+                <div id="currentTitle" class="prog-title">Loading...</div>
+                <div id="currentTimeRange" class="prog-time">--:-- - --:--</div>
+                <div class="progress-wrapper">
+                    <div id="progressBar"></div>
                 </div>
             </div>
-
-            <div class="progress-container">
-                <div id="progressBar"></div>
-            </div>
-
-            <div class="footer">
-                <div>&copy; 2026 MSNET IPTV • Cinema Mode Active</div>
-                <div id="liveClock">00:00:00</div>
+            <div class="epg-card">
+                <div class="label">Coming Up Next</div>
+                <div id="nextTitle" class="prog-title">Searching...</div>
+                <div id="nextStartTime" class="prog-time">Starts at --:--</div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json"; // Update with your actual URL
+<footer>
+    <p>&copy; 2026 MSNET Streaming Services • All Rights Reserved</p>
+</footer>
 
+<script>
+// --- CONFIG ---
+const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
 const playlist = [
     { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
     { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
 ];
 
-let silentLockTimer;
-const lockOverlay = document.getElementById('silentLockOverlay');
-
-function isStrictChrome() {
-    const ua = navigator.userAgent;
-    return (ua.indexOf("Chrome") > -1 || ua.indexOf("CriOS") > -1) && 
-           !(ua.indexOf("Edg") > -1 || ua.indexOf("SamsungBrowser") > -1 || ua.indexOf("OPR") > -1);
-}
-
-function formatTime(dateString) {
-    if(!dateString) return "--:--";
-    const d = new Date(dateString);
-    return d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
-}
-
-function updateClock() {
-    const now = new Date();
-    document.getElementById('liveClock').innerText = now.toLocaleTimeString();
-}
-
 async function loadEPG() {
-    const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
-    
     try {
-        const res = await fetch(freshUrl);
-        if (!res.ok) throw new Error("Fetch failed");
-        
+        const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
         const data = await res.json();
         const now = new Date();
-        let currentProg = null;
-        let nextProg = null;
+        let current = null;
+        let next = null;
 
         for (let i = 0; i < data.schedule.length; i++) {
             const start = new Date(data.schedule[i].start);
             const end = new Date(data.schedule[i].end);
             
             if (now >= start && now < end) {
-                currentProg = data.schedule[i];
-                nextProg = data.schedule[i + 1] || null;
+                current = data.schedule[i];
+                next = data.schedule[i + 1] || null;
                 
-                // Calculate Progress
-                const total = end - start;
-                const elapsed = now - start;
-                const percent = (elapsed / total) * 100;
-                document.getElementById('progressBar').style.width = percent + "%";
+                // Progress Calc
+                const pct = ((now - start) / (end - start)) * 100;
+                document.getElementById('progressBar').style.width = pct + "%";
                 break;
             }
         }
 
-        if(currentProg) {
-            updateUI(currentProg, nextProg);
-            syncVideo(currentProg.title);
-        } else {
-            rotateLocal();
+        if(current) {
+            updateUI(current, next);
+            syncVideo(current.title);
         }
-
-    } catch(e) {
-        rotateLocal();
-    }
+    } catch(e) { console.log("EPG Update Failed"); }
 }
 
-function updateUI(current, next) {
-    document.getElementById('currentTitle').innerText = current.title;
-    document.title = "Player | " + current.title;
-    document.getElementById('currentTimeRange').innerText = `${formatTime(current.start)} until ${formatTime(current.end)}`;
+function updateUI(curr, nxt) {
+    document.getElementById('currentTitle').innerText = curr.title;
+    document.title = "Watching: " + curr.title;
+    document.getElementById('currentTimeRange').innerText = 
+        `${new Date(curr.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(curr.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
     
-    if(next) {
-        document.getElementById('nextTitle').innerText = next.title;
-        document.getElementById('nextStartTime').innerText = `Starts at ${formatTime(next.start)}`;
-    } else {
-        document.getElementById('nextTitle').innerText = "TBA";
-        document.getElementById('nextStartTime').innerText = "Check back later";
+    if(nxt) {
+        document.getElementById('nextTitle').innerText = nxt.title;
+        document.getElementById('nextStartTime').innerText = "Starts at " + new Date(nxt.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
 }
 
-function rotateLocal() {
+function syncVideo(title) {
     const player = document.getElementById('videoPlayer');
-    const currentIndex = playlist.findIndex(v => v.url === player.src);
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    document.getElementById('currentTitle').innerText = playlist[nextIndex].title;
-    syncVideo(playlist[nextIndex].title);
-}
-
-function syncVideo(liveTitle){
-    const player = document.getElementById('videoPlayer');
-    let liveVideo = playlist.find(v => v.title === liveTitle);
-
-    if(liveVideo && player.src !== liveVideo.url){
-        player.src = liveVideo.url;
-        
-        clearTimeout(silentLockTimer);
-        lockOverlay.style.pointerEvents = 'none'; 
-        silentLockTimer = setTimeout(() => {
-            lockOverlay.style.pointerEvents = 'auto';
-        }, 40000); 
+    const stream = playlist.find(v => v.title === title);
+    if(stream && player.src !== stream.url) {
+        player.src = stream.url;
     }
 }
 
-window.onload = function(){
-    if(isStrictChrome()){
-        document.getElementById('chrome-only-content').style.display='block';
-        document.getElementById('browser-error').style.display='none';
-        loadEPG();
-        setInterval(loadEPG, 30000); // More frequent updates for the progress bar
-        setInterval(updateClock, 1000);
-    } else {
-        document.getElementById('browser-error').style.display='flex';
-    }
-};
+setInterval(loadEPG, 30000);
+window.onload = loadEPG;
 </script>
 </body>
 </html>
