@@ -72,41 +72,64 @@
         }
 
         function updateLoop() {
-            if(!schedule.length) return;
+    if (!schedule || schedule.length === 0) {
+        console.warn("Schedule is empty or not loaded yet.");
+        return;
+    }
 
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
-                            now.getMinutes().toString().padStart(2, '0');
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                    now.getMinutes().toString().padStart(2, '0');
 
-            // Find current show
-            let current = schedule.find(i => timeStr >= i.start && timeStr < i.end);
-            
-            // If no show matches current time, default to first show (Looping)
-            if(!current) current = schedule;
+    // FIND SHOW: Look for a match, or default to the first show if it's "Late Night"
+    let current = schedule.find(i => {
+        // Fix: ensure times are HH:mm (e.g. "1:30" becomes "01:30")
+        const start = i.start.includes(':') && i.start.split(':').length === 1 ? '0' + i.start : i.start;
+        const end = i.end.includes(':') && i.end.split(':').length === 1 ? '0' + i.end : i.end;
+        return timeStr >= start && timeStr < end;
+    });
 
-            // Update Player
-            const p = document.getElementById('main-player');
-            if(p.src !== current.url) p.src = current.url;
+    // Fallback to first show if no match (Looping)
+    if (!current) current = schedule;
+    
+    // SAFETY: If still no current show, exit to prevent "split" error
+    if (!current || !current.start || !current.end) return;
 
-            // Update UI
-            document.getElementById('now-title').innerText = current.title;
-            document.getElementById('now-time').innerText = `${current.start} - ${current.end}`;
-            document.getElementById('now-logo').src = current.logo;
+    // Update Player
+    const p = document.getElementById('main-player');
+    if (p && p.src !== current.url) p.src = current.url;
 
-            // Progress
-            const [sh, sm] = current.start.split(':').map(Number);
-            const [eh, em] = current.end.split(':').map(Number);
-            const total = (eh * 60 + em) - (sh * 60 + sm);
-            const elapsed = (now.getHours() * 60 + now.getMinutes()) - (sh * 60 + sm);
-            document.getElementById('progress-bar').style.width = Math.min(100, Math.max(0, (elapsed/total)*100)) + "%";
+    // Update UI
+    document.getElementById('now-title').innerText = current.title || "Unknown Show";
+    document.getElementById('now-time').innerText = `${current.start} - ${current.end}`;
+    if(current.logo) document.getElementById('now-logo').src = current.logo;
 
-            // Next
-            const idx = schedule.indexOf(current);
-            const next = schedule[idx + 1] || schedule;
-            document.getElementById('next-start').innerText = next.start;
+    // Progress Calculation with Safety
+    try {
+        const [sh, sm] = current.start.split(':').map(Number);
+        const [eh, em] = current.end.split(':').map(Number);
+        
+        const startTotal = sh * 60 + sm;
+        let endTotal = eh * 60 + em;
+        const nowTotal = now.getHours() * 60 + now.getMinutes();
+
+        // Handle shows that cross midnight (e.g. 23:00 to 01:00)
+        if (endTotal < startTotal) endTotal += 1440; 
+        
+        const total = endTotal - startTotal;
+        const elapsed = nowTotal - startTotal;
+        const percent = Math.min(100, Math.max(0, (elapsed / total) * 100));
+        
+        document.getElementById('progress-bar').style.width = percent + "%";
+    } catch (err) {
+        console.error("Progress calculation failed", err);
+    }
+
+    // Next Show Logic
+    const idx = schedule.indexOf(current);
+    const next = schedule[idx + 1] || schedule;
+    document.getElementById('next-start').innerText = next.start;
         }
-
-        startApp();
     </script>
 </body>
 </html>
