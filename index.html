@@ -3,166 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>MSNET Cinema Mode</title>
     <style>
-        :root { --red: #ff0000; --bg: #000; --card: #111; --text: #eee; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            height: 100%; width: 100%; 
+            background-color: #000; 
+            overflow: hidden; 
+            cursor: none; /* Hides cursor on desktop */
+        }
 
-        /* The Container must be relative so the overlay can be absolute to IT */
-        .player-wrapper { 
-            position: relative; 
-            width: 100vw; 
-            height: 56.25vw; 
-            background: #000; 
+        /* Fullscreen Player Container */
+        .player-wrapper {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #000;
             z-index: 1;
         }
 
-        #videoPlayer { width: 100%; height: 100%; border: none; display: block; }
-
-        /* THE SHIELD: This is what blocks the controls */
-        #silentLockOverlay { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            z-index: 9999; /* Highest priority */
-            pointer-events: none; /* Initially off */
-            background: rgba(0,0,0,0);
+        #videoPlayer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+            display: block;
         }
 
-        .ui-section { padding: 15px; height: 40vh; }
-        .card { background: var(--card); padding: 15px; border-radius: 8px; border-left: 4px solid var(--red); display: flex; align-items: center; gap: 12px; }
-        .dot { height: 8px; width: 8px; background: var(--red); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-        .progress-bg { width: 100%; height: 4px; background: #333; margin-top: 10px; }
-        #progress-fill { height: 100%; background: var(--red); width: 0%; }
-
-        /* Forced Landscape Mode */
-        @media (orientation: landscape) {
-            .player-wrapper { height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; }
-            .ui-section { display: none; }
+        /* The Invisible Shield */
+        #silentLockOverlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999; 
+            pointer-events: none; /* Initially allows interaction */
+            background: rgba(0, 0, 0, 0);
         }
 
-        #browser-error { display: none; height: 100vh; align-items: center; justify-content: center; text-align: center; }
+        #browser-error { 
+            display: none; 
+            color: white; 
+            height: 100vh; 
+            justify-content: center; 
+            align-items: center; 
+            font-family: sans-serif;
+        }
     </style>
 </head>
 <body>
 
-<div id="browser-error"><h1>CHROME REQUIRED</h1></div>
+<div id="browser-error"><h2>Google Chrome Required</h2></div>
 
-<div id="app-content">
+<div id="chrome-only-content">
     <div class="player-wrapper">
         <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen" playsinline></iframe>
         <div id="silentLockOverlay"></div>
     </div>
-
-    <div class="ui-section">
-        <div class="card">
-            <div style="flex: 1;">
-                <div style="font-weight: bold;"><span class="dot"></span> <span id="title">Loading...</span></div>
-                <div id="time-range" style="font-size: 0.8rem; color: #888; margin-top: 5px;">--:--</div>
-                <div class="progress-bg"><div id="progress-fill"></div></div>
-            </div>
-        </div>
-        <p style="margin-top: 15px; font-size: 0.8rem; color: #444;">UP NEXT: <span id="next-time">--:--</span></p>
-    </div>
 </div>
+
 <script>
-const GITHUB_JSON = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
-let schedule = [];
-let lockTimer;
-const lockOverlay = document.getElementById('silentLockOverlay');
+    // Configuration
+    const JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
+    const playlist = [
+        { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
+        { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
+    ];
 
-// Strict Chrome Check
-function isStrictChrome() {
-    const ua = navigator.userAgent;
-    return (ua.indexOf("Chrome") > -1 || ua.indexOf("CriOS") > -1) && 
-           !(ua.indexOf("Edg") > -1 || ua.indexOf("SamsungBrowser") > -1 || ua.indexOf("OPR") > -1);
-}
+    let silentLockTimer;
+    const lockOverlay = document.getElementById('silentLockOverlay');
 
-async function sync() {
-    try {
-        const r = await fetch(GITHUB_JSON + "?v=" + Date.now());
-        if (!r.ok) throw new Error("JSON 404 - Check your GitHub URL");
-        
-        const d = await r.json();
-        // Handle both Array or Object formats
-        schedule = Array.isArray(d) ? d : (d.schedule || []);
-        
-        if (schedule.length > 0) {
-            refresh();
+    function isStrictChrome() {
+        const ua = navigator.userAgent;
+        const isChrome = (ua.indexOf("Chrome") > -1 || ua.indexOf("CriOS") > -1);
+        const isOther = (ua.indexOf("Edg") > -1 || ua.indexOf("SamsungBrowser") > -1 || ua.indexOf("OPR") > -1);
+        return isChrome && !isOther;
+    }
+
+    async function loadEPG() {
+        try {
+            const res = await fetch(JSON_URL + "?v=" + Date.now());
+            if (!res.ok) throw new Error("404");
+            
+            const data = await res.json();
+            const now = new Date();
+            let currentTitle = null;
+
+            // Search JSON for current time match
+            const schedule = Array.isArray(data) ? data : data.schedule;
+            for (let item of schedule) {
+                // Assuming JSON format is "YYYY-MM-DDTHH:MM:SS"
+                const start = new Date(item.start);
+                const end = new Date(item.end);
+                if (now >= start && now < end) {
+                    currentTitle = item.title;
+                    break;
+                }
+            }
+
+            if(!currentTitle) rotateLocal();
+            else syncVideo(currentTitle);
+
+        } catch(e) {
+            rotateLocal(); // Backup if JSON fails
         }
-    } catch(e) { 
-        console.error("Sync Error:", e.message); 
-        document.getElementById('title').innerText = "Offline: JSON Load Error";
-    }
-}
-
-function refresh() {
-    // CRITICAL SAFETY: Stop if schedule is empty to prevent .split() error
-    if (!schedule || schedule.length === 0) return;
-
-    const now = new Date();
-    const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
-                    now.getMinutes().toString().padStart(2, '0');
-
-    // Find show or default to first
-    let show = schedule.find(s => timeStr >= s.start && timeStr < s.end) || schedule;
-    
-    // Safety check for properties
-    if (!show || !show.start || !show.end) return;
-
-    const player = document.getElementById('videoPlayer');
-
-    // IF NEW SHOW STARTS
-    if (player.src !== show.url) {
-        player.src = show.url;
-
-        // RESET LOCK LAYER
-        clearTimeout(lockTimer);
-        lockOverlay.style.pointerEvents = 'none'; 
-        console.log("Stream Rotated - Unlocked");
-
-        lockTimer = setTimeout(() => {
-            lockOverlay.style.pointerEvents = 'auto';
-            console.log("Locked - Interaction Disabled");
-        }, 40000); 
     }
 
-    // Update UI
-    document.getElementById('title').innerText = show.title || "Live Stream";
-    document.getElementById('time-range').innerText = `${show.start} - ${show.end}`;
-    
-    // Progress Logic with try-catch to prevent crashing on malformed strings
-    try {
-        const [sh, sm] = show.start.split(':').map(Number);
-        const [eh, em] = show.end.split(':').map(Number);
-        let sM = sh * 60 + sm;
-        let eM = eh * 60 + em;
-        if (eM < sM) eM += 1440; // Cross midnight fix
-        
-        const nowM = now.getHours() * 60 + now.getMinutes();
-        const pct = ((nowM - sM) / (eM - sM)) * 100;
-        document.getElementById('progress-fill').style.width = Math.min(100, Math.max(0, pct)) + "%";
-    } catch (err) {
-        console.warn("Time format error in JSON");
+    function rotateLocal() {
+        const player = document.getElementById('videoPlayer');
+        // Find index of current playing URL
+        let idx = playlist.findIndex(v => v.url === player.src);
+        // Move to next one (or first one)
+        let nextIdx = (idx + 1) % playlist.length;
+        syncVideo(playlist[nextIdx].title);
     }
 
-    const nIdx = (schedule.indexOf(show) + 1) % schedule.length;
-    document.getElementById('next-time').innerText = schedule[nIdx].start;
-}
+    function syncVideo(title) {
+        const player = document.getElementById('videoPlayer');
+        const video = playlist.find(v => v.title === title);
 
-// Startup logic
-if (isStrictChrome()) {
-    sync();
-    // Re-check every 30s
-    setInterval(sync, 30000);
-} else {
-    document.getElementById('app-content').style.display = 'none';
-    document.getElementById('browser-error').style.display = 'flex';
-}
+        if(video && player.src !== video.url) {
+            player.src = video.url;
+
+            // RESET LOCK: Controls available for 40s
+            clearTimeout(silentLockTimer);
+            lockOverlay.style.pointerEvents = 'none'; 
+            console.log("New video: Controls Unlocked");
+
+            // LOCK: Shield active after 40s
+            silentLockTimer = setTimeout(() => {
+                lockOverlay.style.pointerEvents = 'auto';
+                console.log("Shield Active: Controls Hidden");
+            }, 40000); 
+        }
+    }
+
+    window.onload = function() {
+        if(isStrictChrome()){
+            document.getElementById('chrome-only-content').style.display = 'block';
+            loadEPG();
+            setInterval(loadEPG, 60000); // Check for updates every minute
+        } else {
+            document.getElementById('browser-error').style.display = 'flex';
+        }
+    };
 </script>
 </body>
 </html>
