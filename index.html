@@ -3,214 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MS-TV Player</title>
+    <title>MS-TV Live</title>
     <style>
-        :root {
-            --primary-red: #ff0000;
-            --bg-dark: #121212;
-            --card-bg: #1e1e1e;
-            --text-main: #ffffff;
-        }
+        :root { --red: #ff0000; --bg: #0f0f0f; --card: #1a1a1a; --text: #eee; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        
+        .player-container { position: relative; width: 100%; max-width: 850px; aspect-ratio: 16/9; margin: auto; background: #000; }
+        iframe { width: 100%; height: 100%; border: none; }
+        
+        /* The 40s Lock Layer */
+        #lockscreen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; cursor: default; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+        .epg-area { max-width: 850px; margin: 15px auto; }
+        .card { background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--red); }
+        .logo-box { width: 50px; height: 50px; background: #333; border-radius: 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo-box img { width: 80%; height: 80%; object-fit: contain; }
 
-        /* Player Container */
-        .player-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 16 / 9;
-            margin-top: 20px;
-            background: #000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .dot { height: 8px; width: 8px; background: var(--red); border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Lockscreen Overlay */
-        #lockscreen {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0); /* Transparent but blocks clicks */
-            z-index: 10;
-            cursor: not-allowed;
-        }
-
-        /* EPG Section */
-        .epg-container {
-            width: 100%;
-            max-width: 800px;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .epg-card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-left: 4px solid transparent;
-        }
-
-        .epg-card.active {
-            border-left: 4px solid var(--primary-red);
-        }
-
-        .dot {
-            height: 10px;
-            width: 10px;
-            background-color: var(--primary-red);
-            border-radius: 50%;
-            display: inline-block;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.7; }
-            70% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.7; }
-        }
-
-        .progress-bar {
-            flex-grow: 1;
-            height: 5px;
-            background: #444;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-
-        #progress-fill {
-            height: 100%;
-            background: var(--primary-red);
-            width: 0%;
-        }
-
-        footer {
-            margin-top: auto;
-            padding: 20px;
-            font-size: 0.8rem;
-            color: #777;
-        }
+        .progress-bg { width: 100%; height: 4px; background: #333; margin-top: 10px; border-radius: 2px; }
+        #progress-bar { height: 100%; background: var(--red); width: 0%; transition: width 0.5s; }
+        
+        footer { text-align: center; padding: 30px; color: #555; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <div class="player-wrapper">
+    <div class="player-container">
         <div id="lockscreen"></div>
-        <iframe id="main-player" src="" allowfullscreen></iframe>
+        <iframe id="main-player" allow="autoplay; fullscreen"></iframe>
     </div>
 
-    <div class="epg-container">
-        <div class="epg-card active">
-            <div class="logo"><img src="https://via.placeholder.com/40" id="current-logo" alt="logo"></div>
-            <div style="flex-grow:1">
-                <div><span class="dot"></span> <strong>Now Playing</strong>: <span id="current-time-range">--:--</span></div>
-                <div class="progress-bar"><div id="progress-fill"></div></div>
+    <div class="epg-area">
+        <div class="card">
+            <div class="logo-box"><img id="now-logo" src="https://img.icons8.com/color/48/television.png"></div>
+            <div style="flex: 1;">
+                <div style="font-weight: bold;"><span class="dot"></span> NOW: <span id="now-title">Loading...</span></div>
+                <div id="now-time" style="font-size: 0.85rem; color: #aaa; margin-top: 3px;">--:--</div>
+                <div class="progress-bg"><div id="progress-bar"></div></div>
             </div>
         </div>
-
-        <div class="epg-card">
-            <div style="color: #aaa;">Next: Starts at <span id="next-start">--:--</span></div>
+        <div class="card" style="border-left-color: #444; opacity: 0.7;">
+            <div style="font-size: 0.9rem;">NEXT: Starts at <span id="next-start">--:--</span></div>
         </div>
     </div>
 
-    <footer>
-        &copy; 2026 MSTV4 Project. All rights reserved.
-    </footer>
+    <footer>&copy; 2026 MSTV4 • All Rights Reserved</footer>
 
     <script>
-        // Configuration
-        const GITHUB_JSON_URL = 'https://mstvnetwork.github.io/mstv4/schedule.json';
+        const JSON_URL = 'https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json';
         let schedule = [];
-        
-        async function init() {
-            try {
-                // 1. Fetch Schedule
-                // const response = await fetch(GITHUB_JSON_URL);
-                // schedule = await response.json();
-                
-                // Mock data for demonstration
-                schedule = [
-                    { title: "Stream 1", url: "https://www.youtube.com/embed/jfKfPfyJRdk", start: "00:00", end: "12:00" },
-                    { title: "Stream 2", url: "https://www.youtube.com/embed/CHFif_y2TyM", start: "12:00", end: "23:59" }
-                ];
 
-                updatePlayer();
-                setInterval(updatePlayer, 10000); // Check every 10s for schedule changes
+        async function startApp() {
+            try {
+                const res = await fetch(JSON_URL);
+                schedule = await res.json();
                 
-                // 2. Lockscreen Timer (40 Seconds)
+                updateLoop();
+                setInterval(updateLoop, 5000); // Fast check
+
+                // 40 Second Lockout
                 setTimeout(() => {
                     document.getElementById('lockscreen').style.display = 'block';
-                    console.log("Player locked.");
                 }, 40000);
 
-            } catch (err) {
-                console.error("Failed to load schedule", err);
-            }
+            } catch (e) { console.error("Data error", e); }
         }
 
-        function updatePlayer() {
-    const now = new Date();
-    // Format: "HH:mm"
-    const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + 
-                           now.getMinutes().toString().padStart(2, '0');
-    
-    // Find the current show
-    const currentItem = schedule.find(item => currentTimeStr >= item.start && currentTimeStr < item.end);
-    
-    if (currentItem) {
-        const player = document.getElementById('main-player');
-        
-        // Only update the iframe if the URL has actually changed (prevents flicker)
-        if (player.src !== currentItem.url) {
-            player.src = currentItem.url;
+        function updateLoop() {
+            if(!schedule.length) return;
+
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                            now.getMinutes().toString().padStart(2, '0');
+
+            // Find current show
+            let current = schedule.find(i => timeStr >= i.start && timeStr < i.end);
+            
+            // If no show matches current time, default to first show (Looping)
+            if(!current) current = schedule;
+
+            // Update Player
+            const p = document.getElementById('main-player');
+            if(p.src !== current.url) p.src = current.url;
+
+            // Update UI
+            document.getElementById('now-title').innerText = current.title;
+            document.getElementById('now-time').innerText = `${current.start} - ${current.end}`;
+            document.getElementById('now-logo').src = current.logo;
+
+            // Progress
+            const [sh, sm] = current.start.split(':').map(Number);
+            const [eh, em] = current.end.split(':').map(Number);
+            const total = (eh * 60 + em) - (sh * 60 + sm);
+            const elapsed = (now.getHours() * 60 + now.getMinutes()) - (sh * 60 + sm);
+            document.getElementById('progress-bar').style.width = Math.min(100, Math.max(0, (elapsed/total)*100)) + "%";
+
+            // Next
+            const idx = schedule.indexOf(current);
+            const next = schedule[idx + 1] || schedule;
+            document.getElementById('next-start').innerText = next.start;
         }
 
-        // Update UI Text
-        document.getElementById('current-time-range').innerText = `${currentItem.start} - ${currentItem.end}`;
-        document.getElementById('current-logo').src = currentItem.logo;
-
-        // Calculate Progress Bar %
-        const [startH, startM] = currentItem.start.split(':').map(Number);
-        const [endH, endM] = currentItem.end.split(':').map(Number);
-        
-        const startTotalMinutes = (startH * 60) + startM;
-        const endTotalMinutes = (endH * 60) + endM;
-        const nowTotalMinutes = (now.getHours() * 60) + now.getMinutes();
-        
-        const duration = endTotalMinutes - startTotalMinutes;
-        const elapsed = nowTotalMinutes - startTotalMinutes;
-        const percent = Math.min(Math.max((elapsed / duration) * 100, 0), 100);
-        
-        document.getElementById('progress-fill').style.width = percent + "%";
-
-        // Update Next Start Time
-        const currentIndex = schedule.indexOf(currentItem);
-        const nextItem = schedule[currentIndex + 1] || schedule; // Loops back to first
-        document.getElementById('next-start').innerText = nextItem.start;
-    }
-        }
+        startApp();
     </script>
 </body>
 </html>
