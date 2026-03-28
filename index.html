@@ -3,91 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>MSNET Cinema Mode</title>
     <style>
         :root { --red: #ff0000; --bg: #000; --card: #111; --text: #eee; }
-        * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
 
-        /* 1. THE PLAYER WRAPPER */
+        /* The Container must be relative so the overlay can be absolute to IT */
         .player-wrapper { 
             position: relative; 
             width: 100vw; 
-            height: 56.25vw; /* 16:9 Aspect Ratio */
-            max-height: 70vh; 
+            height: 56.25vw; 
             background: #000; 
-            overflow: hidden;
+            z-index: 1;
         }
 
-        /* 2. THE IFRAME: Sanitized to prevent popups */
-        #videoPlayer { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
-            display: block; 
-        }
+        #videoPlayer { width: 100%; height: 100%; border: none; display: block; }
 
-        /* 3. THE SILENT LOCK LAYER: The key to "No Controls" */
+        /* THE SHIELD: This is what blocks the controls */
         #silentLockOverlay { 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
             height: 100%; 
-            z-index: 9999; 
-            pointer-events: none; /* Starts OFF: Controls accessible for 40s */
-            background: rgba(0,0,0,0); 
+            z-index: 9999; /* Highest priority */
+            pointer-events: none; /* Initially off */
+            background: rgba(0,0,0,0);
         }
 
-        /* UI Styling */
-        .epg-area { padding: 15px; height: 30vh; }
-        .card { background: var(--card); border-radius: 10px; padding: 15px; border-left: 4px solid var(--red); display: flex; align-items: center; gap: 15px; }
+        .ui-section { padding: 15px; height: 40vh; }
+        .card { background: var(--card); padding: 15px; border-radius: 8px; border-left: 4px solid var(--red); display: flex; align-items: center; gap: 12px; }
         .dot { height: 8px; width: 8px; background: var(--red); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-        .progress-bg { width: 100%; height: 4px; background: #333; margin-top: 10px; border-radius: 2px; }
+        .progress-bg { width: 100%; height: 4px; background: #333; margin-top: 10px; }
         #progress-fill { height: 100%; background: var(--red); width: 0%; }
 
-        /* Fullscreen Landscape logic */
+        /* Forced Landscape Mode */
         @media (orientation: landscape) {
-            .player-wrapper { height: 100vh; width: 100vw; max-height: 100vh; }
-            .epg-area { display: none; }
+            .player-wrapper { height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; }
+            .ui-section { display: none; }
         }
 
-        #browser-error { display: none; height: 100vh; color: white; justify-content: center; align-items: center; text-align: center; }
+        #browser-error { display: none; height: 100vh; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="browser-error"><h1>CHROME REQUIRED</h1></div>
 
-<div id="app">
+<div id="app-content">
     <div class="player-wrapper">
+        <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen" playsinline></iframe>
         <div id="silentLockOverlay"></div>
-        <iframe id="videoPlayer" 
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" 
-            allow="autoplay; fullscreen" 
-            playsinline>
-        </iframe>
     </div>
 
-    <div class="epg-area">
+    <div class="ui-section">
         <div class="card">
             <div style="flex: 1;">
-                <div style="font-weight: bold;"><span class="dot"></span> NOW: <span id="title">Loading...</span></div>
-                <div id="time-info" style="font-size: 0.8rem; color: #888; margin-top: 4px;">--:--</div>
+                <div style="font-weight: bold;"><span class="dot"></span> <span id="title">Loading...</span></div>
+                <div id="time-range" style="font-size: 0.8rem; color: #888; margin-top: 5px;">--:--</div>
                 <div class="progress-bg"><div id="progress-fill"></div></div>
             </div>
         </div>
-        <p style="margin-top: 15px; font-size: 0.8rem; color: #444;">UP NEXT: <span id="next">--:--</span></p>
+        <p style="margin-top: 15px; font-size: 0.8rem; color: #444;">UP NEXT: <span id="next-time">--:--</span></p>
     </div>
 </div>
 
 <script>
-    const GITHUB_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
+    const GITHUB_JSON = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
     let schedule = [];
     let lockTimer;
-    const overlay = document.getElementById('silentLockOverlay');
+    const lockOverlay = document.getElementById('silentLockOverlay');
 
     function isStrictChrome() {
         const ua = navigator.userAgent;
@@ -95,62 +82,61 @@
                !(ua.indexOf("Edg") > -1 || ua.indexOf("SamsungBrowser") > -1 || ua.indexOf("OPR") > -1);
     }
 
-    async function load() {
+    async function sync() {
         try {
-            const res = await fetch(GITHUB_URL + "?nocache=" + Date.now());
-            const data = await res.json();
-            schedule = Array.isArray(data) ? data : data.schedule;
-            update();
+            const r = await fetch(GITHUB_JSON + "?v=" + Date.now());
+            const d = await r.json();
+            schedule = Array.isArray(d) ? d : d.schedule;
+            refresh();
         } catch(e) { console.error(e); }
     }
 
-    function update() {
+    function refresh() {
         if (!schedule.length) return;
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
                         now.getMinutes().toString().padStart(2, '0');
 
-        let current = schedule.find(i => timeStr >= i.start && timeStr < i.end) || schedule;
+        let show = schedule.find(s => timeStr >= s.start && timeStr < s.end) || schedule;
         const player = document.getElementById('videoPlayer');
 
-        // IF ROTATION HAPPENS (New URL)
-        if (player.src !== current.url) {
-            player.src = current.url;
+        // IF NEW SHOW STARTS
+        if (player.src !== show.url) {
+            player.src = show.url;
 
-            // RESET LOCK: Disable overlay so user can use controls for 40s
+            // RESET LOCK (Exactly like your original logic)
             clearTimeout(lockTimer);
-            overlay.style.pointerEvents = 'none'; 
-            console.log("Stream Rotated: Controls Unlocked");
+            lockOverlay.style.pointerEvents = 'none'; 
+            console.log("Unlocked for 40s");
 
-            // SET LOCK: After 40s, block all pointer events to the iframe
             lockTimer = setTimeout(() => {
-                overlay.style.pointerEvents = 'auto';
-                console.log("Stream Locked: Controls Hidden");
+                lockOverlay.style.pointerEvents = 'auto';
+                console.log("Locked - Interaction Disabled");
             }, 40000); 
         }
 
         // Update UI
-        document.getElementById('title').innerText = current.title;
-        document.getElementById('time-info').innerText = `${current.start} - ${current.end}`;
+        document.getElementById('title').innerText = show.title;
+        document.getElementById('time-range').innerText = `${show.start} - ${show.end}`;
         
-        // Progress
-        const [sh, sm] = current.start.split(':').map(Number);
-        const [eh, em] = current.end.split(':').map(Number);
-        let startM = sh * 60 + sm;
-        let endM = eh * 60 + em;
-        if (endM < startM) endM += 1440;
-        const pct = ((now.getHours() * 60 + now.getMinutes() - startM) / (endM - startM)) * 100;
+        // Progress Logic
+        const [sh, sm] = show.start.split(':').map(Number);
+        const [eh, em] = show.end.split(':').map(Number);
+        let sM = sh * 60 + sm;
+        let eM = eh * 60 + em;
+        if (eM < sM) eM += 1440;
+        const pct = ((now.getHours() * 60 + now.getMinutes() - sM) / (eM - sM)) * 100;
         document.getElementById('progress-fill').style.width = Math.min(100, Math.max(0, pct)) + "%";
 
-        const nextIdx = (schedule.indexOf(current) + 1) % schedule.length;
-        document.getElementById('next').innerText = schedule[nextIdx].start;
+        const nIdx = (schedule.indexOf(show) + 1) % schedule.length;
+        document.getElementById('next-time').innerText = schedule[nIdx].start;
     }
 
     if (isStrictChrome()) {
-        load();
-        setInterval(load, 30000);
+        sync();
+        setInterval(sync, 30000);
     } else {
-        document.getElementById('app').style.display = 'none';
+        document.getElementById('app-content').style.display = 'none';
         document.getElementById('browser-error').style.display = 'flex';
     }
 </script>
