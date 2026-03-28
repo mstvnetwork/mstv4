@@ -1,34 +1,6 @@
 {
   "schedule": [
-    { 
-      "title": "Late Night Melodies", 
-      "start": "22:00", 
-      "end": "02:00" 
-    },
-    { 
-      "title": "Early Morning News", 
-      "start": "02:00", 
-      "end": "06:00" 
-    },
-    { 
-      "title": "Breakfast Show", 
-      "start": "06:00", 
-      "end": "10:00" 
-    },
-    { 
-      "title": "Mid-Day Hits", 
-      "start": "10:00", 
-      "end": "14:00" 
-    },
-    { 
-      "title": "Afternoon Cinema", 
-      "start": "14:00", 
-      "end": "18:00" 
-    },
-    { 
-      "title": "Prime Time News", 
-      "start": "18:00", 
-      "end": "22:00" 
-    }
+    { "title": "Indian Idol", "start": "00:00", "end": "12:00" },
+    { "title": "Mtv", "start": "12:00", "end": "23:59" }
   ]
 }
