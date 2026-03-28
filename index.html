@@ -2,134 +2,152 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MS-TV Live</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MS-TV Pro</title>
     <style>
-        :root { --red: #ff0000; --bg: #0f0f0f; --card: #1a1a1a; --text: #eee; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        :root { --red: #ff0000; --bg: #000000; --card: #141414; --text: #ffffff; }
         
-        .player-container { position: relative; width: 100%; max-width: 850px; aspect-ratio: 16/9; margin: auto; background: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
-        
-        /* The 40s Lock Layer */
-        #lockscreen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; cursor: default; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: var(--bg); color: var(--text); font-family: sans-serif;
+            overflow-x: hidden;
+        }
 
-        .epg-area { max-width: 850px; margin: 15px auto; }
-        .card { background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--red); }
-        .logo-box { width: 50px; height: 50px; background: #333; border-radius: 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .logo-box img { width: 80%; height: 80%; object-fit: contain; }
+        /* Restriction Overlay */
+        #chrome-only {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: #000; z-index: 9999; justify-content: center; align-items: center;
+            text-align: center; padding: 20px;
+        }
 
-        .dot { height: 8px; width: 8px; background: var(--red); border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        /* Player Styling */
+        .player-container { 
+            position: relative; width: 100%; background: #000; 
+            aspect-ratio: 16/9;
+        }
 
-        .progress-bg { width: 100%; height: 4px; background: #333; margin-top: 10px; border-radius: 2px; }
-        #progress-bar { height: 100%; background: var(--red); width: 0%; transition: width 0.5s; }
-        
-        footer { text-align: center; padding: 30px; color: #555; font-size: 0.8rem; }
+        iframe { width: 100%; height: 100%; border: none; pointer-events: auto; }
+
+        /* Lockscreen Layer: Transparent but blocks all interaction */
+        #lockscreen { 
+            display: none; position: absolute; top: 0; left: 0; 
+            width: 100%; height: 100%; z-index: 999;
+            background: rgba(0,0,0,0); /* Completely invisible */
+            cursor: none; /* Hides cursor on desktop */
+        }
+
+        /* UI Styling */
+        .ui-content { padding: 15px; max-width: 900px; margin: auto; }
+        .card { 
+            background: var(--card); border-radius: 12px; padding: 15px; 
+            display: flex; align-items: center; gap: 15px; margin-bottom: 10px;
+        }
+        .dot { height: 10px; width: 10px; background: var(--red); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        .progress-bg { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--red); width: 0%; transition: width 1s linear; }
+
+        /* Landscape Mode Adjustments */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .player-container { height: 100vh; width: 100vw; aspect-ratio: auto; }
+            .ui-content { display: none; } /* Hide EPG in full landscape for "TV" feel */
+        }
+
+        footer { text-align: center; padding: 20px; color: #444; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
-        <div id="lockscreen"></div>
-        <iframe id="main-player" allow="autoplay; fullscreen"></iframe>
+    <div id="chrome-only">
+        <h1>Access Restricted</h1>
+        <p>This playback system is optimized exclusively for <strong>Google Chrome</strong>.</p>
     </div>
 
-    <div class="epg-area">
-        <div class="card">
-            <div class="logo-box"><img id="now-logo" src="https://img.icons8.com/color/48/television.png"></div>
-            <div style="flex: 1;">
-                <div style="font-weight: bold;"><span class="dot"></span> NOW: <span id="now-title">Loading...</span></div>
-                <div id="now-time" style="font-size: 0.85rem; color: #aaa; margin-top: 3px;">--:--</div>
-                <div class="progress-bg"><div id="progress-bar"></div></div>
+    <div id="app-content">
+        <div class="player-container">
+            <div id="lockscreen"></div>
+            <iframe id="main-player" allow="autoplay; fullscreen"></iframe>
+        </div>
+
+        <div class="ui-content">
+            <div class="card" style="border-bottom: 3px solid var(--red);">
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; font-size: 1.2rem;"><span class="dot"></span> <span id="title">LIVE</span></div>
+                    <div id="timing" style="color: #888; margin: 5px 0;">--:-- to --:--</div>
+                    <div class="progress-bg"><div id="progress-fill"></div></div>
+                </div>
+            </div>
+            
+            <div class="card" style="opacity: 0.6; font-size: 0.9rem;">
+                <div>UP NEXT: <span id="next-start">--:--</span></div>
             </div>
         </div>
-        <div class="card" style="border-left-color: #444; opacity: 0.7;">
-            <div style="font-size: 0.9rem;">NEXT: Starts at <span id="next-start">--:--</span></div>
-        </div>
+
+        <footer>&copy; 2026 MSTV4 • Proprietary System</footer>
     </div>
 
-    <footer>&copy; 2026 MSTV4 • All Rights Reserved</footer>
-
     <script>
-        const JSON_URL = 'https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json';
+        // 1. CHROME ONLY LOGIC
+        const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+        if (!isChrome) {
+            document.getElementById('chrome-only').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        }
+
+        const JSON_URL = 'https://raw.githubusercontent.com/YOUR_USER/mstv4/main/schedule.json';
         let schedule = [];
 
-        async function startApp() {
+        async function init() {
             try {
                 const res = await fetch(JSON_URL);
                 schedule = await res.json();
                 
-                updateLoop();
-                setInterval(updateLoop, 5000); // Fast check
+                update();
+                setInterval(update, 5000);
 
-                // 40 Second Lockout
+                // 2. LOCKSCREEN LOGIC (40 Seconds)
                 setTimeout(() => {
                     document.getElementById('lockscreen').style.display = 'block';
+                    console.log("Controls locked.");
                 }, 40000);
 
-            } catch (e) { console.error("Data error", e); }
+            } catch (e) { console.error("Load failed", e); }
         }
 
-        function updateLoop() {
-    if (!schedule || schedule.length === 0) {
-        console.warn("Schedule is empty or not loaded yet.");
-        return;
-    }
+        function update() {
+            if (!schedule.length) return;
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                            now.getMinutes().toString().padStart(2, '0');
 
-    const now = new Date();
-    const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
-                    now.getMinutes().toString().padStart(2, '0');
+            let current = schedule.find(i => timeStr >= i.start && timeStr < i.end);
+            if (!current) current = schedule;
 
-    // FIND SHOW: Look for a match, or default to the first show if it's "Late Night"
-    let current = schedule.find(i => {
-        // Fix: ensure times are HH:mm (e.g. "1:30" becomes "01:30")
-        const start = i.start.includes(':') && i.start.split(':').length === 1 ? '0' + i.start : i.start;
-        const end = i.end.includes(':') && i.end.split(':').length === 1 ? '0' + i.end : i.end;
-        return timeStr >= start && timeStr < end;
-    });
+            // Player Sync
+            const p = document.getElementById('main-player');
+            if (p.src !== current.url) p.src = current.url;
 
-    // Fallback to first show if no match (Looping)
-    if (!current) current = schedule;
-    
-    // SAFETY: If still no current show, exit to prevent "split" error
-    if (!current || !current.start || !current.end) return;
+            // UI Sync
+            document.getElementById('title').innerText = current.title;
+            document.getElementById('timing').innerText = `${current.start} - ${current.end}`;
 
-    // Update Player
-    const p = document.getElementById('main-player');
-    if (p && p.src !== current.url) p.src = current.url;
+            // Progress Bar
+            const [sh, sm] = current.start.split(':').map(Number);
+            const [eh, em] = current.end.split(':').map(Number);
+            const startM = sh * 60 + sm;
+            let endM = eh * 60 + em;
+            if (endM < startM) endM += 1440;
+            const nowM = now.getHours() * 60 + now.getMinutes();
+            const pct = ((nowM - startM) / (endM - startM)) * 100;
+            document.getElementById('progress-fill').style.width = Math.min(100, Math.max(0, pct)) + "%";
 
-    // Update UI
-    document.getElementById('now-title').innerText = current.title || "Unknown Show";
-    document.getElementById('now-time').innerText = `${current.start} - ${current.end}`;
-    if(current.logo) document.getElementById('now-logo').src = current.logo;
-
-    // Progress Calculation with Safety
-    try {
-        const [sh, sm] = current.start.split(':').map(Number);
-        const [eh, em] = current.end.split(':').map(Number);
-        
-        const startTotal = sh * 60 + sm;
-        let endTotal = eh * 60 + em;
-        const nowTotal = now.getHours() * 60 + now.getMinutes();
-
-        // Handle shows that cross midnight (e.g. 23:00 to 01:00)
-        if (endTotal < startTotal) endTotal += 1440; 
-        
-        const total = endTotal - startTotal;
-        const elapsed = nowTotal - startTotal;
-        const percent = Math.min(100, Math.max(0, (elapsed / total) * 100));
-        
-        document.getElementById('progress-bar').style.width = percent + "%";
-    } catch (err) {
-        console.error("Progress calculation failed", err);
-    }
-
-    // Next Show Logic
-    const idx = schedule.indexOf(current);
-    const next = schedule[idx + 1] || schedule;
-    document.getElementById('next-start').innerText = next.start;
+            // Next Logic
+            const nextIdx = (schedule.indexOf(current) + 1) % schedule.length;
+            document.getElementById('next-start').innerText = schedule[nextIdx].start;
         }
+
+        init();
     </script>
 </body>
 </html>
