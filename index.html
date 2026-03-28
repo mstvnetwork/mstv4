@@ -68,6 +68,20 @@ header p { font-size: 0.9rem; color: #777; margin-top: 5px; }
     background: rgba(0, 0, 0, 0); /* Transparent */
     pointer-events: none; /* Starts unlocked */
  }   
+    /* Invisible Lock Overlay */
+#silentLockOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999; 
+    pointer-events: none; 
+    background: rgba(0, 0, 0, 0);
+}
+
+/* Hide UI elements from view */
+#currentTitle, #lockStatus, #browser-error { display: none; }
 
 /* EPG Section */
 .epg-section {
@@ -129,11 +143,7 @@ footer {
     }
 }
 
-#silentLockOverlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 99; pointer-events: none;
-}
+
 </style>
 </head>
 <body>
@@ -142,12 +152,11 @@ footer {
     <h1>MSNET IPTV</h1>
     <p>Premium Entertainment, Redefined.</p>
 </header>
-
-<div class="main-content">
-<div class="player-container" style="position: relative;">
-    <iframe id="videoPlayer" src="" playsinline></iframe>
-    
-    <div id="silentLockOverlay"></div>
+  <div class="player-wrapper">
+        <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" playsinline></iframe>
+        <div id="silentLockOverlay"></div>
+    </div>
+    <p id="lockStatus"></p> <!-- Logic only -->
 </div>
 
     <div class="epg-section" id="epgSection">
@@ -183,27 +192,13 @@ const playlist = [
   let silentLockTimer;
 const lockOverlay = document.getElementById('silentLockOverlay');
 
-function syncVideo(newUrl) {
-    const player = document.getElementById('videoPlayer');
+function isStrictChrome() {
+    const ua = navigator.userAgent;
+    const isChrome = (ua.indexOf("Chrome") > -1 || ua.indexOf("CriOS") > -1);
+    const isOther = (ua.indexOf("Edg") > -1 || ua.indexOf("SamsungBrowser") > -1 || ua.indexOf("OPR") > -1);
+    return isChrome && !isOther;
+}
 
-    // Only trigger if the source is actually changing
-    if (player.src !== newUrl) {
-        player.src = newUrl;
-
-        // 1. Clear any existing timer
-        clearTimeout(silentLockTimer);
-        
-        // 2. ACTIVATE LOCK: Enable pointer events so clicks hit the overlay, not the video
-        lockOverlay.style.pointerEvents = 'auto'; 
-        console.log("Interaction Locked for 40 seconds");
-
-        // 3. SET TIMER: Disable lock after 40,000ms
-        silentLockTimer = setTimeout(() => {
-            lockOverlay.style.pointerEvents = 'none';
-            console.log("Interaction Unlocked");
-        }, 40000); 
-    }
-    }  
 async function loadEPG() {
     try {
         const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
