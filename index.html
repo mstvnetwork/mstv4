@@ -2,209 +2,133 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Apna Tv</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MSNET IPTV Cinema Mode</title>
 
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0b0b0b;
-    color: #fff;
-}
+:root { --bg-black: #000000; --accent: #ff0000; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background-color: var(--bg-black); color: white; font-family: sans-serif; overflow: hidden; }
 
-/* HEADER */
-.header {
-    padding: 16px;
+/* Player Container */
+.player-wrapper {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
 }
+iframe { width: 100%; height: 100%; border: none; }
 
-.header h1 {
-    margin: 0;
-    font-size: 22px;
-}
-
-.header p {
-    margin: 4px 0 0;
-    font-size: 13px;
-    opacity: 0.7;
-}
-
-/* PLAYER 16:9 */
-.player-container {
-    width: 100%;
-    max-width: 1000px;
-    margin: auto;
-    aspect-ratio: 16 / 9;
-    background: black;
-    position: relative;
-}
-
-#videoPlayer {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* EPG SECTION */
-.epg {
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 0 12px;
-    display: grid;
-    gap: 12px;
+/* EPG Cards Overlay */
+#epg-container {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 10000; /* Above the lock overlay */
 }
 
 .card {
-    background: #1a1a1a;
-    padding: 12px;
-    border-radius: 10px;
+    background: rgba(40, 40, 40, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    min-width: 150px;
+    border: 2px solid transparent;
+    transition: 0.3s;
 }
 
-.card-title {
-    font-size: 12px;
-    opacity: 0.6;
-    margin-bottom: 4px;
+.card.active {
+    border-color: var(--accent);
+    background: rgba(255, 0, 0, 0.2);
+    transform: scale(1.05);
 }
 
-.card-main {
-    font-size: 16px;
-    font-weight: bold;
-}
+.card h4 { margin-bottom: 5px; font-size: 14px; }
+.card p { font-size: 12px; opacity: 0.7; }
 
-/* PROGRESS BAR */
-.progress-container {
-    margin-top: 8px;
-    height: 4px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px;
-}
-
-.progress-bar {
-    height: 100%;
-    width: 0%;
-    background: #00ffcc;
-}
-
-/* FOOTER */
-.footer {
-    text-align: center;
-    font-size: 12px;
-    opacity: 0.5;
-    padding: 20px 10px;
+#silentLockOverlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 9999; pointer-events: none;
 }
 </style>
 </head>
-
 <body>
 
-<!-- HEADER -->
-<div class="header">
-    <h1>Apna Tv</h1>
-    <p>Watch serials, web series & movies</p>
-</div>
-
-<!-- PLAYER -->
-<div class="player-container">
-    <iframe id="videoPlayer"></iframe>
-</div>
-
-<!-- EPG -->
-<div class="epg">
-    <div class="card">
-        <div class="card-title">Live Now</div>
-        <div class="card-main" id="nowTitle">Loading...</div>
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
+<div id="chrome-only-content">
+    <div class="player-wrapper">
+        <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" playsinline></iframe>
+        <div id="silentLockOverlay"></div>
     </div>
-
-    <div class="card">
-        <div class="card-title">Next</div>
-        <div class="card-main" id="nextTitle"></div>
-    </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-    Apna TV 24/7 • Streaming everywhere
+    
+    <div id="epg-container"></div>
 </div>
 
 <script>
-const BASE_JSON_URL = "https://mstvnetwork.github.io/mstv4/epg.json";
+const BASE_JSON_URL = "YOUR_RAW_GITHUB_URL_HERE";
 
 const playlist = [
     { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
     { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
 ];
 
-let progressTimer;
-
 async function loadEPG() {
+    const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
     try {
-        const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
+        const res = await fetch(freshUrl);
         const data = await res.json();
+        const now = new Date();
+        const today = now.toISOString().split('T'); // Get 2026-03-29
+        
+        let currentProgramTitle = null;
 
-        const nowTime = Date.now();
+        // Render Cards while checking for current show
+        const container = document.getElementById('epg-container');
+        container.innerHTML = ''; // Clear old cards
 
-        let current = null;
-        let next = null;
+        data.schedule.forEach(item => {
+            const start = new Date(`${today}T${item.start}:00`);
+            const end = new Date(`${today}T${item.end}:00`);
+            
+            const isActive = (now >= start && now < end);
+            if (isActive) currentProgramTitle = item.title;
 
-        for (let i = 0; i < data.schedule.length; i++) {
-            const start = new Date(data.schedule[i].start).getTime();
-            const end = new Date(data.schedule[i].end).getTime();
+            // Create HTML for the card
+            const card = document.createElement('div');
+            card.className = `card ${isActive ? 'active' : ''}`;
+            card.innerHTML = `<h4>${item.title}</h4><p>${item.start} - ${item.end}</p>`;
+            container.appendChild(card);
+        });
 
-            if (nowTime >= start && nowTime < end) {
-                current = data.schedule[i];
-                next = data.schedule[i + 1] || null;
-                break;
-            }
-        }
+        if(!currentProgramTitle) rotateLocal();
+        else syncVideo(currentProgramTitle);
 
-        if (!current) return;
-
-        updateUI(current, next);
-        syncVideo(current.title);
-        startProgress(current);
-
-    } catch (e) {
-        console.error("EPG error:", e);
+    } catch(e) {
+        console.error("Fetch error:", e);
+        rotateLocal();
     }
 }
 
-function updateUI(current, next) {
-    document.getElementById("nowTitle").textContent = current.title;
-    document.getElementById("nextTitle").textContent = next ? next.title : "";
-}
-
-function startProgress(program) {
-    clearInterval(progressTimer);
-
-    progressTimer = setInterval(() => {
-        const now = Date.now();
-        const start = new Date(program.start).getTime();
-        const end = new Date(program.end).getTime();
-
-        const percent = ((now - start) / (end - start)) * 100;
-        document.getElementById("progressBar").style.width = percent + "%";
-
-    }, 1000);
-}
-
-function syncVideo(title) {
-    const player = document.getElementById("videoPlayer");
-    const video = playlist.find(v => v.title === title);
-
-    if (video && player.src !== video.url) {
-        player.src = video.url;
+function syncVideo(liveTitle){
+    const player = document.getElementById('videoPlayer');
+    let liveVideo = playlist.find(v => v.title === liveTitle);
+    if(liveVideo && player.src !== liveVideo.url){
+        player.src = liveVideo.url;
     }
+}
+
+function rotateLocal() {
+    const player = document.getElementById('videoPlayer');
+    const currentIndex = playlist.findIndex(v => v.url === player.src);
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    syncVideo(playlist[nextIndex].title);
 }
 
 window.onload = () => {
     loadEPG();
-    setInterval(loadEPG, 60000);
+    setInterval(loadEPG, 60000); 
 };
 </script>
-
 </body>
 </html>
