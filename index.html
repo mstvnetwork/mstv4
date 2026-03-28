@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>MSNET | Player</title>
+<title>MSNET | Cinema Stream</title>
 
 <style>
 :root { 
@@ -17,7 +14,7 @@
     --footer-bg: #e2e2df;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
 body { 
     background-color: var(--muddy-white); 
@@ -25,9 +22,10 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
-/* Header */
+/* Header Section */
 header {
     padding: 20px;
     text-align: center;
@@ -37,19 +35,19 @@ header {
 header h1 { font-size: 1.8rem; color: var(--accent-red); letter-spacing: 1px; }
 header p { font-size: 0.9rem; color: #777; margin-top: 5px; }
 
-/* Main Content */
+/* Main Content Area */
 .main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
-/* Player Container */
+/* Player Styling */
 .player-container {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -59,183 +57,206 @@ header p { font-size: 0.9rem; color: #777; margin-top: 5px; }
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
+#videoPlayer { width: 100%; height: 100%; border: none; }
+ #silentLockOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999; 
+    background: rgba(0, 0, 0, 0); /* Transparent */
+    pointer-events: none; /* Starts unlocked */
+ }   
 
-#videoPlayer { width: 100%; height: 100%; border: none; display: block; }
+/* EPG Section */
+.epg-section {
+    width: 100%;
+    margin-top: 25px;
+    transition: all 0.3s ease;
+}
 
-/* Silent Lock Overlay (The Original Logic) */
+.epg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.epg-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.label { font-size: 0.75rem; font-weight: bold; color: var(--accent-red); text-transform: uppercase; margin-bottom: 8px; }
+.prog-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 5px; }
+.prog-time { font-size: 0.9rem; color: #666; }
+
+/* Progress Bar */
+.progress-wrapper {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+#progressBar { height: 100%; width: 0%; background: var(--accent-red); transition: width 0.5s ease; }
+
+/* Footer */
+footer {
+    background: var(--footer-bg);
+    padding: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 40px;
+}
+
+/* LANDSCAPE HIDING LOGIC */
+/* Hides EPG and Progress when device is horizontal or in fullscreen */
+@media (orientation: landscape) {
+    header, .epg-section, footer {
+        display: none !important;
+    }
+    .main-content { padding: 0; max-width: 100%; }
+    .player-container {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        border-radius: 0;
+    }
+}
+
 #silentLockOverlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 9999; 
-    pointer-events: none; 
-    background: rgba(0, 0, 0, 0);
+    z-index: 99; pointer-events: none;
 }
-
-/* EPG Cards */
-.epg-section { width: 100%; margin-top: 25px; }
-.epg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-.epg-card { background: var(--card-bg); padding: 20px; border-radius: 10px; border-bottom: 4px solid #ddd; }
-.epg-card.active { border-bottom-color: var(--accent-red); }
-
-.label { font-size: 0.7rem; font-weight: bold; color: #999; text-transform: uppercase; margin-bottom: 5px; }
-.prog-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; }
-.prog-time { font-size: 0.85rem; color: #666; }
-
-/* Progress Bar */
-.progress-wrapper { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin-top: 12px; overflow: hidden; }
-#progressBar { height: 100%; width: 0%; background: var(--accent-red); transition: width 1s linear; }
-
-/* Footer */
-footer { background: var(--footer-bg); padding: 20px; text-align: center; font-size: 0.8rem; color: #888; margin-top: auto; }
-
-/* Landscape / Fullscreen Hiding Logic */
-@media (orientation: landscape) {
-    header, .epg-section, footer { display: none !important; }
-    body { background: #000; }
-    .main-content { padding: 0; max-width: 100%; }
-    .player-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border-radius: 0; }
-}
-
-#browser-error { display: none; padding: 50px; text-align: center; }
 </style>
 </head>
 <body>
 
-<div id="browser-error">
-    <h2>Chrome Browser Required</h2>
-    <p>Please open this link in Google Chrome to start the stream.</p>
+<header>
+    <h1>MSNET IPTV</h1>
+    <p>Premium Entertainment, Redefined.</p>
+</header>
+
+<div class="main-content">
+<div class="player-container" style="position: relative;">
+    <iframe id="videoPlayer" src="" playsinline></iframe>
+    
+    <div id="silentLockOverlay"></div>
 </div>
 
-<div id="chrome-only-content" style="display:none;">
-    <header>
-        <h1>MSNET IPTV</h1>
-        <p>Premium Cinema Mode Active</p>
-    </header>
-
-    <div class="main-content">
-        <div class="player-container">
-            <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" playsinline></iframe>
-            <div id="silentLockOverlay"></div>
-        </div>
-
-        <div class="epg-section">
-            <div class="epg-grid">
-                <div class="epg-card active">
-                    <div class="label">Now Playing</div>
-                    <div id="currentTitle" class="prog-title">Loading...</div>
-                    <div id="currentTimeRange" class="prog-time">--:-- - --:--</div>
-                    <div class="progress-wrapper">
-                        <div id="progressBar"></div>
-                    </div>
+    <div class="epg-section" id="epgSection">
+        <div class="epg-grid">
+            <div class="epg-card">
+                <div class="label">Now Playing</div>
+                <div id="currentTitle" class="prog-title">Loading...</div>
+                <div id="currentTimeRange" class="prog-time">--:-- - --:--</div>
+                <div class="progress-wrapper">
+                    <div id="progressBar"></div>
                 </div>
-                <div class="epg-card">
-                    <div class="label">Next Program</div>
-                    <div id="nextTitle" class="prog-title">Updating...</div>
-                    <div id="nextStartTime" class="prog-time">Starts at --:--</div>
-                </div>
+            </div>
+            <div class="epg-card">
+                <div class="label">Coming Up Next</div>
+                <div id="nextTitle" class="prog-title">Searching...</div>
+                <div id="nextStartTime" class="prog-time">Starts at --:--</div>
             </div>
         </div>
     </div>
-
-    <footer>
-        <p>&copy; 2026 MSNET STREAMING • SECURE CINEMA PLAYER</p>
-    </footer>
 </div>
 
+<footer>
+    <p>&copy; 2026 MSNET Streaming Services • All Rights Reserved</p>
+</footer>
+
 <script>
-const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
+// --- CONFIG ---
+const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/schedule.json";
 const playlist = [
     { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
     { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
 ];
-
-let silentLockTimer;
+    let silentLockTimer;
 const lockOverlay = document.getElementById('silentLockOverlay');
 
-function isStrictChrome() {
-    const ua = navigator.userAgent;
-    const isChrome = (ua.indexOf("Chrome") > -1 || ua.indexOf("CriOS") > -1);
-    const isOther = (ua.indexOf("Edg") > -1 || ua.indexOf("SamsungBrowser") > -1 || ua.indexOf("OPR") > -1);
-    return isChrome && !isOther;
+function syncVideo(newUrl) {
+    const player = document.getElementById('videoPlayer');
+
+    // Only trigger if the source is actually changing
+    if (player.src !== newUrl) {
+        player.src = newUrl;
+
+        // 1. Clear any existing timer
+        clearTimeout(silentLockTimer);
+        
+        // 2. ACTIVATE LOCK: Enable pointer events so clicks hit the overlay, not the video
+        lockOverlay.style.pointerEvents = 'auto'; 
+        console.log("Interaction Locked for 40 seconds");
+
+        // 3. SET TIMER: Disable lock after 40,000ms
+        silentLockTimer = setTimeout(() => {
+            lockOverlay.style.pointerEvents = 'none';
+            console.log("Interaction Unlocked");
+        }, 40000); 
+    }
 }
 
 async function loadEPG() {
-    const freshUrl = BASE_JSON_URL + "?v=" + Date.now();
     try {
-        const res = await fetch(freshUrl);
-        if (!res.ok) throw new Error();
+        const res = await fetch(BASE_JSON_URL + "?v=" + Date.now());
         const data = await res.json();
         const now = new Date();
-        let currentProg = null;
-        let nextProg = null;
+        let current = null;
+        let next = null;
 
         for (let i = 0; i < data.schedule.length; i++) {
             const start = new Date(data.schedule[i].start);
             const end = new Date(data.schedule[i].end);
+            
             if (now >= start && now < end) {
-                currentProg = data.schedule[i];
-                nextProg = data.schedule[i + 1] || null;
-                // Update Progress Bar
+                current = data.schedule[i];
+                next = data.schedule[i + 1] || null;
+                
+                // Progress Calc
                 const pct = ((now - start) / (end - start)) * 100;
                 document.getElementById('progressBar').style.width = pct + "%";
                 break;
             }
         }
 
-        if(currentProg) {
-            updateUI(currentProg, nextProg);
-            syncVideo(currentProg.title);
-        } else {
-            rotateLocal();
+        if(current) {
+            updateUI(current, next);
+            syncVideo(current.title);
         }
-    } catch(e) { rotateLocal(); }
+    } catch(e) { console.log("EPG Update Failed"); }
 }
 
 function updateUI(curr, nxt) {
     document.getElementById('currentTitle').innerText = curr.title;
-    document.title = "Player | " + curr.title;
-    const timeStr = (d) => new Date(d).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    document.getElementById('currentTimeRange').innerText = `${timeStr(curr.start)} - ${timeStr(curr.end)}`;
+    document.title = "Watching: " + curr.title;
+    document.getElementById('currentTimeRange').innerText = 
+        `${new Date(curr.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(curr.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
     
     if(nxt) {
         document.getElementById('nextTitle').innerText = nxt.title;
-        document.getElementById('nextStartTime').innerText = "Starts at " + timeStr(nxt.start);
+        document.getElementById('nextStartTime').innerText = "Starts at " + new Date(nxt.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
 }
 
-function rotateLocal() {
+function syncVideo(title) {
     const player = document.getElementById('videoPlayer');
-    const currentIndex = playlist.findIndex(v => v.url === player.src);
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    syncVideo(playlist[nextIndex].title);
-}
-
-function syncVideo(liveTitle){
-    const player = document.getElementById('videoPlayer');
-    let liveVideo = playlist.find(v => v.title === liveTitle);
-
-    if(liveVideo && player.src !== liveVideo.url){
-        player.src = liveVideo.url;
-
-        // ORIGINAL LOCK LOGIC: Disable interaction for 40 seconds on stream change
-        clearTimeout(silentLockTimer);
-        lockOverlay.style.pointerEvents = 'none'; 
-        silentLockTimer = setTimeout(() => {
-            lockOverlay.style.pointerEvents = 'auto';
-        }, 40000); 
+    const stream = playlist.find(v => v.title === title);
+    if(stream && player.src !== stream.url) {
+        player.src = stream.url;
     }
 }
 
-window.onload = function(){
-    if(isStrictChrome()){
-        document.getElementById('chrome-only-content').style.display='flex';
-        document.getElementById('browser-error').style.display='none';
-        loadEPG();
-        setInterval(loadEPG, 30000); 
-    } else {
-        document.getElementById('browser-error').style.display='block';
-    }
-};
+setInterval(loadEPG, 30000);
+window.onload = loadEPG;
 </script>
 </body>
 </html>
