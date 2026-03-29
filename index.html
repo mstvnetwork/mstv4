@@ -6,7 +6,6 @@
 
 <style>
 body { font-family: Arial; background:#f4f4f2; margin:0; }
-
 .main-content { max-width:900px; margin:auto; padding:20px; position:relative; }
 
 .player-wrapper {
@@ -207,10 +206,13 @@ function rotateVideo(){
     activateLock(); // reset lock on rotation
 }
 
-// 🔥 FETCH AND UPDATE EPG
+// 🔥 FETCH AND UPDATE EPG WITH CACHE-BUSTER
 async function loadEPG(){
     try{
-        const res = await fetch(BASE_JSON_URL + "?t=" + Date.now());
+        const url = BASE_JSON_URL + "?v=" + Date.now(); // cache-buster
+        const res = await fetch(url, { cache: "no-store" });
+        if(!res.ok) throw new Error("Failed to fetch JSON");
+
         const data = await res.json();
 
         const live = updateNowNext(data.schedule);
@@ -221,14 +223,14 @@ async function loadEPG(){
             rotateVideo();
         }
     } catch(e){
-        console.log("EPG failed", e);
+        console.error("EPG fetch error:", e);
         rotateVideo();
     }
 }
 
 // INIT
 loadEPG();
-setInterval(loadEPG, 15000);
+setInterval(loadEPG, 15000); // refresh every 15 sec
 </script>
 
 </body>
