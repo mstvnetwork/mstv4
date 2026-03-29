@@ -5,152 +5,74 @@
 <title>EPG Player</title>
 
 <style>
-:root { 
-    --muddy-white: #f4f4f2; 
-    --text-dark: #2c2c2c;
-    --accent-red: #d32f2f;
-    --card-bg: #ffffff;
-    --footer-bg: #e2e2df;
-}
+body { font-family: Arial; background:#f4f4f2; margin:0; }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.main-content { max-width:900px; margin:auto; padding:20px; }
 
-body { 
-    background-color: var(--muddy-white); 
-    color: var(--text-dark);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-/* Header */
-header {
-    padding: 20px;
-    text-align: center;
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-header h1 { font-size: 1.8rem; color: var(--accent-red); }
-
-/* Layout */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
-}
-
-/* Player */
 .player-wrapper {
-    width: 100%;
-    aspect-ratio: 16/9;
-    background: black;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
+    width:100%;
+    aspect-ratio:16/9;
+    background:black;
+    border-radius:10px;
+    overflow:hidden;
 }
 
-#videoPlayer {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
+#videoPlayer { width:100%; height:100%; border:none; }
 
-#silentLockOverlay {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    pointer-events: none;
-}
-
-/* EPG */
-.epg-section {
-    width: 100%;
-    margin-top: 25px;
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-.epg-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
+.epg-section { margin-top:20px; }
 
 .epg-card {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    transition: 0.3s;
+    background:white;
+    padding:15px;
+    border-radius:8px;
+    margin-bottom:10px;
 }
 
 .epg-card.live {
-    border: 2px solid var(--accent-red);
-    box-shadow: 0 6px 14px rgba(211,47,47,0.2);
+    border:2px solid red;
 }
 
-.label { font-size: 0.75rem; color: var(--accent-red); }
-.prog-title { font-size: 1.2rem; font-weight: 600; }
-.prog-time { font-size: 0.9rem; color: #666; }
-
-/* Progress */
 .progress-wrapper {
-    width: 100%;
-    height: 8px;
-    background: #e0e0e0;
-    border-radius: 4px;
-    margin-top: 15px;
-    overflow: hidden;
+    height:6px;
+    background:#ddd;
+    margin-top:10px;
 }
 
 #progressBar {
-    height: 100%;
-    width: 0%;
-    background: #888;
-    transition: width 0.5s linear, background 0.3s;
+    height:100%;
+    width:0%;
+    background:red;
+    transition:width 0.5s linear;
 }
-
-html { scroll-behavior: smooth; }
 </style>
 </head>
 
 <body>
 
-<header>
-    <h1>Live TV</h1>
-</header>
-
 <div class="main-content">
 
-    <div class="player-wrapper">
-        <iframe id="videoPlayer" allowfullscreen></iframe>
-        <div id="silentLockOverlay"></div>
+<div class="player-wrapper">
+    <iframe id="videoPlayer"></iframe>
+</div>
+
+<div class="epg-section">
+
+<div class="epg-card" id="nowCard">
+    <div>Now Playing</div>
+    <div id="currentTitle">Loading...</div>
+    <div id="currentTimeRange">--</div>
+    <div class="progress-wrapper">
+        <div id="progressBar"></div>
     </div>
+</div>
 
-    <div class="epg-section" id="epgSection">
-        <div class="epg-grid">
+<div class="epg-card">
+    <div>Next</div>
+    <div id="nextTitle">--</div>
+    <div id="nextStartTime"></div>
+</div>
 
-            <div class="epg-card" id="nowCard">
-                <div class="label">Now Playing</div>
-                <div id="currentTitle" class="prog-title">Loading...</div>
-                <div id="currentTimeRange" class="prog-time">--:--</div>
-                <div class="progress-wrapper">
-                    <div id="progressBar"></div>
-                </div>
-            </div>
-
-            <div class="epg-card">
-                <div class="label">Next</div>
-                <div id="nextTitle" class="prog-title">Loading...</div>
-                <div id="nextStartTime" class="prog-time"></div>
-            </div>
-
-        </div>
-    </div>
-
+</div>
 </div>
 
 <script>
@@ -161,148 +83,131 @@ const playlist = [
     { title: "Mtv", url: "https://vkprime.com/embed-e6r4icq8gcq1.html" }
 ];
 
-let lastLiveTitle = null;
+let rotateIndex = 0;
 
 // helper
 function getEl(id){ return document.getElementById(id); }
 
-// 🔥 CORE FIXED LOGIC
+function createTime(base, timeStr){
+    const [h,m] = timeStr.split(":").map(Number);
+    const d = new Date(base);
+    d.setHours(h,m,0,0);
+    return d;
+}
+
+// 🔥 MAIN LOGIC (24h safe)
 function updateNowNext(schedule){
-    if(!Array.isArray(schedule) || schedule.length === 0){
-        console.warn("Invalid or empty schedule");
-        return null;
-    }
 
     const now = new Date();
 
-    let nowPlaying = null;
-    let comingUp = null;
+    let current = null;
+    let next = null;
 
     for(let i=0;i<schedule.length;i++){
+
         const item = schedule[i];
 
-        if(!item.start || !item.end || !item.title) continue;
+        const start = createTime(now, item.start);
+        const end = createTime(now, item.end);
 
-        const [sh, sm] = item.start.split(":").map(Number);
-        const [eh, em] = item.end.split(":").map(Number);
-
-        const start = new Date(now);
-        start.setHours(sh, sm, 0, 0);
-
-        const end = new Date(now);
-        end.setHours(eh, em, 0, 0);
-
-        if(end < start) end.setDate(end.getDate()+1);
+        if(end <= start) end.setDate(end.getDate()+1);
 
         if(now >= start && now < end){
-            nowPlaying = { ...item, startDate: start, endDate: end };
-            comingUp = schedule[i+1] || null;
+            current = {...item, startDate:start, endDate:end};
+            next = schedule[i+1] || null;
             break;
         }
 
-        if(now < start && !comingUp){
-            comingUp = item;
+        if(now < start && !next){
+            next = item;
         }
     }
 
-    // 🟡 fallback if nothing live → show first item
-    if(!nowPlaying && schedule.length > 0){
-        nowPlaying = {
-            ...schedule[0],
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 10*60*1000)
-        };
-    }
-
-    // UI update
-    getEl("currentTitle").textContent = nowPlaying?.title || "No program";
-    getEl("currentTimeRange").textContent = nowPlaying ? nowPlaying.start + " - " + nowPlaying.end : "--";
-
-    getEl("nextTitle").textContent = comingUp?.title || "N/A";
-    getEl("nextStartTime").textContent = comingUp ? "Starts at " + comingUp.start : "";
-
-    // progress
+    const titleEl = getEl("currentTitle");
+    const timeEl = getEl("currentTimeRange");
+    const nextTitle = getEl("nextTitle");
+    const nextTime = getEl("nextStartTime");
     const bar = getEl("progressBar");
-    const nowCard = getEl("nowCard");
+    const card = getEl("nowCard");
 
-    nowCard.classList.remove("live");
+    card.classList.remove("live");
 
-    if(nowPlaying){
-        const percent = ((now - nowPlaying.startDate) / (nowPlaying.endDate - nowPlaying.startDate)) * 100;
+    if(current){
+        titleEl.textContent = current.title;
+        timeEl.textContent = current.start + " - " + current.end;
 
-        bar.style.width = Math.max(0, Math.min(percent, 100)) + "%";
+        const percent = ((now - current.startDate)/(current.endDate - current.startDate))*100;
 
-        if(now >= nowPlaying.startDate && now < nowPlaying.endDate){
-            bar.style.background = "red";
-            nowCard.classList.add("live");
-        } else {
-            bar.style.background = "#888";
-        }
+        bar.style.width = percent + "%";
+        bar.style.background = "red";
 
-        // scroll on change
-        if(nowPlaying.title !== lastLiveTitle){
-            lastLiveTitle = nowPlaying.title;
+        card.classList.add("live");
 
-            getEl("epgSection").scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-            });
-        }
+    } else {
+        titleEl.textContent = "Off Air";
+        timeEl.textContent = "--";
+        bar.style.width = "0%";
     }
 
-    return nowPlaying?.title || null;
+    if(next){
+        nextTitle.textContent = next.title;
+        nextTime.textContent = "Starts at " + next.start;
+    } else {
+        nextTitle.textContent = "N/A";
+        nextTime.textContent = "";
+    }
+
+    return current ? current.title : null;
 }
 
-// 🔥 FIXED VIDEO SYNC (force reload)
+// 🔥 video sync
 function syncVideo(title){
     const player = getEl("videoPlayer");
-    const video = playlist.find(v => v.title === title);
+    const video = playlist.find(v=>v.title===title);
 
-    if(!video){
-        console.warn("No matching video for:", title);
-        return;
-    }
-
-    if(!player.src || !player.src.includes(video.url)){
-        player.src = video.url;
+    if(video){
+        if(!player.src.includes(video.url)){
+            player.src = video.url;
+        }
+    } else {
+        rotateVideo();
     }
 }
 
-// 🔥 fallback rotation (no blank screen)
-function rotateFallback(){
+// 🔥 fallback rotation
+function rotateVideo(){
     const player = getEl("videoPlayer");
-    if(!player.src){
-        player.src = playlist[0].url;
-    }
+
+    const video = playlist[rotateIndex % playlist.length];
+    player.src = video.url;
+
+    rotateIndex++;
 }
 
 // fetch
 async function loadEPG(){
     try{
         const res = await fetch(BASE_JSON_URL + "?t=" + Date.now());
-        if(!res.ok) throw new Error("Fetch failed");
-
         const data = await res.json();
 
-        console.log("EPG loaded:", data);
+        const live = updateNowNext(data.schedule);
 
-        const liveTitle = updateNowNext(data.schedule);
-
-        if(liveTitle){
-            syncVideo(liveTitle);
+        if(live){
+            syncVideo(live);
         } else {
-            rotateFallback();
+            rotateVideo();
         }
 
-    } catch(e){
-        console.error("EPG error:", e);
-        rotateFallback();
+    }catch(e){
+        console.log("EPG failed", e);
+        rotateVideo();
     }
 }
 
-// init
+// start
 loadEPG();
 setInterval(loadEPG, 15000);
 </script>
+
 </body>
 </html>
