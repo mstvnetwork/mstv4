@@ -7,7 +7,7 @@
 <style>
 body { font-family: Arial; background:#f4f4f2; margin:0; }
 
-.main-content { max-width:900px; margin:auto; padding:20px; }
+.main-content { max-width:900px; margin:auto; padding:20px; position:relative; }
 
 .player-wrapper {
     width:100%;
@@ -15,9 +15,18 @@ body { font-family: Arial; background:#f4f4f2; margin:0; }
     background:black;
     border-radius:10px;
     overflow:hidden;
+    position:relative;
 }
 
 #videoPlayer { width:100%; height:100%; border:none; }
+
+#silentLockOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background: rgba(0,0,0,0);
+}
 
 .epg-section { margin-top:20px; }
 
@@ -52,7 +61,8 @@ body { font-family: Arial; background:#f4f4f2; margin:0; }
 <div class="main-content">
 
 <div class="player-wrapper">
-    <iframe id="videoPlayer"></iframe>
+    <iframe id="videoPlayer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
+    <div id="silentLockOverlay"></div>
 </div>
 
 <div class="epg-section">
@@ -84,6 +94,7 @@ const playlist = [
 ];
 
 let rotateIndex = 0;
+let lockTimer = null;
 
 // helper
 function getEl(id){ return document.getElementById(id); }
@@ -95,16 +106,30 @@ function createTime(base, timeStr){
     return d;
 }
 
-// 🔥 MAIN LOGIC (24h safe)
-function updateNowNext(schedule){
+// 🔴 Lock overlay logic
+function activateLock(){
+    const overlay = getEl("silentLockOverlay");
+    if(!overlay) return;
 
+    clearTimeout(lockTimer);
+
+    // unlock immediately
+    overlay.style.pointerEvents = "none";
+
+    // lock after 40 sec
+    lockTimer = setTimeout(()=>{
+        overlay.style.pointerEvents = "auto";
+    }, 40000);
+}
+
+// 🔥 MAIN EPG LOGIC
+function updateNowNext(schedule){
     const now = new Date();
 
     let current = null;
     let next = null;
 
     for(let i=0;i<schedule.length;i++){
-
         const item = schedule[i];
 
         const start = createTime(now, item.start);
@@ -137,12 +162,10 @@ function updateNowNext(schedule){
         timeEl.textContent = current.start + " - " + current.end;
 
         const percent = ((now - current.startDate)/(current.endDate - current.startDate))*100;
-
         bar.style.width = percent + "%";
         bar.style.background = "red";
 
         card.classList.add("live");
-
     } else {
         titleEl.textContent = "Off Air";
         timeEl.textContent = "--";
@@ -160,7 +183,7 @@ function updateNowNext(schedule){
     return current ? current.title : null;
 }
 
-// 🔥 video sync
+// 🔥 VIDEO SYNC
 function syncVideo(title){
     const player = getEl("videoPlayer");
     const video = playlist.find(v=>v.title===title);
@@ -168,23 +191,23 @@ function syncVideo(title){
     if(video){
         if(!player.src.includes(video.url)){
             player.src = video.url;
+            activateLock(); // reset lock on video change
         }
     } else {
         rotateVideo();
     }
 }
 
-// 🔥 fallback rotation
+// 🔥 VIDEO ROTATION FALLBACK
 function rotateVideo(){
     const player = getEl("videoPlayer");
-
     const video = playlist[rotateIndex % playlist.length];
     player.src = video.url;
-
     rotateIndex++;
+    activateLock(); // reset lock on rotation
 }
 
-// fetch
+// 🔥 FETCH AND UPDATE EPG
 async function loadEPG(){
     try{
         const res = await fetch(BASE_JSON_URL + "?t=" + Date.now());
@@ -197,14 +220,13 @@ async function loadEPG(){
         } else {
             rotateVideo();
         }
-
-    }catch(e){
+    } catch(e){
         console.log("EPG failed", e);
         rotateVideo();
     }
 }
 
-// start
+// INIT
 loadEPG();
 setInterval(loadEPG, 15000);
 </script>
