@@ -1,19 +1,7 @@
 {
   "schedule": [
-    {
-      "title": "Indian Idol",
-      "start": "2026-03-30T02:00Z",
-      "end": "2026-03-30T04:11Z"
-    },
-    {
-      "title": "Mtv",
-      "start": "2026-03-30T04:11Z",
-      "end": "2026-03-30T06:05Z"
-    },
-    {
-      "title": "Roadies",
-      "start": "2026-03-30T05:00Z",
-      "end": "2026-03-30T06:00Z"
-    }
+    { "title": "Indian Idol", "start": "02:00", "end": "04:11" },
+    { "title": "Mtv",         "start": "04:11", "end": "06:05" },
+    { "title": "Roadies",     "start": "06:05", "end": "07:00" }
   ]
 }
