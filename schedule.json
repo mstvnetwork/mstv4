@@ -1,7 +1,10 @@
 {
   "schedule": [
-    { "title": "Indian Idol", "start": "07:37", "end": "07:38" },
-    { "title": "Mtv", "start": "07:38", "end": "07:39" },
-    { "title": "Indian Idol", "start": "07:39", "end": "07:40" }
+    { "title": "Indian Idol", "start": "19:45", "end": "19:55" },
+    { "title": "Mtv", "start": "19:55", "end": "20:05" },
+    { "title": "Indian Idol", "start": "20:05", "end": "20:15" },
+
+    { "title": "Mtv", "start": "23:55", "end": "00:10" },
+    { "title": "Indian Idol", "start": "00:10", "end": "00:30" }
   ]
 }
