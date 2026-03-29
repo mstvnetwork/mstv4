@@ -12,10 +12,11 @@ body { font-family: Arial; background:#f4f4f2; margin:0; }
 .modern-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* center content horizontally */
   padding: 20px 30px;
-  background-color: #0b0c17; /* dark, clean background */
+  background-color: #0b0c17;
   flex-wrap: wrap;
+  gap: 10px; /* optional: spacing between logo and title */
 }
 
 /* Logo */
@@ -28,9 +29,9 @@ body { font-family: Arial; background:#f4f4f2; margin:0; }
 .title-wrapper {
   display: flex;
   flex-direction: column;
-  margin-left: 16px;
+  align-items: center; /* center title under logo horizontally */
+  margin-left: 0; /* remove extra margin if centering */
 }
-
 /* Main title */
 .site-title {
   font-family: 'Poppins', sans-serif;
