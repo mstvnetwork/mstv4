@@ -150,6 +150,44 @@ footer {
     </footer>
 
 <script>
+// 🔹 CHROME-ONLY GUARD
+(function(){
+    const ua = navigator.userAgent;
+    const isChromium = window.chrome !== undefined;
+    const isEdgeOrOpera = /Edg|OPR|Brave\//.test(ua);
+    const isChrome = isChromium && !isEdgeOrOpera;
+
+    if(!isChrome){
+        // Clear the body
+        document.body.innerHTML = '';
+        
+        // Fallback message
+        const fallback = document.createElement('div');
+        fallback.style.position = 'fixed';
+        fallback.style.top = '50%';
+        fallback.style.left = '50%';
+        fallback.style.transform = 'translate(-50%, -50%)';
+        fallback.style.textAlign = 'center';
+        fallback.style.fontFamily = 'sans-serif';
+        fallback.style.background = '#ffdd57';
+        fallback.style.color = '#000';
+        fallback.style.padding = '25px';
+        fallback.style.borderRadius = '10px';
+        fallback.style.boxShadow = '0 0 15px rgba(0,0,0,0.3)';
+        fallback.style.zIndex = '9999';
+        fallback.innerHTML = `
+            <h2>Please use Google Chrome</h2>
+            <p>This content is available only on Chrome for the best experience.</p>
+        `;
+        document.body.appendChild(fallback);
+
+        // Stop further scripts
+        throw new Error('Non-Chrome browser detected. Script halted.');
+    }
+})();
+
+// 🔹 CHROME USERS ONLY: LOAD ALL CONTENT BELOW
+
 const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
 
 const playlist = [
@@ -177,10 +215,8 @@ function activateLock(){
 
     clearTimeout(lockTimer);
 
-    // unlock immediately
     overlay.style.pointerEvents = "none";
 
-    // lock after 40 sec
     lockTimer = setTimeout(()=>{
         overlay.style.pointerEvents = "auto";
     }, 40000);
@@ -255,7 +291,7 @@ function syncVideo(title){
     if(video){
         if(!player.src.includes(video.url)){
             player.src = video.url;
-            activateLock(); // reset lock on video change
+            activateLock();
         }
     } else {
         rotateVideo();
@@ -268,13 +304,13 @@ function rotateVideo(){
     const video = playlist[rotateIndex % playlist.length];
     player.src = video.url;
     rotateIndex++;
-    activateLock(); // reset lock on rotation
+    activateLock();
 }
 
 // 🔥 FETCH AND UPDATE EPG WITH CACHE-BUSTER
 async function loadEPG(){
     try{
-        const url = BASE_JSON_URL + "?v=" + Date.now(); // cache-buster
+        const url = BASE_JSON_URL + "?v=" + Date.now();
         const res = await fetch(url, { cache: "no-store" });
         if(!res.ok) throw new Error("Failed to fetch JSON");
 
@@ -295,8 +331,7 @@ async function loadEPG(){
 
 // INIT
 loadEPG();
-setInterval(loadEPG, 15000); // refresh every 15 sec
+setInterval(loadEPG, 15000);
 </script>
-
 </body>
 </html>
