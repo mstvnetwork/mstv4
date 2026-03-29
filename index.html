@@ -174,7 +174,7 @@ footer {
     <p>&copy; 2026 MSNET Streaming Services • All Rights Reserved</p>
 </footer>
 <script>
-const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
+const BASE_JSON_URL = "https://raw.githubusercontent.com/USERNAME/REPO/branch/file.json"; // replace with your RAW JSON URL
 
 const playlist = [
     { title: "Indian Idol", url: "https://vkprime.com/embed-k1ipwza01c0d.html" },
@@ -202,6 +202,8 @@ async function loadEPG() {
         if (!res.ok) throw new Error("Network error");
 
         const data = await res.json();
+        renderEPG(data.schedule);  // update EPG cards
+
         const now = new Date();
         let currentProgramTitle = null;
 
@@ -209,12 +211,8 @@ async function loadEPG() {
             const [sh, sm] = item.start.split(':').map(Number);
             const [eh, em] = item.end.split(':').map(Number);
 
-            const start = new Date(now);
-            start.setHours(sh, sm, 0, 0);
-
-            const end = new Date(now);
-            end.setHours(eh, em, 0, 0);
-
+            const start = new Date(now); start.setHours(sh, sm, 0, 0);
+            const end = new Date(now); end.setHours(eh, em, 0, 0);
             if (end < start) end.setDate(end.getDate() + 1);
 
             if (now >= start && now < end) {
@@ -235,6 +233,37 @@ async function loadEPG() {
     }
 }
 
+function renderEPG(schedule) {
+    const container = getEl('epgContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const now = new Date();
+
+    schedule.forEach(item => {
+        const [sh, sm] = item.start.split(':').map(Number);
+        const [eh, em] = item.end.split(':').map(Number);
+
+        const start = new Date(now); start.setHours(sh, sm, 0, 0);
+        const end = new Date(now); end.setHours(eh, em, 0, 0);
+        if (end < start) end.setDate(end.getDate() + 1);
+
+        const isLive = now >= start && now < end;
+
+        const card = document.createElement('div');
+        card.style.padding = '8px';
+        card.style.margin = '4px 0';
+        card.style.border = '1px solid #ccc';
+        card.style.borderRadius = '4px';
+        card.style.background = isLive ? '#ffd' : '#f9f9f9';
+
+        card.innerHTML = `<strong>${item.title}</strong> (${item.start} - ${item.end}) ${isLive ? '<em>LIVE</em>' : ''}`;
+
+        container.appendChild(card);
+    });
+}
+
 function rotateLocal() {
     const player = getEl('videoPlayer');
     if (!player) return;
@@ -247,7 +276,6 @@ function rotateLocal() {
 function syncVideo(title) {
     const player = getEl('videoPlayer');
     const lockOverlay = getEl('silentLockOverlay');
-
     if (!player) return;
 
     const video = playlist.find(v => v.title === title);
@@ -276,8 +304,7 @@ window.onload = function () {
         if (browserError) browserError.style.display = 'none';
 
         loadEPG();
-        setInterval(loadEPG, 60000);
-
+        setInterval(loadEPG, 60000); // update EPG every 60s
     } else {
         if (browserError) browserError.style.display = 'block';
         if (chromeContent) chromeContent.style.display = 'none';
