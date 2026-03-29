@@ -221,12 +221,11 @@ async function loadEPG() {
 
         const data = await res.json();
         const schedule = data.schedule;
-
         const now = new Date();
 
         let slots = [];
 
-        // Step 1: build today's timeline
+        // Build slots with correct dates
         for (let i = 0; i < schedule.length; i++) {
             let start = parseTimeToToday(schedule[i].start);
             let end = parseTimeToToday(schedule[i].end);
@@ -238,14 +237,14 @@ async function loadEPG() {
             slots.push({
                 ...schedule[i],
                 start,
-                end
+                end,
+                index: i // 👈 KEY FIX
             });
         }
 
-        // Step 2: shift slots to align with "now"
-        // (handles early morning / after last slot)
         let current = null;
 
+        // Find current slot
         for (let slot of slots) {
             if (now >= slot.start && now < slot.end) {
                 current = slot;
@@ -253,7 +252,7 @@ async function loadEPG() {
             }
         }
 
-        // Step 3: if not found, shift entire schedule backward 1 day
+        // If not found, shift to previous day
         if (!current) {
             for (let slot of slots) {
                 slot.start.setDate(slot.start.getDate() - 1);
@@ -268,16 +267,15 @@ async function loadEPG() {
             }
         }
 
-        // Step 4: final fallback (guaranteed match)
+        // Final fallback
         if (!current) {
             current = slots[slots.length - 1];
         }
 
-        // Step 5: find next (based on original order)
-        const index = schedule.findIndex(s => s.title === current.title);
-        const next = schedule[(index + 1) % schedule.length];
+        // ✅ Correct next using index
+        const next = schedule[(current.index + 1) % schedule.length];
 
-        // Step 6: progress bar
+        // Progress bar
         const pct = ((now - current.start) / (current.end - current.start)) * 100;
         const progressBar = document.getElementById('progressBar');
         if (progressBar) progressBar.style.width = pct + "%";
@@ -288,7 +286,7 @@ async function loadEPG() {
     } catch (e) {
         console.error("EPG Update Failed:", e);
     }
-}
+    }
 
 // --- UI UPDATE ---
 function updateUI(curr, nxt, start, end) {
