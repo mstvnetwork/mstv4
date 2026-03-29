@@ -222,55 +222,67 @@ async function loadEPG() {
         const data = await res.json();
         const schedule = data.schedule;
 
-        if (!Array.isArray(schedule) || schedule.length === 0) {
-            throw new Error("Invalid or empty schedule");
-        }
-
         const now = new Date();
 
-        let current = null;
-        let next = null;
-        let start, end;
+        let slots = [];
 
+        // Step 1: build today's timeline
         for (let i = 0; i < schedule.length; i++) {
-            start = parseTimeToToday(schedule[i].start);
-            end = parseTimeToToday(schedule[i].end);
+            let start = parseTimeToToday(schedule[i].start);
+            let end = parseTimeToToday(schedule[i].end);
 
-            // overnight fix
             if (end <= start) {
                 end.setDate(end.getDate() + 1);
             }
 
-            if (now >= start && now < end) {
-                current = schedule[i];
-                next = schedule[(i + 1) % schedule.length];
+            slots.push({
+                ...schedule[i],
+                start,
+                end
+            });
+        }
+
+        // Step 2: shift slots to align with "now"
+        // (handles early morning / after last slot)
+        let current = null;
+
+        for (let slot of slots) {
+            if (now >= slot.start && now < slot.end) {
+                current = slot;
                 break;
             }
         }
 
-        // 🔁 Loop fallback (before first slot)
+        // Step 3: if not found, shift entire schedule backward 1 day
         if (!current) {
-            const lastIndex = schedule.length - 1;
-            current = schedule[lastIndex];
-            next = schedule[0];
-
-            start = parseTimeToToday(current.start);
-            end = parseTimeToToday(current.end);
-
-            if (end <= start) {
-                end.setDate(end.getDate() + 1);
+            for (let slot of slots) {
+                slot.start.setDate(slot.start.getDate() - 1);
+                slot.end.setDate(slot.end.getDate() - 1);
             }
 
-            start.setDate(start.getDate() - 1);
-            end.setDate(end.getDate() - 1);
+            for (let slot of slots) {
+                if (now >= slot.start && now < slot.end) {
+                    current = slot;
+                    break;
+                }
+            }
         }
 
-        // progress bar
-        const pct = ((now - start) / (end - start)) * 100;
+        // Step 4: final fallback (guaranteed match)
+        if (!current) {
+            current = slots[slots.length - 1];
+        }
+
+        // Step 5: find next (based on original order)
+        const index = schedule.findIndex(s => s.title === current.title);
+        const next = schedule[(index + 1) % schedule.length];
+
+        // Step 6: progress bar
+        const pct = ((now - current.start) / (current.end - current.start)) * 100;
         const progressBar = document.getElementById('progressBar');
         if (progressBar) progressBar.style.width = pct + "%";
 
-        updateUI(current, next, start, end);
+        updateUI(current, next, current.start, current.end);
         syncVideo(current.title);
 
     } catch (e) {
