@@ -1,10 +1,10 @@
 {
   "schedule": [
-    { "title": "Indian Idol", "start": "19:45", "end": "19:55" },
-    { "title": "Mtv", "start": "19:55", "end": "20:05" },
-    { "title": "Indian Idol", "start": "20:05", "end": "20:15" },
+    { "title": "Indian Idol", "start": "20:38", "end": "20:40" },
+    { "title": "Mtv", "start": "20:40", "end": "20:42" },
+    { "title": "Indian Idol", "start": "20:42", "end": "20:43" },
 
-    { "title": "Mtv", "start": "23:55", "end": "00:10" },
-    { "title": "Indian Idol", "start": "00:10", "end": "00:30" }
+    { "title": "Mtv", "start": "20:44", "end": "20:45" },
+    { "title": "Indian Idol", "start": "20:45", "end": "20:46" }
   ]
 }
