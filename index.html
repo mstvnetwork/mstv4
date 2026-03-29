@@ -219,7 +219,7 @@ function activateLock(){
 
     lockTimer = setTimeout(()=>{
         overlay.style.pointerEvents = "auto";
-    }, 40000);
+    },15000);
 }
 
 // 🔥 MAIN EPG LOGIC
@@ -327,7 +327,7 @@ async function loadEPG(){
 
 // INIT
 loadEPG();
-setInterval(loadEPG, 15000);
+setInterval(loadEPG, 1000);
       </script>
 
 </body>
