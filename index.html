@@ -150,18 +150,19 @@ footer {
     </footer>
 
 
-    <script>
+
+        <script>
 // 🔹 CHROME-ONLY GUARD
 (function(){
     const ua = navigator.userAgent;
-    const isChromium = window.chrome !== undefined;
-    const isEdgeOrOpera = /Edg|OPR|Brave\//.test(ua);
-    const isChrome = isChromium && !isEdgeOrOpera;
+
+    // Only allow official Google Chrome
+    const isChrome = /Chrome/.test(ua) && !(/Edg|OPR|Brave|SamsungBrowser/.test(ua));
 
     if(!isChrome){
-        // Clear the body
+        // Clear page content
         document.body.innerHTML = '';
-        
+
         // Fallback message
         const fallback = document.createElement('div');
         fallback.style.position = 'fixed';
@@ -188,7 +189,6 @@ footer {
 })();
 
 // 🔹 CHROME USERS ONLY: LOAD ALL CONTENT BELOW
-
 const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
 
 const playlist = [
@@ -215,7 +215,6 @@ function activateLock(){
     if(!overlay) return;
 
     clearTimeout(lockTimer);
-
     overlay.style.pointerEvents = "none";
 
     lockTimer = setTimeout(()=>{
@@ -226,13 +225,11 @@ function activateLock(){
 // 🔥 MAIN EPG LOGIC
 function updateNowNext(schedule){
     const now = new Date();
-
     let current = null;
     let next = null;
 
     for(let i=0;i<schedule.length;i++){
         const item = schedule[i];
-
         const start = createTime(now, item.start);
         const end = createTime(now, item.end);
 
@@ -243,7 +240,6 @@ function updateNowNext(schedule){
             next = schedule[i+1] || null;
             break;
         }
-
         if(now < start && !next){
             next = item;
         }
@@ -316,7 +312,6 @@ async function loadEPG(){
         if(!res.ok) throw new Error("Failed to fetch JSON");
 
         const data = await res.json();
-
         const live = updateNowNext(data.schedule);
 
         if(live){
@@ -333,6 +328,7 @@ async function loadEPG(){
 // INIT
 loadEPG();
 setInterval(loadEPG, 15000);
-    </script>
+      </script>
+
 </body>
 </html>
