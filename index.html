@@ -163,11 +163,16 @@ const playlist = [
 
 let lastLiveTitle = null;
 
-// helpers
+// helper
 function getEl(id){ return document.getElementById(id); }
 
-// main logic
+// 🔥 CORE FIXED LOGIC
 function updateNowNext(schedule){
+    if(!Array.isArray(schedule) || schedule.length === 0){
+        console.warn("Invalid or empty schedule");
+        return null;
+    }
+
     const now = new Date();
 
     let nowPlaying = null;
@@ -175,22 +180,38 @@ function updateNowNext(schedule){
 
     for(let i=0;i<schedule.length;i++){
         const item = schedule[i];
-        if(!item.start || !item.end) continue;
+
+        if(!item.start || !item.end || !item.title) continue;
 
         const [sh, sm] = item.start.split(":").map(Number);
         const [eh, em] = item.end.split(":").map(Number);
 
-        const start = new Date(now); start.setHours(sh, sm, 0, 0);
-        const end = new Date(now); end.setHours(eh, em, 0, 0);
+        const start = new Date(now);
+        start.setHours(sh, sm, 0, 0);
+
+        const end = new Date(now);
+        end.setHours(eh, em, 0, 0);
+
         if(end < start) end.setDate(end.getDate()+1);
 
         if(now >= start && now < end){
-            nowPlaying = {...item, startDate:start, endDate:end};
+            nowPlaying = { ...item, startDate: start, endDate: end };
             comingUp = schedule[i+1] || null;
             break;
-        } else if(now < start && !comingUp){
+        }
+
+        if(now < start && !comingUp){
             comingUp = item;
         }
+    }
+
+    // 🟡 fallback if nothing live → show first item
+    if(!nowPlaying && schedule.length > 0){
+        nowPlaying = {
+            ...schedule[0],
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 10*60*1000)
+        };
     }
 
     // UI update
@@ -209,12 +230,16 @@ function updateNowNext(schedule){
     if(nowPlaying){
         const percent = ((now - nowPlaying.startDate) / (nowPlaying.endDate - nowPlaying.startDate)) * 100;
 
-        bar.style.width = percent + "%";
-        bar.style.background = "red";
+        bar.style.width = Math.max(0, Math.min(percent, 100)) + "%";
 
-        nowCard.classList.add("live");
+        if(now >= nowPlaying.startDate && now < nowPlaying.endDate){
+            bar.style.background = "red";
+            nowCard.classList.add("live");
+        } else {
+            bar.style.background = "#888";
+        }
 
-        // scroll when changed
+        // scroll on change
         if(nowPlaying.title !== lastLiveTitle){
             lastLiveTitle = nowPlaying.title;
 
@@ -223,23 +248,31 @@ function updateNowNext(schedule){
                 block: "center"
             });
         }
-
-    } else {
-        bar.style.width = "0%";
-        bar.style.background = "#888";
     }
 
-    return nowPlaying?.title;
+    return nowPlaying?.title || null;
 }
 
-// video sync
+// 🔥 FIXED VIDEO SYNC (force reload)
 function syncVideo(title){
     const player = getEl("videoPlayer");
     const video = playlist.find(v => v.title === title);
-    if(!video) return;
 
-    if(!player.src.includes(video.url)){
+    if(!video){
+        console.warn("No matching video for:", title);
+        return;
+    }
+
+    if(!player.src || !player.src.includes(video.url)){
         player.src = video.url;
+    }
+}
+
+// 🔥 fallback rotation (no blank screen)
+function rotateFallback(){
+    const player = getEl("videoPlayer");
+    if(!player.src){
+        player.src = playlist[0].url;
     }
 }
 
@@ -247,14 +280,23 @@ function syncVideo(title){
 async function loadEPG(){
     try{
         const res = await fetch(BASE_JSON_URL + "?t=" + Date.now());
+        if(!res.ok) throw new Error("Fetch failed");
+
         const data = await res.json();
+
+        console.log("EPG loaded:", data);
 
         const liveTitle = updateNowNext(data.schedule);
 
-        if(liveTitle) syncVideo(liveTitle);
+        if(liveTitle){
+            syncVideo(liveTitle);
+        } else {
+            rotateFallback();
+        }
 
     } catch(e){
-        console.error("EPG error", e);
+        console.error("EPG error:", e);
+        rotateFallback();
     }
 }
 
@@ -262,6 +304,5 @@ async function loadEPG(){
 loadEPG();
 setInterval(loadEPG, 15000);
 </script>
-
 </body>
 </html>
