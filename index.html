@@ -174,7 +174,6 @@ footer {
     <p>&copy; 2026 MSNET Streaming Services • All Rights Reserved</p>
 </footer>
 <script>
-// 🔴 IMPORTANT: put your actual RAW GitHub JSON link here
 const BASE_JSON_URL = "https://raw.githubusercontent.com/mstvnetwork/mstv4/main/schedule.json";
 
 const playlist = [
@@ -183,7 +182,10 @@ const playlist = [
 ];
 
 let silentLockTimer;
-const lockOverlay = document.getElementById('silentLockOverlay');
+
+function getEl(id) {
+    return document.getElementById(id);
+}
 
 function isStrictChrome() {
     const ua = navigator.userAgent;
@@ -197,28 +199,23 @@ async function loadEPG() {
 
     try {
         const res = await fetch(freshUrl);
-        if (!res.ok) throw new Error("Network response was not ok");
+        if (!res.ok) throw new Error("Network error");
 
         const data = await res.json();
         const now = new Date();
         let currentProgramTitle = null;
 
-        for (let i = 0; i < data.schedule.length; i++) {
-            const item = data.schedule[i];
-
-            const [startH, startM] = item.start.split(':').map(Number);
-            const [endH, endM] = item.end.split(':').map(Number);
+        for (let item of data.schedule) {
+            const [sh, sm] = item.start.split(':').map(Number);
+            const [eh, em] = item.end.split(':').map(Number);
 
             const start = new Date(now);
-            start.setHours(startH, startM, 0, 0);
+            start.setHours(sh, sm, 0, 0);
 
             const end = new Date(now);
-            end.setHours(endH, endM, 0, 0);
+            end.setHours(eh, em, 0, 0);
 
-            // handle midnight crossover
-            if (end < start) {
-                end.setDate(end.getDate() + 1);
-            }
+            if (end < start) end.setDate(end.getDate() + 1);
 
             if (now >= start && now < end) {
                 currentProgramTitle = item.title;
@@ -226,53 +223,64 @@ async function loadEPG() {
             }
         }
 
-        if (!currentProgramTitle) {
-            rotateLocal();
-        } else {
+        if (currentProgramTitle) {
             syncVideo(currentProgramTitle);
+        } else {
+            rotateLocal();
         }
 
     } catch (e) {
-        console.error("Fetch error, rotating locally:", e);
+        console.error("EPG failed:", e);
         rotateLocal();
     }
 }
 
 function rotateLocal() {
-    const player = document.getElementById('videoPlayer');
+    const player = getEl('videoPlayer');
+    if (!player) return;
+
     const currentIndex = playlist.findIndex(v => player.src.includes(v.url));
     const nextIndex = (currentIndex + 1) % playlist.length;
     syncVideo(playlist[nextIndex].title);
 }
 
-function syncVideo(liveTitle) {
-    const player = document.getElementById('videoPlayer');
-    let liveVideo = playlist.find(v => v.title === liveTitle);
+function syncVideo(title) {
+    const player = getEl('videoPlayer');
+    const lockOverlay = getEl('silentLockOverlay');
 
-    if (liveVideo && !player.src.includes(liveVideo.url)) {
-        player.src = liveVideo.url;
+    if (!player) return;
 
-        // Reset Interaction Lock for 40 seconds
-        clearTimeout(silentLockTimer);
-        lockOverlay.style.pointerEvents = 'none';
+    const video = playlist.find(v => v.title === title);
+    if (!video) return;
 
-        silentLockTimer = setTimeout(() => {
-            lockOverlay.style.pointerEvents = 'auto';
-        }, 40000);
+    if (!player.src.includes(video.url)) {
+        player.src = video.url;
+
+        if (lockOverlay) {
+            clearTimeout(silentLockTimer);
+            lockOverlay.style.pointerEvents = 'none';
+
+            silentLockTimer = setTimeout(() => {
+                lockOverlay.style.pointerEvents = 'auto';
+            }, 40000);
+        }
     }
 }
 
 window.onload = function () {
+    const chromeContent = getEl('chrome-only-content');
+    const browserError = getEl('browser-error');
+
     if (isStrictChrome()) {
-        document.getElementById('chrome-only-content').style.display = 'block';
-        document.getElementById('browser-error').style.display = 'none';
+        if (chromeContent) chromeContent.style.display = 'block';
+        if (browserError) browserError.style.display = 'none';
 
         loadEPG();
-        setInterval(loadEPG, 60000); // check every 60 sec
+        setInterval(loadEPG, 60000);
 
     } else {
-        document.getElementById('browser-error').style.display = 'block';
-        document.getElementById('chrome-only-content').style.display = 'none';
+        if (browserError) browserError.style.display = 'block';
+        if (chromeContent) chromeContent.style.display = 'none';
     }
 };
 </script>
