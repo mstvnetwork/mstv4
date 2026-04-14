@@ -40,7 +40,6 @@
     </div>
 
     <script>
-        // STEP 1: Handle Authentication
 async function powerOn() {
     try {
         await puter.auth.signIn(); 
@@ -54,7 +53,6 @@ if (puter.auth.isSignedIn()) {
     document.getElementById('auth-overlay').style.display = 'none';
 }
 
-// STEP 2: Fixed Chat Logic
 async function askAI() {
     const input = document.getElementById('userInput');
     const chat = document.getElementById('chat-window');
@@ -63,28 +61,35 @@ async function askAI() {
     const userText = input.value;
     chat.innerHTML += `<div class="msg user">${userText}</div>`;
     
-    // Add a temporary "Thinking..." message
     const botMsgDiv = document.createElement('div');
     botMsgDiv.className = 'msg bot';
-    botMsgDiv.innerText = '...';
+    botMsgDiv.innerText = 'Thinking...';
     chat.appendChild(botMsgDiv);
     
     input.value = '';
     chat.scrollTop = chat.scrollHeight;
 
     try {
-        // Updated API call for Puter.js 2026
         const response = await puter.ai.chat(userText, {model: 'claude-sonnet-4-6'});
         
-        // FIX: Puter 2026 returns text directly or inside message.text 
-        // We use response.toString() or message.content to ensure it's not undefined
-        const resultText = response?.message?.content || response?.message?.text || response.toString();
+        // --- THE FIX ---
+        // We look for the text in the new 2026 object structure
+        let resultText = "";
+        
+        if (response.message && response.message.content) {
+            // If it's a string, use it. If it's an object/array, pull the text.
+            resultText = typeof response.message.content === 'string' 
+                         ? response.message.content 
+                         : (response.message.content[0]?.text || "No text returned");
+        } else {
+            resultText = response.toString();
+        }
         
         botMsgDiv.innerText = resultText;
     } catch (e) {
         botMsgDiv.style.color = '#f87171';
-        botMsgDiv.innerText = "Brain error: Check connection.";
-        console.error("Puter Error:", e);
+        botMsgDiv.innerText = "Error: Check Puter connection.";
+        console.error(e);
     }
     chat.scrollTop = chat.scrollHeight;
 }
