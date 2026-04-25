@@ -1,1 +1,25 @@
-
+{
+  "schedule": [
+    {
+      "title": "Morning Show",
+      "start": "13:20:00",
+      "end": "15:45:00",
+      "url": "https://vidup.site/play/?cd=6uL0hbsRM8P1As3QhXteulteWjehiB/Nf97uNppp56TaprUY9WbPxuB8FygN+xcn4bOASBY8Ceyg9/MAs93eywsPktq/K1WuoEi1sKH3Rr5wFy32p24GWP3hk1wzKYqSg7xp5/ISu31wujQ=&autoplay=1",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Logo_geo_alt.svg/512px-Logo_geo_alt.svg.png"
+    },
+    {
+      "title": "Mtv Hits",
+      "start": "13:22:00",
+      "end": "13:33:00",
+      "url": "https://vkprime.com/embed-e6r4icq8gcq1.html",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/MTV_2021_logo.svg/512px-MTV_2021_logo.svg.png"
+    },
+    {
+      "title": "Morning Show",
+      "start": "13:33:00",
+      "end": "13:34:00",
+      "url": "https://vkspeed.com/embed-dir4yl2jjl8h.html",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Logo_geo_alt.svg/512px-Logo_geo_alt.svg.png"
+    }
+  ]
+}
