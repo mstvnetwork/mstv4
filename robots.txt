@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Allow: /channels_pages/
-Disallow: /channels2.json
-
-Sitemap: https://crickethd.pages.dev/sitemap.xml
