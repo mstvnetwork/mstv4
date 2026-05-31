@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear TV</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #080808;
+    --surface: #111111;
+    --border: #222222;
+    --accent: #e8ff00;
+    --accent2: #ff4444;
+    --text: #f0f0f0;
+    --muted: #666666;
+    --scanline: rgba(255,255,255,0.015);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* CRT scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  .shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(232,255,0,0.4);
+    line-height: 1;
+  }
+
+  .logo span {
+    color: var(--text);
+    font-size: 14px;
+    letter-spacing: 6px;
+    display: block;
+    margin-top: -4px;
+    opacity: 0.5;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+  }
+
+  .clock-block {
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+    line-height: 1.3;
+  }
+
+  .clock-time {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 2px;
+  }
+
+  .clock-date {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* LIVE badge */
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 5px 12px;
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: blink 1.2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* ── MAIN AREA ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  /* ── VIDEO COLUMN ── */
+  .video-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .video-wrap {
+    position: relative;
+    flex: 1;
+    background: #000;
+    overflow: hidden;
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    /* Hide all native controls via CSS where possible */
+  }
+
+  /* Custom controls overlay */
+  .controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 24px 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .video-wrap:hover .controls { opacity: 1; }
+
+  .btn-play {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    font-size: 14px;
+  }
+
+  .btn-play:hover { background: rgba(255,255,255,0.25); }
+
+  .vol-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+  }
+
+  .vol-wrap span { font-size: 16px; }
+
+  input[type=range].vol {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80px;
+    height: 3px;
+    background: rgba(255,255,255,0.25);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range].vol::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  /* No seekbar — intentionally omitted */
+
+  .now-playing-overlay {
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    pointer-events: none;
+  }
+
+  .now-playing-overlay strong {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0;
+    margin-top: 3px;
+    text-transform: none;
+  }
+
+  /* Loading / buffering state */
+  .loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    gap: 14px;
+    transition: opacity 0.4s;
+  }
+
+  .loader.hidden { opacity: 0; pointer-events: none; }
+
+  .loader-ring {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loader-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Error state */
+  .error-msg {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--accent2);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .error-msg.show { display: flex; }
+  .error-msg .err-icon { font-size: 32px; }
+
+  /* Progress bar (time-in-show, not seekable) */
+  .progress-bar-wrap {
+    padding: 8px 0 0;
+    flex-shrink: 0;
+  }
+
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 1s linear;
+    box-shadow: 0 0 8px rgba(232,255,0,0.6);
+  }
+
+  /* ── SCHEDULE SIDEBAR ── */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .sidebar-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .schedule-list {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: none;
+  }
+
+  .schedule-list::-webkit-scrollbar { display: none; }
+
+  .schedule-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: default;
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .schedule-item.active {
+    background: rgba(232,255,0,0.04);
+    border-left: 2px solid var(--accent);
+    padding-left: 14px;
+  }
+
+  .schedule-item.past { opacity: 0.35; }
+
+  .s-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .s-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .s-duration {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .s-active-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ── BOTTOM STATUS BAR ── */
+  .statusbar {
+    border-top: 1px solid var(--border);
+    padding: 6px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .status-viewers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  /* Sync notification */
+  .sync-toast {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: rgba(232,255,0,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    padding: 8px 14px;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .sync-toast.show { opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .logo span { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .clock-date { display: none; }
+    .live-badge { padding: 4px 8px; font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="logo">
+      LINEAR
+      <span>BROADCAST NETWORK</span>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      Live
+    </div>
+    <div class="clock-block">
+      <div class="clock-time" id="clock">--:--:--</div>
+      <div class="clock-date" id="clock-date">---</div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- VIDEO COLUMN -->
+    <div class="video-col">
+
+      <div class="video-wrap" id="videoWrap">
+
+        <!-- Loading -->
+        <div class="loader" id="loader">
+          <div class="loader-ring"></div>
+          <div class="loader-text">Tuning in...</div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg">
+          <div class="err-icon">📡</div>
+          <div>Signal lost — retrying</div>
+        </div>
+
+        <!-- Video element - controls managed via JS -->
+        <video id="vid" playsinline></video>
+
+        <!-- Now playing info -->
+        <div class="now-playing-overlay" id="nowPlayingOverlay">
+          Now playing
+          <strong id="nowPlayingTitle">—</strong>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+          <button class="btn-play" id="btnPlay" title="Play/Pause">▶</button>
+          <div class="vol-wrap">
+            <span>🔊</span>
+            <input type="range" class="vol" id="volSlider" min="0" max="1" step="0.05" value="0.8">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Non-seekable progress bar showing show progress -->
+      <div class="progress-bar-wrap">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SCHEDULE SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">Schedule</div>
+      <div class="schedule-list" id="scheduleList"></div>
+    </aside>
+
+  </div>
+
+  <!-- STATUS BAR -->
+  <footer class="statusbar">
+    <div class="status-viewers">
+      <div class="status-dot"></div>
+      <span id="statusText">Syncing...</span>
+    </div>
+    <div id="statusOffset">OFFSET —</div>
+    <div>No DVR · No rewind · Live only</div>
+  </footer>
+
+</div>
+
+<!-- Sync toast -->
+<div class="sync-toast" id="syncToast">⟳ Resynced to live</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG — change CHANNEL_EPOCH to your channel's start date
+// All viewers share the same timeline anchored to this date.
+// ═══════════════════════════════════════════════════════════
+const CHANNEL_EPOCH = new Date('2024-01-01T00:00:00Z').getTime();
+const PLAYLIST_URL  = './playlist.json';
+const RESYNC_THRESHOLD = 3; // seconds drift before auto-resync
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let playlist     = [];
+let totalDur     = 0;
+let currentIndex = -1;
+let hls          = null;
+let paused       = false;
+let pausedAt     = null; // wallclock ms when user paused
+
+const vid         = document.getElementById('vid');
+const loader      = document.getElementById('loader');
+const errorMsg    = document.getElementById('errorMsg');
+const btnPlay     = document.getElementById('btnPlay');
+const volSlider   = document.getElementById('volSlider');
+const progressFill= document.getElementById('progressFill');
+const scheduleList= document.getElementById('scheduleList');
+const syncToast   = document.getElementById('syncToast');
+const statusText  = document.getElementById('statusText');
+const statusOffset= document.getElementById('statusOffset');
+const nowTitle    = document.getElementById('nowPlayingTitle');
+
+// ═══════════════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-GB', { hour12: false });
+  document.getElementById('clock-date').textContent =
+    now.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' }).toUpperCase();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ═══════════════════════════════════════════════════════════
+// COMPUTE POSITION FROM WALL CLOCK
+// Returns { index, offset } — which video, how many seconds in
+// ═══════════════════════════════════════════════════════════
+function computePosition(nowMs) {
+  if (!playlist.length) return null;
+  const elapsed = ((nowMs - CHANNEL_EPOCH) / 1000 % totalDur + totalDur) % totalDur;
+  let acc = 0;
+  for (let i = 0; i < playlist.length; i++) {
+    if (elapsed < acc + playlist[i].duration) {
+      return { index: i, offset: elapsed - acc, globalOffset: elapsed };
+    }
+    acc += playlist[i].duration;
+  }
+  return { index: 0, offset: 0, globalOffset: 0 };
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCHEDULE SIDEBAR
+// ═══════════════════════════════════════════════════════════
+function renderSchedule(activeIndex, globalOffset) {
+  scheduleList.innerHTML = '';
+  let acc = 0;
+  playlist.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'schedule-item' +
+      (i === activeIndex ? ' active' : (acc + item.duration < globalOffset ? ' past' : ''));
+
+    const startSec = acc;
+    const startLabel = formatDuration(startSec);
+
+    el.innerHTML = `
+      <div class="s-time">${startLabel}</div>
+      <div class="s-title">${escHtml(item.title)}</div>
+      <div class="s-duration">${formatDuration(item.duration)} runtime</div>
+      ${i === activeIndex ? '<div class="s-active-tag">▶ On now</div>' : ''}
+    `;
+    scheduleList.appendChild(el);
+
+    if (i === activeIndex) {
+      // Scroll active item into view
+      setTimeout(() => el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 100);
+    }
+    acc += item.duration;
+  });
+}
+
+function formatDuration(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOAD + PLAY A VIDEO AT A SPECIFIC OFFSET
+// ═══════════════════════════════════════════════════════════
+function loadVideo(index, seekTo) {
+  const item = playlist[index];
+  currentIndex = index;
+  nowTitle.textContent = item.title;
+
+  loader.classList.remove('hidden');
+  errorMsg.classList.remove('show');
+
+  // Destroy previous hls instance
+  if (hls) { hls.destroy(); hls = null; }
+
+  const url = item.url;
+  const isHLS = item.type === 'hls' || url.includes('.m3u8');
+
+  if (isHLS && Hls.isSupported()) {
+    hls = new Hls({
+      startPosition: seekTo,
+      // Allow seeking but we'll disable UI seekbar
+    });
+    hls.loadSource(url);
+    hls.attachMedia(vid);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      vid.currentTime = seekTo;
+      play();
+    });
+    hls.on(Hls.Events.ERROR, (_, data) => {
+      if (data.fatal) handleError();
+    });
+  } else if (vid.canPlayType('application/vnd.apple.mpegurl') && isHLS) {
+    // Native HLS (Safari)
+    vid.src = url;
+    vid.addEventListener('loadedmetadata', () => {
+      vid.currentTime = seekTo;
+      play();
+    }, { once: true });
+  } else {
+    // MP4 fallback
+    vid.src = url;
+    vid.addEventListener('loadedmetadata', () => {
+      vid.currentTime = seekTo;
+      play();
+    }, { once: true });
+  }
+
+  vid.onerror = handleError;
+}
+
+function play() {
+  loader.classList.add('hidden');
+  errorMsg.classList.remove('show');
+  vid.volume = parseFloat(volSlider.value);
+  vid.play().catch(() => {
+    // Autoplay blocked — show play button prominently
+    btnPlay.textContent = '▶';
+  });
+  paused = false;
+  pausedAt = null;
+  btnPlay.textContent = '⏸';
+}
+
+function handleError() {
+  loader.classList.add('hidden');
+  errorMsg.classList.add('show');
+  // Retry after 5s
+  setTimeout(() => {
+    const pos = computePosition(Date.now());
+    if (pos) loadVideo(pos.index, pos.offset);
+  }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLAY / PAUSE — when resuming, resync to live position
+// ═══════════════════════════════════════════════════════════
+btnPlay.addEventListener('click', () => {
+  if (vid.paused) {
+    // Resync to live position before resuming
+    const pos = computePosition(Date.now());
+    if (!pos) return;
+
+    if (pos.index !== currentIndex) {
+      loadVideo(pos.index, pos.offset);
+    } else {
+      vid.currentTime = pos.offset;
+      vid.play();
+    }
+    paused = false;
+    pausedAt = null;
+    btnPlay.textContent = '⏸';
+    showToast();
+  } else {
+    vid.pause();
+    paused = true;
+    pausedAt = Date.now();
+    btnPlay.textContent = '▶';
+  }
+});
+
+volSlider.addEventListener('input', () => {
+  vid.volume = parseFloat(volSlider.value);
+});
+
+// Prevent seeking via keyboard
+vid.addEventListener('keydown', e => e.preventDefault());
+
+// ═══════════════════════════════════════════════════════════
+// SYNC WATCHDOG — every second, check drift
+// ═══════════════════════════════════════════════════════════
+setInterval(() => {
+  if (paused || !playlist.length || vid.paused) return;
+
+  const pos = computePosition(Date.now());
+  if (!pos) return;
+
+  // Update progress bar
+  const itemProgress = (vid.currentTime / playlist[pos.index].duration) * 100;
+  progressFill.style.width = Math.min(itemProgress, 100) + '%';
+
+  // Update status bar
+  const remaining = playlist[pos.index].duration - vid.currentTime;
+  statusText.textContent = `Up next in ${formatDuration(Math.max(0, remaining))}`;
+  statusOffset.textContent = `OFFSET ${formatDuration(Math.floor(pos.globalOffset))}`;
+
+  // Check if we've drifted to a new video
+  if (pos.index !== currentIndex) {
+    loadVideo(pos.index, pos.offset);
+    renderSchedule(pos.index, pos.globalOffset);
+    return;
+  }
+
+  // Check time drift
+  const drift = Math.abs(vid.currentTime - pos.offset);
+  if (drift > RESYNC_THRESHOLD && !vid.seeking) {
+    vid.currentTime = pos.offset;
+    showToast();
+  }
+
+  renderSchedule(pos.index, pos.globalOffset);
+}, 1000);
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function showToast() {
+  syncToast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => syncToast.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT — load playlist then tune in
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  try {
+    const res = await fetch(PLAYLIST_URL);
+    playlist = await res.json();
+    totalDur = playlist.reduce((s, v) => s + v.duration, 0);
+
+    const pos = computePosition(Date.now());
+    if (!pos) throw new Error('Empty playlist');
+
+    renderSchedule(pos.index, pos.globalOffset);
+    loadVideo(pos.index, pos.offset);
+  } catch (e) {
+    loader.classList.add('hidden');
+    errorMsg.classList.add('show');
+    console.error('Channel init failed:', e);
+  }
+}
+
+// Block context menu on video (no save-video option)
+vid.addEventListener('contextmenu', e => e.preventDefault());
+
+init();
+</script>
+</body>
+</html>
