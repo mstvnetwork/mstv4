@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linear HLS Player</title>
+    <title>Linear HLS Player (Victoria Time Zone)</title>
     <style>
         body { margin: 0; background: #111; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #fff; }
         .video-container { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; }
@@ -16,6 +16,7 @@
 <body>
 
 <div class="video-container">
+    <!-- playsinline prevents Samsung/Safari from forcing standard full screen -->
     <video id="linear-video" controls playsinline muted autoplay></video>
     <div class="now-playing">
         <img id="show-logo" src="" alt="" style="display:none;">
@@ -24,21 +25,21 @@
 </div>
 
 <script>
-    // Your exact JSON payload (Change the start/end times here manually to match your clock for testing!)
+    // JSON explicitly timed for your current time in Victoria, Australia (12:42 AM)
     const jsonSchedule = {
       "schedule": [
         {
           "title": "Anupama",
-          "start": "20:07:00",
-          "end": "20:10:00",
-          "url": "https://hlsplayers.pages.dev/player2?url=https://s2.videoapne.to/hls/,bdohws7v7bboxuzvta2p4g2ws2khimvq24xbpns7osntfggpd74dnpjxuvna,.urlset/master.m3u8",
-          "logo": "https://cdn.jsdelivr.net/gh/mstvnetwork/mstv4/assets/anu.webp"
+          "start": "00:42:00",
+          "end": "00:45:00",
+          "url": "https://pages.dev",
+          "logo": "https://jsdelivr.net"
         },
         {
           "title": "The Great Indian Kapil Show",
-          "start": "20:10:00",
-          "end": "20:12:00",
-          "url": "https://hlsplayers.pages.dev/player2?url=https://si.videoapne.to/hls/,bdohws6n7bboxuzvta2p4hct3roxtnt3veh2nxklit5prwibjscxjipymnfa,.urlset/master.m3u8",
+          "start": "00:45:00",
+          "end": "00:50:00",
+          "url": "https://pages.dev",
           "logo": "https://jsdelivr.gh"
         }
       ]
@@ -51,29 +52,31 @@
     let currentActiveUrl = "";
     let hls = null;
 
-    // Helper function to extract the raw .m3u8 link from your wrapper URL
     function extractM3u8(wrapperUrl) {
         try {
             const urlObj = new URL(wrapperUrl);
-            return urlObj.searchParams.get('url'); // Grabs everything after ?url=
+            return urlObj.searchParams.get('url'); 
         } catch (e) {
-            return wrapperUrl; // Fallback if it's already a raw URL
+            return wrapperUrl; 
         }
     }
 
-    // Helper function to convert "HH:MM:SS" string to total seconds of the day
     function timeToSeconds(timeStr) {
         const parts = timeStr.split(':');
         return (parseInt(parts[0], 10) * 3600) + (parseInt(parts[1], 10) * 60) + parseInt(parts[2], 10);
     }
 
-    // Check the clock and update the video stream source dynamically
     function checkSchedule() {
         const now = new Date();
-        const currentTimeStr = now.toTimeString().split(' ')[0]; // Gets current "HH:MM:SS"
+        
+        // Force evaluation using 24-hour HH:MM:SS format
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const currentTimeStr = `${hours}:${minutes}:${seconds}`;
+        
         const currentSeconds = timeToSeconds(currentTimeStr);
 
-        // Find which slot matches the current time of day
         const activeSlot = jsonSchedule.schedule.find(slot => {
             const startSec = timeToSeconds(slot.start);
             const endSec = timeToSeconds(slot.end);
@@ -83,7 +86,6 @@
         if (activeSlot) {
             const targetStream = extractM3u8(activeSlot.url);
 
-            // If the slot changed, clear old stream and load the new one
             if (currentActiveUrl !== targetStream) {
                 currentActiveUrl = targetStream;
                 updateUI(activeSlot);
@@ -92,6 +94,7 @@
         } else {
             titleEl.textContent = "Off Air - No Scheduled Program";
             logoEl.style.display = "none";
+            if (hls) { hls.destroy(); currentActiveUrl = ""; }
         }
     }
 
@@ -103,30 +106,28 @@
 
     function loadHlsStream(streamUrl) {
         if (hls) {
-            hls.destroy(); // Completely wipe the previous video track from memory
+            hls.destroy(); 
         }
 
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveDurationInfinity: true, // Dictates to the browser engine that it is an endless stream
+                liveDurationInfinity: true, // Tells the browser engine the media has no end point
                 maxLiveSyncPlaybackRate: 1
             });
             hls.loadSource(streamUrl);
             hls.attachMediaElement(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(() => console.log("Waiting for user tap to play audio..."));
+                video.play().catch(() => console.log("Click the player to unmute audio."));
             });
         } 
         else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Safari / Native iOS fallback
             video.src = streamUrl;
             video.play();
         }
     }
 
-    // Run the schedule check immediately, then check every 2 seconds for a track rotation
     checkSchedule();
-    setInterval(checkSchedule, 2000);
+    setInterval(checkSchedule, 2000); // Check for transitions every 2 seconds
 </script>
 
 </body>
