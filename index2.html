@@ -51,78 +51,75 @@
         }
       ]
     };
-const iframe = document.getElementById('linear-iframe');
-    const shield = document.getElementById('player-shield');
-    const titleEl = document.getElementById('show-title');
-    let currentActiveUrl = "";
 
-    // The Click-Through Trick: Drops the shield for 100ms to allow the play trigger
-    shield.addEventListener('click', (e) => {
-        shield.style.pointerEvents = 'none'; // Temporarily turn off the shield
-        
-        // Emulate the click exactly where you pressed on the screen
-        const elementBehind = document.elementFromPoint(e.clientX, e.clientY);
-        if (elementBehind) {
-            elementBehind.click();
-        }
+    // FIXED: Code waits until the HTML DOM is entirely constructed by the browser
+    document.addEventListener("DOMContentLoaded", () => {
+        const iframe = document.getElementById('linear-iframe');
+        const shield = document.getElementById('player-shield');
+        const titleEl = document.getElementById('show-title');
+        let currentActiveUrl = "";
 
-        // Instantly wrap the shield back over the video after 100 milliseconds
-        setTimeout(() => {
-            shield.style.pointerEvents = 'auto';
-        }, 100);
-    });
-
-    // Also catch mobile touch events for absolute compatibility on Samsung Browser
-    shield.addEventListener('touchend', (e) => {
-        shield.style.pointerEvents = 'none';
-        setTimeout(() => {
-            shield.style.pointerEvents = 'auto';
-        }, 100);
-    });
-
-    function timeToSeconds(timeStr) {
-        const parts = timeStr.split(':');
-        const hrs = parseInt(parts[0], 10) || 0;
-        const mins = parseInt(parts[1], 10) || 0;
-        const secs = parseInt(parts[2], 10) || 0;
-        return (hrs * 3600) + (mins * 60) + secs;
-    }
-
-    function checkSchedule() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const currentTimeStr = `${hours}:${minutes}:${seconds}`;
-        
-        const currentSeconds = timeToSeconds(currentTimeStr);
-
-        const activeSlot = jsonSchedule.schedule.find(slot => {
-            const startSec = timeToSeconds(slot.start);
-            const endSec = timeToSeconds(slot.end);
-            return currentSeconds >= startSec && currentSeconds < endSec;
+        // Touch handling routines
+        shield.addEventListener('click', (e) => {
+            shield.style.pointerEvents = 'none';
+            const elementBehind = document.elementFromPoint(e.clientX, e.clientY);
+            if (elementBehind) {
+                elementBehind.click();
+            }
+            setTimeout(() => { shield.style.pointerEvents = 'auto'; }, 100);
         });
 
-        if (activeSlot) {
-            const targetUrl = activeSlot.url + "&autoplay=true&muted=true";
+        shield.addEventListener('touchend', () => {
+            shield.style.pointerEvents = 'none';
+            setTimeout(() => { shield.style.pointerEvents = 'auto'; }, 100);
+        });
 
-            if (currentActiveUrl !== targetUrl) {
-                currentActiveUrl = targetUrl;
-                titleEl.textContent = `Now Playing: ${activeSlot.title}`;
-                iframe.src = targetUrl;
-            }
-        } else {
-            titleEl.textContent = "Off Air - No Scheduled Program";
-            if(iframe.src !== "about:blank") {
-                iframe.src = "about:blank";
-                currentActiveUrl = "";
+        function timeToSeconds(timeStr) {
+            const parts = timeStr.split(':');
+            const hrs = parseInt(parts[0], 10) || 0;
+            const mins = parseInt(parts[1], 10) || 0;
+            const secs = parseInt(parts[2], 10) || 0;
+            return (hrs * 3600) + (mins * 60) + secs;
+        }
+
+        function checkSchedule() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const currentTimeStr = `${hours}:${minutes}:${seconds}`;
+            
+            const currentSeconds = timeToSeconds(currentTimeStr);
+
+            const activeSlot = jsonSchedule.schedule.find(slot => {
+                const startSec = timeToSeconds(slot.start);
+                const endSec = timeToSeconds(slot.end);
+                return currentSeconds >= startSec && currentSeconds < endSec;
+            });
+
+            if (activeSlot) {
+                const targetUrl = activeSlot.url + "&autoplay=true&muted=true";
+
+                if (currentActiveUrl !== targetUrl) {
+                    currentActiveUrl = targetUrl;
+                    titleEl.textContent = `Now Playing: ${activeSlot.title}`;
+                    iframe.src = targetUrl;
+                }
+            } else {
+                titleEl.textContent = "Off Air - No Scheduled Program";
+                if(iframe.src !== "about:blank") {
+                    iframe.src = "about:blank";
+                    currentActiveUrl = "";
+                }
             }
         }
-    }
 
-    checkSchedule();
-    setInterval(checkSchedule, 2000);
+        // Initialize engine
+        checkSchedule();
+        setInterval(checkSchedule, 2000);
+    });
 </script>
 
 </body>
 </html>
+
