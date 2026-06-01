@@ -3,53 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linear HLS Player (Victoria Time Zone)</title>
+    <title>Linear HLS Player Fix</title>
     <style>
         body { margin: 0; background: #111; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #fff; }
         .video-container { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; }
         video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; }
-        .now-playing { margin-top: 15px; text-align: center; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .now-playing img { height: 30px; border-radius: 4px; }
+        .now-playing { margin-top: 15px; text-align: center; font-size: 1.2rem; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
 <div class="video-container">
-    <!-- playsinline prevents Samsung/Safari from forcing standard full screen -->
     <video id="linear-video" controls playsinline muted autoplay></video>
     <div class="now-playing">
-        <img id="show-logo" src="" alt="" style="display:none;">
         <span id="show-title">Loading Schedule...</span>
     </div>
 </div>
 
 <script>
-    // JSON explicitly timed for your current time in Victoria, Australia (12:42 AM)
+    // Schedule explicitly timed for your current late-night slot in Victoria
     const jsonSchedule = {
       "schedule": [
         {
           "title": "Anupama",
-          "start": "00:57:00",
-          "end": "00:59:00",
+          "start": "01:02:00",
+          "end": "01:08:00",
           "url": "https://hlsplayers.pages.dev/player2?url=https://s2.videoapne.to/hls/,bdohws7v7bboxuzvta2p4g2ws2khimvq24xbpns7osntfggpd74dnpjxuvna,.urlset/master.m3u8",
-          "logo": "https://jsdelivr.net"
+
         },
         {
           "title": "The Great Indian Kapil Show",
-          "start": "00:59:00",
-          "end": "01:05:00",
-          "url": "https://hlsplayers.pages.dev/player2?url=https://si.videoapne.to/hls/,bdohws6n7bboxuzvta2p4hct3roxtnt3veh2nxklit5prwibjscxjipymnfa,.urlset/master.m3u8",
-          "logo": "https://jsdelivr.gh"
+          "start": "01:08:00",
+          "end": "01:15:00",
+          "url": "https://hlsplayers.pages.dev/player2?url=https://si.videoapne.to/hls/,bdohws6n7bboxuzvta2p4hct3roxtnt3veh2nxklit5prwibjscxjipymnfa,.urlset/master.m3u8"
         }
       ]
     };
+    
 
 
+
+    
 
     const video = document.getElementById('linear-video');
     const titleEl = document.getElementById('show-title');
-    const logoEl = document.getElementById('show-logo');
     
     let currentActiveUrl = "";
     let hls = null;
@@ -57,7 +55,12 @@
     function extractM3u8(wrapperUrl) {
         try {
             const urlObj = new URL(wrapperUrl);
-            return urlObj.searchParams.get('url'); 
+            let rawUrl = urlObj.searchParams.get('url');
+            
+            if (rawUrl) {
+                return decodeURIComponent(rawUrl).trim();
+            }
+            return wrapperUrl; 
         } catch (e) {
             return wrapperUrl; 
         }
@@ -70,8 +73,6 @@
 
     function checkSchedule() {
         const now = new Date();
-        
-        // Force evaluation using 24-hour HH:MM:SS format
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -90,20 +91,13 @@
 
             if (currentActiveUrl !== targetStream) {
                 currentActiveUrl = targetStream;
-                updateUI(activeSlot);
+                titleEl.textContent = `Now Playing: ${activeSlot.title}`;
                 loadHlsStream(targetStream);
             }
         } else {
             titleEl.textContent = "Off Air - No Scheduled Program";
-            logoEl.style.display = "none";
             if (hls) { hls.destroy(); currentActiveUrl = ""; }
         }
-    }
-
-    function updateUI(slot) {
-        titleEl.textContent = `Now Playing: ${slot.title}`;
-        logoEl.src = slot.logo;
-        logoEl.style.display = "inline";
     }
 
     function loadHlsStream(streamUrl) {
@@ -111,15 +105,26 @@
             hls.destroy(); 
         }
 
+        if (!streamUrl || typeof streamUrl !== 'string') {
+            console.error("Invalid stream URL generated:", streamUrl);
+            return;
+        }
+
         if (Hls.isSupported()) {
             hls = new Hls({
-                liveDurationInfinity: true, // Tells the browser engine the media has no end point
+                liveDurationInfinity: true, 
                 maxLiveSyncPlaybackRate: 1
             });
             hls.loadSource(streamUrl);
             hls.attachMediaElement(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(() => console.log("Click the player to unmute audio."));
+                video.play().catch(() => console.log("Tap screen to unmute audio."));
+            });
+            
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                if (data.fatal) {
+                    console.warn("HLS Encountered a stream load error:", data.type);
+                }
             });
         } 
         else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -129,8 +134,11 @@
     }
 
     checkSchedule();
-    setInterval(checkSchedule, 2000); // Check for transitions every 2 seconds
+    setInterval(checkSchedule, 2000);
 </script>
 
 </body>
 </html>
+
+
+        
