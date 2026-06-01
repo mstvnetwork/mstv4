@@ -1,0 +1,26 @@
+cat > /home/claude/linear-tv/_headers << 'EOF'
+# Cloudflare Pages _headers file
+# Forces playlist.json to never be cached at the edge or browser.
+# This is what makes live JSON updates reflect immediately.
+
+/playlist.json
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Surrogate-Control: no-store
+
+/*.json
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+
+/index.html
+  Cache-Control: no-cache, max-age=0
+
+/embed.html
+  Cache-Control: no-cache, max-age=0
+
+/player.js
+  Cache-Control: no-cache, max-age=0
+EOF
+Output
+
+
