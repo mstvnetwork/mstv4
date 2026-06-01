@@ -51,12 +51,35 @@
         }
       ]
     };
-
-    const iframe = document.getElementById('linear-iframe');
+const iframe = document.getElementById('linear-iframe');
+    const shield = document.getElementById('player-shield');
     const titleEl = document.getElementById('show-title');
     let currentActiveUrl = "";
 
-    // FIXED: Correctly processes hours, minutes, and seconds independently
+    // The Click-Through Trick: Drops the shield for 100ms to allow the play trigger
+    shield.addEventListener('click', (e) => {
+        shield.style.pointerEvents = 'none'; // Temporarily turn off the shield
+        
+        // Emulate the click exactly where you pressed on the screen
+        const elementBehind = document.elementFromPoint(e.clientX, e.clientY);
+        if (elementBehind) {
+            elementBehind.click();
+        }
+
+        // Instantly wrap the shield back over the video after 100 milliseconds
+        setTimeout(() => {
+            shield.style.pointerEvents = 'auto';
+        }, 100);
+    });
+
+    // Also catch mobile touch events for absolute compatibility on Samsung Browser
+    shield.addEventListener('touchend', (e) => {
+        shield.style.pointerEvents = 'none';
+        setTimeout(() => {
+            shield.style.pointerEvents = 'auto';
+        }, 100);
+    });
+
     function timeToSeconds(timeStr) {
         const parts = timeStr.split(':');
         const hrs = parseInt(parts[0], 10) || 0;
