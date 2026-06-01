@@ -12,8 +12,9 @@
         .player-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
         
-        /* The Design Trick: A completely transparent shield sitting on top of the iframe */
+        /* Modified: Added transition and a class to temporarily disable pointer events */
         .interaction-shield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(0,0,0,0); pointer-events: auto; }
+        .interaction-shield.relaxed { pointer-events: none; }
         
         .now-playing { margin-top: 15px; text-align: center; font-size: 1.2rem; }
     </style>
@@ -23,7 +24,7 @@
 <div class="video-container">
     <div class="player-wrapper">
         <!-- 1. The structural shield blocking browser-engine touch triggers -->
-        <div class="interaction-shield"></div>
+        <div id="shield" class="interaction-shield"></div>
         
         <!-- 2. Your native wrapper iframe utilizing sandbox restrictions -->
         <iframe id="linear-iframe" src="about:blank" sandbox="allow-scripts allow-same-origin" allow="autoplay; encrypted-media"></iframe>
@@ -34,29 +35,43 @@
 </div>
 
 <script>
-    // Adjusted test times matching your early morning Victoria clock (1:23 AM)
     const jsonSchedule = {
       "schedule": [
         {
           "title": "Anupama",
-          "start": "01:48:00",
-          "end": "01:55:00",
+          "start": "02:18:00",
+          "end": "02:20:00",
           "url": "https://hlsplayers.pages.dev/player2?url=https://s2.videoapne.to/hls/,bdohws7v7bboxuzvta2p4g2ws2khimvq24xbpns7osntfggpd74dnpjxuvna,.urlset/master.m3u8",
         },
         {
           "title": "The Great Indian Kapil Show",
-          "start": "01:55:00",
-          "end": "02:25:00",
-          "url": "https://hlsplayers.pages.dev/player2?url=https://si.videoapne.to/hls/,bdohws6n7bboxuzvta2p4hct3roxtnt3veh2nxklit5prwibjscxjipymnfa,.urlset/master.m3u8"
+          "start": "02:20:00",
+          "end": "02:45:00",
+          "url": "https://videoapne.to"
         }
       ]
     };
 
-const iframe = document.getElementById('linear-iframe');
+    const iframe = document.getElementById('linear-iframe');
     const titleEl = document.getElementById('show-title');
+    const shield = document.getElementById('shield');
     let currentActiveUrl = "";
 
-    // FIXED: Correctly processes hours, minutes, and seconds independently
+    // NEW LOGIC: Temporarily drop shield for pass-through clicking
+    function relaxShield() {
+        // Disable pointer events so the click passes through to the iframe
+        shield.classList.add('relaxed');
+        
+        // Lock it back immediately after the browser registers the tap/click (50ms)
+        setTimeout(() => {
+            shield.classList.remove('relaxed');
+        }, 50);
+    }
+
+    // Listen for both desktop clicks and mobile touches
+    shield.addEventListener('mousedown', relaxShield);
+    shield.addEventListener('touchstart', relaxShield);
+
     function timeToSeconds(timeStr) {
         const parts = timeStr.split(':');
         const hrs = parseInt(parts[0], 10) || 0;
