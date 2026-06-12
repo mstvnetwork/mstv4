@@ -7,9 +7,9 @@
   },
   {
     "title": "Video 01",
-    "duration": 90,
-    "url": "https://hlsplayers.pages.dev/player2?url=https://si.videoapne.to/hls/,bdohws6n7bboxuzvta2p4hct3roxtnt3veh2nxklit5prwibjscxjipymnfa,.urlset/master.m3u8",
-    "type": "iframe"
+    "duration": 45,
+    "url": "https://samplelib.com/mp4/sample-10s-vp9.mp4",
+    "type": "mp4"
   }
 ]
 
