@@ -2,13 +2,13 @@
   {
     "title": "Video 08",
     "duration": 60,
-    "url":"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-    "type": "m3u8"
+    "url":"https://turbovidhls.com/t/69f03ad0a2458",
+    "type": "iframe"
   },
     {
     "title": "Video 09",
     "duration": 60,
-    "url":"https://hlsplayers.pages.dev/player2?url=https://si.videoapne.to/hls/,bdohxk747bboxuzvta2p4calrbcn73suapxxsmjp5m6vmouxmobcxeia3y4q,.urlset/master.m3u8",
+    "url":"https://turbovidhls.com/t/69f03ad0a2458",
     "type": "iframe"
   },
   {
