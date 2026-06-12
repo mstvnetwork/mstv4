@@ -1,20 +1,20 @@
 [
   {
     "title": "Video 08",
-    "duration": 120,
-    "url":"https://archive.org/download/cooking_202602/part_000.ia.mp4",
+    "duration": 200,
+    "url":"https://github.com/mstvnetwork/mstv4/releases/download/v1.0.0/nagin.mp4",
     "type": "mp4"
   },
     {
     "title": "Video 09",
-    "duration": 120,
-    "url":"https://archive.org/download/cooking_202602/part_000.ia.mp4",
+    "duration": 200,
+    "url":"https://github.com/mstvnetwork/mstv4/releases/download/v1.0.0/nagin.mp4",
     "type": "mp4"
   },
   {
     "title": "Video 01",
-    "duration": 60,
-    "url": "https://archive.org/download/cooking_202602/part_000.ia.mp4",
+    "duration": 200,
+    "url": "https://github.com/mstvnetwork/mstv4/releases/download/v1.0.0/nagin.mp4",
     "type": "mp4"
   }
 ]
