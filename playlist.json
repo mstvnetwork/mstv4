@@ -1,15 +1,15 @@
 [
   {
     "title": "Video 08",
-    "duration": 45,
-    "url":"https://samplelib.com/mp4/sample-5s.mp4",
-    "type": "mp4"
+    "duration": 60,
+    "url":"https://amg01550-indiatv-indiatv-aapkiadalat-mi-xiaomi-n5tuk.amagi.tv/playlist/amg01550-indiatv-indiatv-aapkiadalat-mi-xiaomi/playlist.m3u8",
+    "type": "m3u8"
   },
   {
     "title": "Video 01",
-    "duration": 45,
-    "url": "https://samplelib.com/mp4/sample-10s-vp9.mp4",
-    "type": "mp4"
+    "duration": 60,
+    "url": "https://amg01550-indiatv-indiatv-aapkiadalat-mi-xiaomi-n5tuk.amagi.tv/playlist/amg01550-indiatv-indiatv-aapkiadalat-mi-xiaomi/playlist.m3u8",
+    "type": "m3u8"
   }
 ]
 
