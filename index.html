@@ -9,6 +9,8 @@
         :root {
             --bg-color: #0d0d0c;
             --card-bg: #1a1a1a;
+            --btn-bg: #2a2a2a;
+            --btn-hover: #3a3a3a;
             --accent-color: #ff3b30;
             --text-main: #ffffff;
             --text-muted: #aaaaaa;
@@ -46,7 +48,7 @@
 
         .video-wrapper {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            padding-bottom: 56.25%; /* 16:9 Widescreen Ratio */
             height: 0;
             background: #000;
             border-radius: 8px;
@@ -62,7 +64,7 @@
             height: 100%;
         }
 
-        /* Status & Info Bars */
+        /* Status Bar */
         .live-status-bar {
             background: var(--card-bg);
             padding: 16px;
@@ -81,7 +83,7 @@
             text-transform: uppercase;
         }
 
-        /* Sidebar & EPG Panels */
+        /* Sidebar Panels */
         .sidebar-section {
             display: flex;
             flex-direction: column;
@@ -99,21 +101,56 @@
             font-size: 0.9rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
         }
 
-        .program-name {
-            font-size: 1.2rem;
+        /* Sidebar Interactive Channel Buttons */
+        .channel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* Custom Scrollbar for channel panel */
+        .channel-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .channel-list::-webkit-scrollbar-thumb {
+            background: var(--btn-hover);
+            border-radius: 4px;
+        }
+
+        .channel-btn {
+            width: 100%;
+            background: var(--btn-bg);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 12px 16px;
+            text-align: left;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .channel-btn:hover {
+            background: var(--btn-hover);
+        }
+
+        .channel-btn.active {
+            background: var(--card-bg);
+            border-color: var(--accent-color);
             font-weight: bold;
-            margin-bottom: 4px;
         }
 
-        .program-time {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        /* Footer & Disclaimers */
+        /* Footer */
         footer {
             margin-top: 40px;
             text-align: center;
@@ -127,35 +164,26 @@
 
     <div class="cinema-container">
         
-        <!-- Left Side: Main Video Stream -->
+        <!-- Left Side: Widescreen Stream Window -->
         <main class="player-section">
             <div class="video-wrapper">
-                <!-- Replace with your actual video element referenced in player.js -->
-                <video id="videoPlayer" controls autoplay></video>
+                <video id="videoPlayer" controls autoplay playsinline></video>
             </div>
             
             <div class="live-status-bar">
                 <div>
                     <span class="badge">Live Now</span>
-                    <span id="currentProgramTitle" style="margin-left: 10px; font-weight: bold;">Loading…</span>
+                    <span id="currentProgramTitle" style="margin-left: 10px; font-weight: bold;">Loading Stream…</span>
                 </div>
-                <div class="program-time">Finishing At: <span id="currentProgramEnd">--:--</span></div>
             </div>
         </main>
 
-        <!-- Right Side: Sidebar Program Guide (EPG) -->
+        <!-- Right Side: Sidebar Interactive Menu -->
         <aside class="sidebar-section">
-            <div class="epg-card">
-                <div class="epg-title">Coming Up Next</div>
-                <div id="nextProgramTitle" class="program-name">Loading…</div>
-                <div class="program-time">Starts At: <span id="nextProgramStart">--:--</span></div>
-            </div>
-            
-            <!-- Channel / Playlist Selection placeholder -->
-            <div class="epg-card" style="border-left-color: #444;">
-                <div class="epg-title">Available Channels</div>
-                <div id="channelListContainer">
-                    <!-- Dynamic playlist.js items inject here -->
+            <div class="epg-card" style="border-left-color: #34c759;">
+                <div class="epg-title">Available Stations</div>
+                <div id="channelListContainer" class="channel-list">
+                    <div style="color: var(--text-muted); padding: 10px;">Reading channel guide...</div>
                 </div>
             </div>
         </aside>
@@ -163,12 +191,11 @@
     </div>
 
     <footer>
-        <p><strong>Disclaimer & Copyright:</strong> This app does not host or store media files. We provide a directory of publicly available streams.</p>
-        <p>&copy; 2026 Your App Network. All Rights Reserved.</p>
+        <p><strong>Disclaimer & Copyright:</strong> This index application does not host, mirror, or store media packages locally. All feeds point directly to open directory endpoints.</p>
+        <p>&copy; 2026 TV Hub Network. All Rights Reserved.</p>
     </footer>
 
-    <!-- Hooks for your JavaScript logic -->
-    <script src="playlist.json"></script>
+    <!-- Single Javascript Controller Engine -->
     <script src="player.js"></script>
 </body>
 </html>
