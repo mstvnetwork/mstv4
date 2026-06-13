@@ -1,240 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linear TV Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apna TV 24/7 - Cinema Mode</title>
+    <style>
+        /* Base Styling & Theme Colors */
+        :root {
+            --bg-color: #0d0d0c;
+            --card-bg: #1a1a1a;
+            --accent-color: #ff3b30;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
 
-<style>
-body{
-    margin:0;
-    background:#111;
-    color:#fff;
-    font-family:Arial,sans-serif;
-}
+        /* Responsive Layout Grid */
+        .cinema-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-.player-wrap{
-    max-width:1200px;
-    margin:auto;
-    padding:20px;
-}
+        @media (min-width: 992px) {
+            .cinema-container {
+                grid-template-columns: 3fr 1fr;
+            }
+        }
 
-.video-container{
-    position:relative;
-    width:100%;
-    aspect-ratio:16/9;
-    background:#000;
-    overflow:hidden;
-}
+        /* Player Styling */
+        .player-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-video,
-iframe{
-    width:100%;
-    height:100%;
-    border:0;
-}
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
 
-.loader{
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,.6);
-}
+        .video-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
 
-.loader.hidden{
-    display:none;
-}
+        /* Status & Info Bars */
+        .live-status-bar {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.error{
-    display:none;
-    padding:10px;
-    background:#900;
-    margin-top:10px;
-}
+        .badge {
+            background: var(--accent-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
 
-.error.show{
-    display:block;
-}
+        /* Sidebar & EPG Panels */
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-.controls{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    padding:12px 0;
-}
+        .epg-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
 
-button{
-    cursor:pointer;
-    padding:8px 14px;
-}
+        .epg-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
 
-.progress{
-    height:6px;
-    background:#333;
-    margin:10px 0;
-}
+        .program-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
 
-.progress-fill{
-    height:100%;
-    width:0%;
-    background:#0f0;
-}
+        .program-time {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
 
-.schedule{
-    margin-top:20px;
-    max-height:300px;
-    overflow:auto;
-    border:1px solid #333;
-}
-
-.schedule-item{
-    padding:10px;
-    border-bottom:1px solid #222;
-}
-
-.schedule-item.active{
-    background:#222;
-}
-
-.toast{
-    position:fixed;
-    right:20px;
-    bottom:20px;
-    background:#222;
-    padding:10px 15px;
-    border-radius:6px;
-    opacity:0;
-    transition:.3s;
-}
-
-.toast.show{
-    opacity:1;
-}
-
-.vol-overlay{
-    display:none;
-    position:absolute;
-    bottom:10px;
-    left:10px;
-    padding:6px 10px;
-    background:rgba(0,0,0,.7);
-    border-radius:4px;
-    font-size:12px;
-    z-index:100;
-    pointer-events:none;
-}
-</style>
+        /* Footer & Disclaimers */
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+    </style>
 </head>
 <body>
 
-<div class="player-wrap">
+    <div class="cinema-container">
+        
+        <!-- Left Side: Main Video Stream -->
+        <main class="player-section">
+            <div class="video-wrapper">
+                <!-- Replace with your actual video element referenced in player.js -->
+                <video id="videoPlayer" controls autoplay></video>
+            </div>
+            
+            <div class="live-status-bar">
+                <div>
+                    <span class="badge">Live Now</span>
+                    <span id="currentProgramTitle" style="margin-left: 10px; font-weight: bold;">Loading…</span>
+                </div>
+                <div class="program-time">Finishing At: <span id="currentProgramEnd">--:--</span></div>
+            </div>
+        </main>
 
-    <h2 id="nowTitle">Loading...</h2>
-
-    <div id="clock"></div>
-    <div id="clockDate"></div>
-
-    <div class="video-container">
-
-        <video
-            id="videoPlayer"
-            playsinline
-            controlslist="nodownload">
-        </video>
-
-        <iframe
-            id="iframePlayer"
-            style="display:none;"
-            allowfullscreen>
-        </iframe>
-
-        <div id="loader" class="loader">
-            Loading...
-        </div>
-
-        <div id="volOverlay" class="vol-overlay">
-            Volume controlled by embedded player
-        </div>
-
-    </div>
-
-    <div id="errorMsg" class="error">
-        Playback error. Retrying...
-    </div>
-
-    <div class="controls">
-
-        <button id="btnPlay">⏸</button>
-
-        <input
-            id="volSlider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0.8">
+        <!-- Right Side: Sidebar Program Guide (EPG) -->
+        <aside class="sidebar-section">
+            <div class="epg-card">
+                <div class="epg-title">Coming Up Next</div>
+                <div id="nextProgramTitle" class="program-name">Loading…</div>
+                <div class="program-time">Starts At: <span id="nextProgramStart">--:--</span></div>
+            </div>
+            
+            <!-- Channel / Playlist Selection placeholder -->
+            <div class="epg-card" style="border-left-color: #444;">
+                <div class="epg-title">Available Channels</div>
+                <div id="channelListContainer">
+                    <!-- Dynamic playlist.js items inject here -->
+                </div>
+            </div>
+        </aside>
 
     </div>
 
-    <div class="progress">
-        <div id="progressFill" class="progress-fill"></div>
-    </div>
+    <footer>
+        <p><strong>Disclaimer & Copyright:</strong> This app does not host or store media files. We provide a directory of publicly available streams.</p>
+        <p>&copy; 2026 Your App Network. All Rights Reserved.</p>
+    </footer>
 
-    <div id="statusText"></div>
-    <div id="statusOffset"></div>
-
-    <h3>Schedule</h3>
-    <div id="scheduleList" class="schedule"></div>
-
-</div>
-
-<div id="syncToast" class="toast">
-    Synced to live position
-</div>
-
-<div id="updateToast" class="toast">
-    Playlist updated
-</div>
-
-<script src="./player.js"></script>
-
-<script>
-
-initPlayer({
-
-    videoId: 'videoPlayer',
-    iframeId: 'iframePlayer',
-
-    loaderId: 'loader',
-    errorId: 'errorMsg',
-
-    btnPlayId: 'btnPlay',
-    volSliderId: 'volSlider',
-
-    progressFillId: 'progressFill',
-    scheduleListId: 'scheduleList',
-
-    syncToastId: 'syncToast',
-    updateToastId: 'updateToast',
-
-    statusTextId: 'statusText',
-    statusOffsetId: 'statusOffset',
-
-    nowTitleId: 'nowTitle',
-
-    volOverlayId: 'volOverlay',
-
-    showClock: true,
-    clockId: 'clock',
-    clockDateId: 'clockDate'
-
-});
-
-</script>
-
+    <!-- Hooks for your JavaScript logic -->
+    <script src="playlist.js"></script>
+    <script src="player.js"></script>
 </body>
 </html>
