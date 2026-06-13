@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const CHANNEL_EPOCH   = new Date('2024-01-01T00:00:00Z').getTime();
-const PLAYLIST_URL    = './playlist.json';
+const PLAYLIST_URL    = 5000'./playlist.json';
 
 const POLL_MS         = ;   // playlist change check interval
 const WATCHDOG_MS     = 1000;   // sync ticker
